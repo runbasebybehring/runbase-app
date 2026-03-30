@@ -234,7 +234,7 @@ const EC = ['#f44336','#ff9800','#ffeb3b','#8bc34a','#4caf50'];
 // Chave = email do aluno no Supabase
 // ─────────────────────────────────────────────
 const RELATORIOS = {
-  'luizcarlos@runbase.com': {
+  '2838d7ba-77ff-4c0b-8d6f-4fa9ddf6ded7': {
     mes: 'Mês 2', objetivo: 'Maratona',
     badges: [
       {txt:'✓ Todos os treinos completos',cls:'green'},
@@ -261,7 +261,7 @@ const RELATORIOS = {
     ],
     nota:'Luiz, foi um mês muito forte. Completar todos os treinos com a agenda que você tem já é uma vitória. Os problemas nos longões têm solução — vamos trabalhar a nutrição juntos.<br><br>O ritmo está chegando. A base está sendo construída. <strong>Maratona é um processo longo, e você está no caminho certo.</strong>',
   },
-  'mayra@runbase.com': {
+  '0155a773-1f52-4997-8418-9be63368ff00a': {
     mes: 'Mês 2', objetivo: 'NYC Marathon 2026',
     badges: [
       {txt:'✓ Todos os treinos completos',cls:'green'},
@@ -289,9 +289,77 @@ const RELATORIOS = {
     ],
     nota:'Mayra, que mês! Completar tudo, superar as distâncias e chegar sem dor é o resultado ideal para essa fase da preparação.<br><br>A NYC é em novembro — ainda temos muito espaço para construir. <strong>Continue confiando no processo. A base que você está criando agora vai fazer toda a diferença no dia da prova.</strong>',
   },
+  'a525a749-9853-49d3-bbc9-1baf724b29ed': {
+    mes: 'Mês 1', objetivo: 'Retorno à Corrida + Musculação',
+    badges: [
+      {txt:'1º mês de assessoria',cls:'gold'},
+      {txt:'Protocolo anti-canelite',cls:'red'},
+      {txt:'Push · Pull · Legs',cls:'blue'},
+    ],
+    stats: [
+      {val:'5x',lbl:'Musculação',sub:'Seg · Ter · Qua · Qui · Sex'},
+      {val:'2–3x',lbl:'Corrida',sub:'retorno progressivo'},
+      {val:'8sem',lbl:'Progressão',sub:'musculação planejada'},
+    ],
+    resumo:'Gustavo tem base aeróbica sólida (histórico de meia maratona), mas ficou mais de um ano sem correr. O tecido ósseo e muscular perdeu adaptação ao impacto — o limitante não é o pulmão, é a tolerância ao estresse repetido.<br><br>O mês 1 foca em <strong>reintroduzir a corrida com segurança</strong> via protocolo anti-canelite, enquanto a musculação Push/Pull/Legs constrói a base de força necessária para suportar o volume de corrida futuro.',
+    progresso:[
+      {lbl:'Musculação (5x/semana)',val:'100%',w:100,cor:'#F5C800'},
+      {lbl:'Corrida S1–S2 (2x/sem)',w:50,val:'S1–S2',cor:'#4caf50'},
+      {lbl:'Corrida S3–S4 (3x/sem)',w:75,val:'S3–S4',cor:'#4caf50'},
+      {lbl:'Progressão anti-canelite',w:100,val:'ativa',cor:'#4fc3f7'},
+    ],
+    infos:[
+      {cls:'alert',titulo:'⚠ Regra principal',txt:'Dor >2/10 durante corrida → reduzir para caminhada. <strong>Não empurrar.</strong> Canelite >3/10 → parar e avaliar no dia seguinte.'},
+      {cls:'highlight',titulo:'★ Ponto forte',txt:'Base aeróbica preservada do histórico de meia maratona. O retorno será mais rápido do que parece — desde que o tecido respeite o tempo.'},
+      {cls:'note',titulo:'↗ Musculação',txt:'Tibial anterior no Treino C: <strong>nunca pular</strong> — é a prevenção principal. Bike sprints: pular no Legs se canelite >3/10.'},
+      {cls:'next',titulo:'→ Progressão',txt:'S1–S2: técnica e ritmo. S3–S4: força. S5–S6: metabólico. S7: pico. S8: deload. Subir carga ao bater topo do range com boa forma.'},
+    ],
+    nota:'Gustavo, o retorno à corrida exige paciência — mas você tem a base certa para fazer isso bem feito. A musculação que estamos construindo agora vai proteger você e acelerar o processo.<br><br><strong>Confie no protocolo. O tecido precisa de tempo, mas ele vai se adaptar.</strong>',
+    gym: {
+      semana: [
+        {dia:'SEG', tipo:'PUSH — Peito + Ombro + Tríceps', tempo:'55–60min', blocos:[
+          {bloco:'Aquec.', exercicios:'Bike Z2 15min + Ativação 1x15 reps'},
+          {bloco:'M1', exercicios:'Supino máq. reto 4x10–12 / Elevação lateral halter 4x12–15 — 45s'},
+          {bloco:'M2', exercicios:'Supino inclinado máq. 3x10–12 / Desenvolvimento ombro 3x12 — 45s'},
+          {bloco:'M3', exercicios:'Cross over cabo 3x12–15 / Tríceps corda 3x12–15 — 45s'},
+          {bloco:'Acab.', exercicios:'Tríceps testa unilateral 2x12 / Dead bug 2x10 / Prancha lateral 2x20s'},
+          {bloco:'Final', exercicios:'Bike sprints 5 rounds (40s médio / 20s forte) + Desaquec. 1min'},
+        ]},
+        {dia:'TER', tipo:'PULL — Costas + Bíceps + Ombro Post.', tempo:'55–60min', blocos:[
+          {bloco:'Aquec.', exercicios:'Bike Z2 15min + Ativação 1x15 reps'},
+          {bloco:'M1', exercicios:'Puxada vertical 4x8–10 / Face pull cabo 4x15 — 45s'},
+          {bloco:'M2', exercicios:'Remada fechada cabo 4x10–12 / Remada aberta máq. 4x10–12 — 45s'},
+          {bloco:'M3', exercicios:'Rosca direta 3x10–12 / Rosca martelo 3x12 — 75s'},
+          {bloco:'Acab.', exercicios:'Pullover 2x12–15 / Remada alta cabo 2x15 / Prancha frontal 2x35–45s'},
+          {bloco:'Final', exercicios:'Bike sprints 5 rounds (40s médio / 20s forte) + Desaquec. 1min'},
+        ]},
+        {dia:'QUA', tipo:'LEGS — Pernas + Glúteo + Anti-canelite', tempo:'55–60min', blocos:[
+          {bloco:'Aquec.', exercicios:'Bike Z2 8min + Leg press leve 1x15'},
+          {bloco:'M1', exercicios:'Leg press 45° 4x10–12 (40kg/lado) / Panturrilha leg press 4x15–20 — 45s'},
+          {bloco:'M2', exercicios:'Cadeira extensora 3x12–15 / Cadeira flexora 3x12–15 — 45s'},
+          {bloco:'M3', exercicios:'Hip thrust 4x12 / Tibial anterior 3x15–20 ⚠️ nunca pular — 30s'},
+          {bloco:'Acab.', exercicios:'Abdução quadril 2x15–20 / Stiff romeno 2x12 / Prancha c/ extensão 2x8'},
+          {bloco:'Final', exercicios:'Bike sprints 4 rounds (pular se canelite >3/10) + Desaquec. 1min'},
+        ]},
+        {dia:'QUI', tipo:'PUSH — repetição Segunda', tempo:'55–60min', blocos:[
+          {bloco:'Treino', exercicios:'Mesma estrutura da Segunda. Foco em superar as repetições ou cargas registradas.'},
+        ]},
+        {dia:'SEX', tipo:'PULL — repetição Terça', tempo:'55–60min', blocos:[
+          {bloco:'Treino', exercicios:'Mesma estrutura da Terça. Foco em superar as repetições ou cargas registradas.'},
+        ]},
+      ],
+      corrida: [
+        {sem:'Semana 1', sessoes:'2x', volume:'~12min impacto', foco:'Caminhada + blocos curtos de trote. Esteira. Sem pace.'},
+        {sem:'Semana 2', sessoes:'2x', volume:'~18min impacto', foco:'Blocos maiores de trote. Asfalto com cautela. Observar 24–48h.'},
+        {sem:'Semana 3', sessoes:'3x', volume:'~26min impacto', foco:'3ª sessão adicionada. Trote contínuo curto.'},
+        {sem:'Semana 4', sessoes:'3x', volume:'~32min impacto', foco:'Consolidação da base. Avaliar progressão para o próximo ciclo.'},
+      ],
+    }
+  },
 };
 
 // ── State ──
+var relTab='resumo';
 let currentUser=null,athleteData=null,athleteWeeks=[],athleteZones=[],workouts=[],allFeedbacks=[],allAthletes=[];
 let coachView='dashboard',coachDetailAthlete=null,coachDetailTab='semana',athView='home',openWeekIdx=0,fbTargetIdx=null;
 let selectedRpe=null,selectedEn=null,selectedFadiga=null,selectedSono=null,selectedHidra=null,selectedGel=null,selectedFc=null;
@@ -349,29 +417,45 @@ function renderAthFeedback(){var pend=workouts.filter(function(w){return w.done&
 
 // ── RELATÓRIO ──
 function renderAthRelatorio(){
-  var email=currentUser?currentUser.email:'';
-  var rel=RELATORIOS[email];
+  var id=currentUser?currentUser.id:'';
+  var rel=RELATORIOS[id];
   if(!rel){
-    document.getElementById('athlete-content').innerHTML=pt('RELATÓRIO')+'<div style="text-align:center;padding:40px;color:#555;font-family:DM Mono,monospace;font-size:11px;line-height:1.8">Relatório do mês ainda<br>não disponível.<br><br></div>';
+    document.getElementById('athlete-content').innerHTML=pt('RELATÓRIO')+'<div style="text-align:center;padding:40px;color:#555;font-family:DM Mono,monospace;font-size:11px;line-height:1.8">Relatório do mês ainda<br>não disponível.<br><br>Em breve seu coach irá publicar.</div>';
     return;
   }
+  var hasGym=rel.gym&&rel.gym.semana;
+  var tabBtn=function(tid,lbl){return '<button onclick="relTab=\''+tid+'\';renderAthRelatorio()" style="flex:1;padding:9px 0;border-radius:6px;cursor:pointer;font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;border:1px solid '+(relTab===tid?'#F5C800':'#2a2a2a')+';background:'+(relTab===tid?'#F5C800':'transparent')+';color:'+(relTab===tid?'#141414':'#888')+'">'+lbl+'</button>';};
+  var tabs=hasGym?'<div style="display:flex;gap:4px;margin-bottom:16px">'+tabBtn('resumo','Resumo')+tabBtn('musculacao','Musculação')+tabBtn('corrida','Corrida')+'</div>':'';
   var badgesHTML=rel.badges.map(function(b){return '<span class="rel-badge '+b.cls+'">'+b.txt+'</span>';}).join('');
   var statsHTML='<div class="rel-stat-grid">'+rel.stats.map(function(s){return '<div class="rel-stat"><div class="rel-stat-val">'+s.val+'</div><div class="rel-stat-lbl">'+s.lbl+'</div><div class="rel-stat-sub">'+s.sub+'</div></div>';}).join('')+'</div>';
-  var progHTML=rel.progresso.map(function(p){return '<div class="rel-prog-item"><div class="rel-prog-header"><span class="rel-prog-label">'+p.lbl+'</span><span class="rel-prog-val">'+p.val+'</span></div><div class="rel-prog-bar"><div class="rel-prog-fill" style="width:0%;background:'+p.cor+'" data-w="'+p.w+'"></div></div></div>';}).join('');
-  var infosHTML='<div class="rel-info-grid">'+rel.infos.map(function(i){return '<div class="rel-info '+i.cls+'"><div class="rel-info-title">'+i.titulo+'</div><p>'+i.txt+'</p></div>';}).join('')+'</div>';
-  document.getElementById('athlete-content').innerHTML=
-    '<div style="margin-bottom:16px"><div style="font-family:DM Mono,monospace;font-size:9px;color:#555;letter-spacing:.2em;margin-bottom:4px">'+rel.mes.toUpperCase()+' · '+rel.objetivo.toUpperCase()+'</div>'+pt('RELATÓRIO MENSAL')+'<div>'+badgesHTML+'</div></div>'+
-    statsHTML+
-    st('Resumo do Mês')+
-    '<div class="rel-summary">'+rel.resumo+'</div>'+
-    st('Análise')+
-    '<div style="margin-bottom:16px">'+progHTML+'</div>'+
-    st('Destaques')+
-    infosHTML+
-    st('Nota do Coach')+
-    '<div class="rel-coach-note"><p>'+rel.nota+'</p><div class="rel-coach-sig">— Run Base by Behring · Abril 2026</div></div>';
-  // Anima as barras após render
+  var bodyHTML='';
+  if(!hasGym||relTab==='resumo'){
+    var progHTML=rel.progresso.map(function(p){return '<div class="rel-prog-item"><div class="rel-prog-header"><span class="rel-prog-label">'+p.lbl+'</span><span class="rel-prog-val">'+p.val+'</span></div><div class="rel-prog-bar"><div class="rel-prog-fill" style="width:0%;background:'+p.cor+'" data-w="'+p.w+'"></div></div></div>';}).join('');
+    var infosHTML='<div class="rel-info-grid">'+rel.infos.map(function(i){return '<div class="rel-info '+i.cls+'"><div class="rel-info-title">'+i.titulo+'</div><p>'+i.txt+'</p></div>';}).join('')+'</div>';
+    bodyHTML=st('Resumo do Mês')+'<div class="rel-summary">'+rel.resumo+'</div>'+st('Análise')+'<div style="margin-bottom:16px">'+progHTML+'</div>'+st('Destaques')+infosHTML+st('Nota do Coach')+'<div class="rel-coach-note"><p>'+rel.nota+'</p><div class="rel-coach-sig">— Run Base by Behring · Abril 2026</div></div>';
+  } else if(relTab==='musculacao'){
+    var savedLoads=JSON.parse(localStorage.getItem('gym_loads_'+id)||'{}');
+    bodyHTML=st('Treinos da Semana')+'<div style="font-family:DM Mono,monospace;font-size:9px;color:#555;margin-bottom:14px;line-height:1.6">Toque em qualquer exercício para anotar a carga. Suas anotações ficam salvas.</div>'+rel.gym.semana.map(function(d){
+      var blocos=d.blocos.map(function(b,bi){
+        var key=d.dia+'_'+bi;
+        var saved=savedLoads[key]||'';
+        var inputId='load_'+d.dia+'_'+bi;
+        return '<div style="padding:10px 0;border-bottom:1px solid #1e1e1e"><div style="font-family:\'DM Mono\',monospace;font-size:8px;color:#F5C800;letter-spacing:.1em;margin-bottom:3px">'+b.bloco+'</div><div style="font-size:12px;color:#aaa;line-height:1.6;margin-bottom:6px">'+b.exercicios+'</div>'+(b.bloco!=='Final'&&b.bloco!=='Aquec.'?'<div style="display:flex;gap:8px;align-items:center"><input id="'+inputId+'" type="text" placeholder="Anotar carga..." value="'+saved+'" style="flex:1;background:#242424;border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;color:#fff;font-family:\'DM Mono\',monospace;font-size:11px;outline:none" oninput="saveLoad(\''+id+'\',\''+key+'\',this.value)"><span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#555">kg/obs</span></div>':'')+'</div>';
+      }).join('');
+      return '<div class="workout-card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px"><div><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:#F5C800;margin-bottom:2px">'+d.dia+'</div><div style="font-size:14px;font-weight:600;color:#fff">'+d.tipo+'</div></div><span class="tag" style="color:#555;border-color:#333;font-size:8px">'+d.tempo+'</span></div>'+blocos+'</div>';
+    }).join('');
+  } else if(relTab==='corrida'){
+    bodyHTML=st('Protocolo Anti-Canelite — 4 Semanas')+'<div class="rel-summary" style="margin-bottom:16px">Zona 1–2 o tempo todo. <strong>Sem pace, sem meta de distância.</strong> Começar na esteira. 48h de descanso entre corridas nas primeiras 2 semanas.</div>'+rel.gym.corrida.map(function(s){return '<div class="workout-card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:700;font-style:italic;font-size:18px;color:#F5C800">'+s.sem+'</div><div style="display:flex;gap:6px"><span class="tag" style="color:#888;border-color:#333">'+s.sessoes+'</span><span class="tag" style="color:#F5C800;border-color:#F5C800">'+s.volume+'</span></div></div><div style="font-size:13px;color:#aaa;line-height:1.6">'+s.foco+'</div></div>';}).join('')+'<div class="rel-info alert" style="margin-top:8px"><div class="rel-info-title">⚠ Escala de dor</div><p>0–1/10: continuar · 2/10: monitorar · 3/10: <strong>parar, virar caminhada</strong> · 4+/10: <strong>parar imediatamente, 2–3 dias off</strong></p></div>';
+  }
+  document.getElementById('athlete-content').innerHTML='<div style="margin-bottom:16px"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#555;letter-spacing:.2em;margin-bottom:4px">'+rel.mes.toUpperCase()+' · '+rel.objetivo.toUpperCase()+'</div>'+pt('MEU PLANO')+'<div>'+badgesHTML+'</div></div>'+statsHTML+tabs+bodyHTML;
   setTimeout(function(){document.querySelectorAll('.rel-prog-fill').forEach(function(b){b.style.width=b.dataset.w+'%';});},100);
+}
+
+// ── GYM LOAD TRACKING ──
+function saveLoad(userId, key, value){
+  var loads=JSON.parse(localStorage.getItem('gym_loads_'+userId)||'{}');
+  loads[key]=value;
+  localStorage.setItem('gym_loads_'+userId, JSON.stringify(loads));
 }
 
 // ── FEEDBACK MODAL ──
