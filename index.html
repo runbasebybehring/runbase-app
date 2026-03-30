@@ -426,31 +426,37 @@ function renderAthForca(){
     return;
   }
   var savedLoads=JSON.parse(localStorage.getItem('gym_loads_'+id)||'{}');
-  var html=pt('FORÇA')+'<div style="font-family:DM Mono,monospace;font-size:9px;color:#555;margin-bottom:16px;line-height:1.6">Anote suas cargas em cada exercício. Ficam salvas automaticamente.</div>';
-  html+=rel.gym.semana.map(function(d){
-    var blocos=d.blocos.map(function(b,bi){
+  var html=pt('FORÇA')+'<div style="font-family:DM Mono,monospace;font-size:9px;color:#555;margin-bottom:16px">Anote suas cargas. Ficam salvas automaticamente.</div>';
+  rel.gym.semana.forEach(function(d){
+    var blocos='';
+    d.blocos.forEach(function(b,bi){
       var key=d.dia+'_'+bi;
       var saved=savedLoads[key]||'';
       var hasInput=b.bloco!=='Final'&&b.bloco!=='Aquec.';
-      return '<div style="padding:10px 0;border-bottom:1px solid #1e1e1e">'+
-        '<div style="font-family:DM Mono,monospace;font-size:8px;color:#F5C800;letter-spacing:.1em;margin-bottom:3px">'+b.bloco+'</div>'+
-        '<div style="font-size:12px;color:#aaa;line-height:1.6;margin-bottom:'+(hasInput?'8px':'0')+'">'+b.exercicios+'</div>'+
-        (hasInput?'<div style="display:flex;gap:8px;align-items:center">'+
-        '<input type="text" placeholder="Anotar carga / obs..." value="'+saved+'" '+
-        'style="flex:1;background:#242424;border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;color:#fff;font-family:DM Mono,monospace;font-size:11px;outline:none" '+
-        'oninput="saveLoad(''+id+'',''+key+'',this.value)"></div>':'')+'</div>';
-    }).join('');
-    return '<div class="workout-card" style="margin-bottom:10px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'+
-      '<div><div style="font-family:DM Mono,monospace;font-size:10px;color:#F5C800;margin-bottom:2px">'+d.dia+'</div>'+
-      '<div style="font-size:14px;font-weight:600;color:#fff">'+d.tipo+'</div></div>'+
-      '<span class="tag" style="color:#555;border-color:#333;font-size:8px">'+d.tempo+'</span></div>'+
-      blocos+'</div>';
-  }).join('');
+      blocos+='<div style="padding:10px 0;border-bottom:1px solid #1e1e1e">';
+      blocos+='<div style="font-family:DM Mono,monospace;font-size:8px;color:#F5C800;letter-spacing:.1em;margin-bottom:3px">'+b.bloco+'</div>';
+      blocos+='<div style="font-size:12px;color:#aaa;line-height:1.6;margin-bottom:'+(hasInput?'8':'0')+'px">'+b.exercicios+'</div>';
+      if(hasInput){
+        blocos+='<input type="text" placeholder="Anotar carga / obs..." ';
+        blocos+='style="width:100%;background:#242424;border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;color:#fff;font-family:DM Mono,monospace;font-size:11px;outline:none;margin-top:4px" ';
+        blocos+='data-uid="'+id+'" data-key="'+key+'" value="'+saved+'" oninput="saveLoad(this)">';
+      }
+      blocos+='</div>';
+    });
+    html+='<div class="workout-card" style="margin-bottom:10px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">';
+    html+='<div><div style="font-family:DM Mono,monospace;font-size:10px;color:#F5C800;margin-bottom:2px">'+d.dia+'</div>';
+    html+='<div style="font-size:14px;font-weight:600;color:#fff">'+d.tipo+'</div></div>';
+    html+='<span class="tag" style="color:#555;border-color:#333;font-size:8px">'+d.tempo+'</span></div>';
+    html+=blocos+'</div>';
+  });
   document.getElementById('athlete-content').innerHTML=html;
 }
 
-function saveLoad(userId,key,value){
+function saveLoad(input){
+  var userId=input.dataset.uid;
+  var key=input.dataset.key;
+  var value=input.value;
   var loads=JSON.parse(localStorage.getItem('gym_loads_'+userId)||'{}');
   loads[key]=value;
   localStorage.setItem('gym_loads_'+userId,JSON.stringify(loads));
