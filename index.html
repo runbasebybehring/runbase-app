@@ -287,6 +287,81 @@ var RELATORIOS = {
     ],
     nota: 'Mayra, que mês! Completar tudo, superar as distâncias e chegar sem dor é o resultado ideal para essa fase da preparação.<br><br>A NYC é em novembro — ainda temos muito espaço para construir. <strong>Continue confiando no processo. A base que você está criando agora vai fazer toda a diferença no dia da prova.</strong>'
   },
+  'fc4b1ff2-4169-46ee-bf38-c5c6ee532c81': {
+    mes: 'Mês 1', objetivo: 'Corrida · Seg · Qua · Sex',
+    badges: [
+      {txt:'1º mês de assessoria', cls:'gold'},
+      {txt:'Fartlek + Tiros + Longo', cls:'blue'},
+      {txt:'Dia bônus opcional', cls:'green'}
+    ],
+    stats: [
+      {val:'3x', lbl:'Treinos fixos', sub:'Seg · Qua · Sex'},
+      {val:'+1', lbl:'Dia bônus', sub:'quando possível'},
+      {val:'35–45', lbl:'km/sem', sub:'base → carga alta'}
+    ],
+    resumo: 'Sylvia corre <strong>três vezes por semana</strong> — segunda (fartlek), quarta (tiros) e sexta (longo). Quando a agenda permitir, um <strong>4º dia opcional</strong> de rodagem leve em Z1/Z2 pode ser encaixado em qualquer dia, exceto véspera do longo.<br><br>A progressão parte de <strong>40 km</strong> na semana 1 e chega a <strong>45 km</strong> na semana 3, com semana 4 regenerativa.',
+    progresso: [
+      {lbl:'Volume S1 (base)', val:'~40 km', w:75, cor:'#4caf50'},
+      {lbl:'Volume S2 (moderado)', val:'~43 km', w:82, cor:'#4caf50'},
+      {lbl:'Volume S3 (carga alta)', val:'~45 km', w:90, cor:'#F5C800'},
+      {lbl:'Volume S4 (regenerativa)', val:'~34 km', w:60, cor:'#4fc3f7'}
+    ],
+    infos: [
+      {cls:'highlight', titulo:'↑ Fartlek (SEG)', txt:'Aquecimento Z1 → blocos em Z4/Z3/Z5 → desaquecimento Z1. Intensidade varia a cada semana.'},
+      {cls:'note', titulo:'◎ Tiros (QUA)', txt:'Repetições em Z4 ou Z5 com recuperação ativa em trote leve. Aquecimento + desaquecimento incluídos.'},
+      {cls:'next', titulo:'→ Longo (SEX)', txt:'Base aeróbica em Z2. Nas semanas 2 e 3, opção de terminar os últimos km em Z3 se sentir bem.'},
+      {cls:'highlight', titulo:'★ Dia bônus', txt:'Rodagem leve Z1/Z2. Qualquer dia <strong>exceto véspera do longo</strong>. Se o corpo não estiver bem, <strong>pule sem culpa</strong>.'}
+    ],
+    nota: 'Sylvia, a estrutura foi montada respeitando sua realidade de três dias por semana — sem abrir mão da qualidade. Fartlek, tiros e longo cobrem todas as demandas da corrida.<br><br>O dia bônus está lá quando a vida permitir. <strong>Consistência nos três dias fixos já é o suficiente para evoluir.</strong>',
+    planilha: {
+      zonas: [
+        {zone:'Z1 · Leve', pace:'5:35–5:50 /km', description:'Recuperação e base', color:'#4a90d9'},
+        {zone:'Z2 · Confortável', pace:'5:20–5:35 /km', description:'Resistência aeróbica', color:'#3aaa35'},
+        {zone:'Z3 · Moderado', pace:'5:10–5:20 /km', description:'Resistência específica', color:'#e8c400'},
+        {zone:'Z4 · Firme', pace:'5:03–5:07 /km', description:'Ritmo controlado', color:'#e06020'},
+        {zone:'Z5 · Forte', pace:'4:40–4:50 /km', description:'Uso pontual', color:'#cc2020'}
+      ],
+      bonus_regra: 'Rodagem leve Z1/Z2 — qualquer dia, exceto véspera do longo. Se o corpo não estiver bem, pule sem culpa.',
+      semanas: [
+        {
+          num:'SEMANA 1', tag:'Base', vol_base:'~40 km', vol_bonus:'~48 km',
+          treinos:[
+            {dia:'SEG', tipo:'Fartlek · 10 km', desc:'2 km Z1 aquec. → 6x (2\' Z4 + 2\' Z1) → 2 km Z1 desaq.'},
+            {dia:'QUA', tipo:'Tiros · ~8 km', desc:'5x 1 km Z5 · recupera 2\' trote leve · 1,5 km aquec. + 1,5 km desaq.'},
+            {dia:'SEX', tipo:'Longo', desc:'22 km Z2 · ritmo confortável do início ao fim'}
+          ],
+          bonus:{dia:'+1', tipo:'Rodagem bônus', desc:'8 km Z2 · ter, qua (manhã) ou sáb · evitar véspera do longo'}
+        },
+        {
+          num:'SEMANA 2', tag:'Carga moderada', vol_base:'~43 km', vol_bonus:'~52 km',
+          treinos:[
+            {dia:'SEG', tipo:'Fartlek · 11 km', desc:'2 km Z1 aquec. → 5x (3\' Z4 + 2\' Z1) → 2 km Z1 desaq.'},
+            {dia:'QUA', tipo:'Tiros · ~11 km', desc:'4x 2 km Z4 · recupera 3\' trote leve · 1,5 km aquec. + 1,5 km desaq.'},
+            {dia:'SEX', tipo:'Longo', desc:'24 km Z2 · últimos 3 km em Z3 se sentir bem'}
+          ],
+          bonus:{dia:'+1', tipo:'Rodagem bônus', desc:'9 km Z2 · ter, qua (manhã) ou sáb · evitar véspera do longo'}
+        },
+        {
+          num:'SEMANA 3', tag:'Carga alta', vol_base:'~45 km', vol_bonus:'~55 km',
+          treinos:[
+            {dia:'SEG', tipo:'Fartlek · 12 km', desc:'2 km Z1 aquec. → 3x (5\' Z3 + 2\' Z1) + 3x (1\' Z5 + 2\' Z1) → 2 km Z1 desaq.'},
+            {dia:'QUA', tipo:'Tiros · ~10 km', desc:'6x 1 km Z5 · recupera 2\' trote leve · 1,5 km aquec. + 1,5 km desaq.'},
+            {dia:'SEX', tipo:'Longo', desc:'26 km Z2 progressivo · últimos 5 km em Z3 se sentir bem'}
+          ],
+          bonus:{dia:'+1', tipo:'Rodagem bônus', desc:'10 km Z1/Z2 · semana pesada — priorizar Z1 se vier cansaço acumulado'}
+        },
+        {
+          num:'SEMANA 4', tag:'Regenerativa', vol_base:'~34 km', vol_bonus:'~40 km',
+          treinos:[
+            {dia:'SEG', tipo:'Fartlek leve · 8 km', desc:'2 km Z1 aquec. → 4x (2\' Z3 + 2\' Z1) → 2 km Z1 desaq.'},
+            {dia:'QUA', tipo:'Tiros · ~8 km', desc:'4x 1 km Z4 · recupera 2\' trote leve · intensidade controlada'},
+            {dia:'SEX', tipo:'Longo', desc:'18 km Z2 · ritmo leve do início ao fim, sem progressão'}
+          ],
+          bonus:{dia:'+1', tipo:'Rodagem bônus', desc:'6 km Z1 · só correr se sentir disposição real'}
+        }
+      ]
+    }
+  },
   'a525a749-9853-49d3-bbc9-1baf724b29ed': {
     mes: 'Mês 1', objetivo: 'Retorno à Corrida + Musculação',
     badges: [
@@ -602,6 +677,27 @@ function renderAthHome(){
     '<div class="card">'+st('Objetivo')+'<div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:22px;color:#F5C800;margin-bottom:6px;line-height:1.2">'+a.goal+'</div><div style="font-family:DM Mono,monospace;font-size:9px;color:#555">'+a.pace+' · '+a.vol+'</div></div>';
 }
 function renderAthPlanilha(){
+  var id=currentUser?currentUser.id:'';
+  var rel=RELATORIOS[id];
+  // Sylvia e alunos com planilha customizada
+  if(rel&&rel.planilha){
+    var p=rel.planilha;
+    var zonasHTML='<div style="margin-bottom:20px"><div class="st">Zonas de Ritmo</div>'+p.zonas.map(function(z){return '<div class="zone-row"><div class="zone-dot" style="background:'+z.color+'"></div><span style="font-family:DM Mono,monospace;font-size:9px;color:#888;min-width:110px">'+z.zone+(z.description?' — '+z.description:'')+'</span><span style="font-family:DM Mono,monospace;font-size:10px;color:#ddd">'+z.pace+'</span></div>';}).join('')+'</div>';
+    var bonusRegraHTML='<div style="background:#1a1800;border:1px dashed rgba(245,200,0,0.25);border-radius:8px;padding:12px 14px;margin-bottom:20px"><div style="font-family:DM Mono,monospace;font-size:9px;color:#F5C800;letter-spacing:.1em;margin-bottom:6px;opacity:.8">DIA BÔNUS — OPCIONAL</div><div style="font-size:12px;color:#666;line-height:1.7">'+p.bonus_regra+'</div></div>';
+    var semanasHTML=p.semanas.map(function(s,si){
+      var isRegen=s.tag==='Regenerativa';
+      var tagColor=isRegen?'#4caf50':'#F5C800';
+      var tagBorder=isRegen?'#4caf5055':'#F5C80055';
+      var treinosHTML=s.treinos.map(function(t){
+        return '<div class="day-row" style="margin-bottom:6px"><div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap"><span style="font-family:DM Mono,monospace;font-size:10px;color:#555;min-width:28px">'+t.dia+'</span>'+tag(t.tipo,'#F5C800')+'</div><div style="font-size:12px;color:#ccc;line-height:1.6">'+t.desc+'</div></div>';
+      }).join('');
+      var bonusHTML='<div style="border-top:1px dashed rgba(245,200,0,0.15);margin-top:8px;padding-top:10px;background:rgba(245,200,0,0.03);border-radius:0 0 6px 6px;padding:10px 12px;margin:-4px -4px -4px -4px"><div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap"><span style="font-family:DM Mono,monospace;font-size:10px;color:rgba(245,200,0,0.4);min-width:28px">'+s.bonus.dia+'</span><span style="font-family:DM Mono,monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;border:1px dashed rgba(245,200,0,0.3);padding:2px 6px;border-radius:2px;color:rgba(245,200,0,0.5)">'+s.bonus.tipo+'</span></div><div style="font-size:12px;color:#555;line-height:1.6">'+s.bonus.desc+'</div></div>';
+      return '<div class="week-block" style="margin-bottom:10px"><div class="week-header" onclick="toggleWeek('+si+')"><div><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-style:italic;font-size:16px;color:#fff">'+s.num+'</div><div style="font-family:DM Mono,monospace;font-size:8px;letter-spacing:.1em;margin-top:2px;color:'+tagColor+'">'+s.tag.toUpperCase()+'</div></div><div style="display:flex;gap:8px;align-items:center"><div style="text-align:right"><div style="font-family:DM Mono,monospace;font-size:9px;color:#888">'+s.vol_base+'</div><div style="font-family:DM Mono,monospace;font-size:8px;color:#444">+bônus '+s.vol_bonus+'</div></div><span style="color:#555;font-size:12px" id="arrow-'+si+'">'+(si===openWeekIdx?'▲':'▼')+'</span></div></div><div class="week-body'+(si===openWeekIdx?' open':'')+'" id="week-body-'+si+'"><div style="padding:4px 0">'+treinosHTML+bonusHTML+'</div></div></div>';
+    }).join('');
+    document.getElementById('athlete-content').innerHTML=pt('PLANILHA COMPLETA')+'<div style="font-family:DM Mono,monospace;font-size:9px;color:#555;margin-bottom:16px">'+athleteData.goal+'</div>'+zonasHTML+bonusRegraHTML+'<div class="st">Semanas 1 a 4</div>'+semanasHTML;
+    return;
+  }
+  // Layout padrão (Luiz, Mayra, outros)
   var html=pt('PLANILHA COMPLETA')+'<div style="font-family:DM Mono,monospace;font-size:9px;color:#555;margin-bottom:16px">'+athleteData.goal+'</div>';
   athleteWeeks.forEach(function(week,wi){
     var isCurrent=week.is_current;
