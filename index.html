@@ -637,10 +637,18 @@ async function loadAthlete(){
   athleteWeeks=wRes.data||[];
   var zRes=await sb.from('zones').select('*').eq('athlete_id',currentUser.id).order('sort_order');
   athleteZones=zRes.data||[];
-  var currentWeek=athleteWeeks.find(function(w){return w.is_current;})||athleteWeeks[0];
+  // Busca todos os feedbacks do aluno de uma vez
+  var allWids=athleteWeeks.reduce(function(acc,w){return acc.concat((w.workouts||[]).map(function(x){return x.id;}));}, []);
+  var allFbRes=allWids.length>0?await sb.from('feedbacks').select('workout_id').in('workout_id',allWids):{data:[]};
+  var doneIds=new Set((allFbRes.data||[]).map(function(f){return f.workout_id;}));
+  // Semana atual = primeira semana com pelo menos 1 workout sem feedback
+  var currentWeek=athleteWeeks.find(function(w){
+    var ws=w.workouts||[];
+    return ws.length>0&&ws.some(function(x){return !doneIds.has(x.id);});
+  })||athleteWeeks[athleteWeeks.length-1]||athleteWeeks[0];
   openWeekIdx=athleteWeeks.indexOf(currentWeek);
   if(currentWeek&&currentWeek.workouts){
-    workouts=currentWeek.workouts.sort(function(a,b){return a.sort_order-b.sort_order;}).map(function(w){return Object.assign({},w,{done:false,feedback:null});});
+    workouts=currentWeek.workouts.sort(function(a,b){return a.sort_order-b.sort_order;}).map(function(w){return Object.assign({},w,{done:doneIds.has(w.id),feedback:null});});
     var fbRes=await sb.from('feedbacks').select('*').in('workout_id',workouts.map(function(w){return w.id;}));
     if(fbRes.data){fbRes.data.forEach(function(f){var w=workouts.find(function(x){return x.id===f.workout_id;});if(w){w.done=true;w.feedback=f;}});}
   }
