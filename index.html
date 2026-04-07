@@ -706,7 +706,7 @@ function renderAthPlanilha(){
       var wIdx=workouts.findIndex(function(x){return x.id===d.id;});
       var isDone=wIdx>=0&&workouts[wIdx]&&workouts[wIdx].done;
       var hasFb=wIdx>=0&&workouts[wIdx]&&workouts[wIdx].feedback;
-      var fbBtn=wIdx>=0&&!hasFb?'<button onclick="event.stopPropagation();openModal('+wIdx+')" style="margin-top:10px;background:#F5C800;border:none;border-radius:6px;padding:7px 14px;color:#141414;font-family:DM Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%">'+(isDone?'DAR FEEDBACK':'CONCLUIR + FEEDBACK')+'</button>':'';
+      var fbBtn=wIdx>=0&&!hasFb?'<button onclick="event.stopPropagation();event.preventDefault();openModal('+wIdx+');return false;" style="margin-top:10px;background:#F5C800;border:none;border-radius:6px;padding:7px 14px;color:#141414;font-family:DM Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%">'+(isDone?'DAR FEEDBACK':'CONCLUIR + FEEDBACK')+'</button>':'';
       var doneMark=hasFb?'<span style="font-family:DM Mono,monospace;font-size:8px;color:#4caf50;margin-left:8px">✓ feedback enviado</span>':'';
       return '<div class="day-row"><div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap"><span style="font-family:DM Mono,monospace;font-size:10px;color:#555;min-width:28px">'+d.day_label+'</span>'+tag(d.type,'#F5C800')+doneMark+'</div><div style="font-size:13px;color:#ccc;line-height:1.5">'+d.description+'</div>'+fbBtn+'</div>';
     }).join('');
