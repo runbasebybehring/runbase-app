@@ -628,24 +628,32 @@ function renderCoachCalendar(){
 
 // ── ATHLETE ──
 async function loadAthlete(){
+  show('athlete');
   loading('athlete-content');
-  var aRes=await sb.from('athletes').select('*').eq('id',currentUser.id).single();
-  if(!aRes.data){showToast('Perfil não encontrado',false);return;}
-  athleteData=aRes.data;
-  document.getElementById('ath-avatar').textContent=athleteData.img;
-  var wRes=await sb.from('weeks').select('*,workouts(*)').eq('athlete_id',currentUser.id).order('week_number');
-  athleteWeeks=wRes.data||[];
-  var zRes=await sb.from('zones').select('*').eq('athlete_id',currentUser.id).order('sort_order');
-  athleteZones=zRes.data||[];
-  // Semana atual = is_current, senão última semana
-  var currentWeek=athleteWeeks.find(function(w){return w.is_current;})||athleteWeeks[athleteWeeks.length-1]||athleteWeeks[0];
-  openWeekIdx=athleteWeeks.indexOf(currentWeek);
-  if(currentWeek&&currentWeek.workouts){
-    workouts=currentWeek.workouts.sort(function(a,b){return a.sort_order-b.sort_order;}).map(function(w){return Object.assign({},w,{done:false,feedback:null});});
-    var fbRes=await sb.from('feedbacks').select('*').eq('athlete_id',currentUser.id);
-    if(fbRes.data){fbRes.data.forEach(function(f){var w=workouts.find(function(x){return x.id===f.workout_id;});if(w){w.done=true;w.feedback=f;}});}
+  try{
+    var aRes=await sb.from('athletes').select('*').eq('id',currentUser.id).single();
+    if(!aRes.data){
+      document.getElementById('athlete-content').innerHTML='<div style="text-align:center;padding:60px 20px;color:#555;font-family:DM Mono,monospace;font-size:11px;line-height:2">Perfil não encontrado.<br>Contacte seu coach.</div>';
+      return;
+    }
+    athleteData=aRes.data;
+    document.getElementById('ath-avatar').textContent=athleteData.img;
+    var wRes=await sb.from('weeks').select('*,workouts(*)').eq('athlete_id',currentUser.id).order('week_number');
+    athleteWeeks=wRes.data||[];
+    var zRes=await sb.from('zones').select('*').eq('athlete_id',currentUser.id).order('sort_order');
+    athleteZones=zRes.data||[];
+    var currentWeek=athleteWeeks.find(function(w){return w.is_current;})||athleteWeeks[athleteWeeks.length-1]||athleteWeeks[0];
+    openWeekIdx=athleteWeeks.indexOf(currentWeek);
+    if(currentWeek&&currentWeek.workouts){
+      workouts=currentWeek.workouts.sort(function(a,b){return a.sort_order-b.sort_order;}).map(function(w){return Object.assign({},w,{done:false,feedback:null});});
+      var fbRes=await sb.from('feedbacks').select('*').eq('athlete_id',currentUser.id);
+      if(fbRes.data){fbRes.data.forEach(function(f){var w=workouts.find(function(x){return x.id===f.workout_id;});if(w){w.done=true;w.feedback=f;}});}
+    }
+    athTab('home');
+  }catch(e){
+    console.error('loadAthlete error:',e);
+    document.getElementById('athlete-content').innerHTML='<div style="text-align:center;padding:60px 20px;color:#555;font-family:DM Mono,monospace;font-size:11px;line-height:2">Erro ao carregar perfil.<br>Tente novamente.</div>';
   }
-  show('athlete');athTab('home');
 }
 function athTab(tab){
   athView=tab;
