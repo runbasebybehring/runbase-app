@@ -223,7 +223,7 @@ input[type=email]:focus,input[type=password]:focus{border-color:#F5C800}
 var SUPABASE_URL = 'https://qjoftlswytvdnznbuvbz.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqb2Z0bHN3eXR2ZG56bmJ1dmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NzE1NTYsImV4cCI6MjA5MDI0NzU1Nn0.zk493jyhjFp_WPoEamakCmifUMhItjA_LAb6Bio6PHM';
 var COACH_ID = '0eaff6f3-e538-4b79-8b94-922b57b3bb42';
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var sb = null;
 
 var RC = ['#4caf50','#4caf50','#8bc34a','#cddc39','#ffeb3b','#ffc107','#ff9800','#ff5722','#f44336','#b71c1c'];
 var RPELBL = ['','Muito fácil','Muito fácil','Muito fácil','Moderado','Moderado','Difícil','Difícil','Muito difícil','Muito difícil','Máximo'];
@@ -518,6 +518,7 @@ async function doLogin() {
   if(!email||!password){err.style.display='block';err.textContent='Preencha email e senha';return;}
   btn.textContent='ENTRANDO...'; btn.disabled=true; err.style.display='none';
   try {
+    if(!sb){sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}
     var res = await sb.auth.signInWithPassword({email:email,password:password});
     if(res.error){err.style.display='block';err.textContent='Erro: '+res.error.message;btn.textContent='ENTRAR';btn.disabled=false;return;}
     currentUser = res.data.user;
@@ -538,6 +539,13 @@ async function doLogout() {
   show('login');
 }
 window.addEventListener('DOMContentLoaded', async function(){
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch(e) {
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('login-error').textContent='Erro ao conectar. Verifique sua internet.';
+    return;
+  }
   var sess = await sb.auth.getSession();
   if(sess.data.session){
     currentUser = sess.data.session.user;
