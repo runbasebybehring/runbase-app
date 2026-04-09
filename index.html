@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Run Base by Behring</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;1,700;1,900&family=Barlow:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#141414;color:#fff;font-family:'Barlow',sans-serif;max-width:430px;margin:0 auto;min-height:100vh;overflow-x:hidden}
@@ -517,11 +517,18 @@ async function doLogin() {
   var err = document.getElementById('login-error');
   if(!email||!password){err.style.display='block';err.textContent='Preencha email e senha';return;}
   btn.textContent='ENTRANDO...'; btn.disabled=true; err.style.display='none';
-  var res = await sb.auth.signInWithPassword({email:email,password:password});
-  if(res.error){err.style.display='block';err.textContent='Email ou senha incorretos';btn.textContent='ENTRAR';btn.disabled=false;return;}
-  currentUser = res.data.user;
-  btn.textContent='ENTRAR'; btn.disabled=false;
-  if(currentUser.id===COACH_ID){await loadCoach();}else{await loadAthlete();}
+  try {
+    var res = await sb.auth.signInWithPassword({email:email,password:password});
+    if(res.error){err.style.display='block';err.textContent='Erro: '+res.error.message;btn.textContent='ENTRAR';btn.disabled=false;return;}
+    currentUser = res.data.user;
+    btn.textContent='ENTRAR'; btn.disabled=false;
+    if(currentUser.id===COACH_ID){await loadCoach();}else{await loadAthlete();}
+  } catch(e) {
+    err.style.display='block';
+    err.textContent='Erro inesperado: '+e.message;
+    btn.textContent='ENTRAR';
+    btn.disabled=false;
+  }
 }
 async function doLogout() {
   await sb.auth.signOut();
@@ -855,7 +862,7 @@ function renderSylviaForca(){
     var isDone=!!checked[uid];
     var tagHTML=ex.tag?'<div style="display:inline-block;border:1px solid #F5C800;color:#F5C800;font-size:9px;font-weight:700;letter-spacing:1.5px;padding:2px 7px;border-radius:3px;text-transform:uppercase;margin-bottom:5px;font-family:DM Mono,monospace">'+ex.tag+'</div>':'';
     var noteHTML=ex.nota?'<div style="font-size:12px;color:#555;margin-top:2px;font-style:italic">'+ex.nota+'</div>':'';
-    var checkHTML='<div style="width:22px;height:22px;border-radius:50%;border:1.5px solid '+(isDone?'#F5C800':'#3a3a3a')+';background:'+(isDone?'#F5C800':'transparent')+';flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center">'+(isDone?'<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#141414" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>')+'</div>';
+    var checkHTML='<div style="width:22px;height:22px;border-radius:50%;border:1.5px solid '+(isDone?'#F5C800':'#3a3a3a')+';background:'+(isDone?'#F5C800':'transparent')+';flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center">'+(isDone?'<svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#141414" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</div>';
     return '<div onclick="sylviaToggle(\''+uid+'\',\''+checkKey+'\')" style="padding:12px 16px;border-bottom:1px solid #252525;display:flex;align-items:flex-start;gap:12px;cursor:pointer;'+(isDone?'opacity:.45':'')+'">'
       +'<div style="flex:1">'+tagHTML+'<div style="font-size:15px;color:'+(isDone?'#555':'#e8e8e8')+';font-weight:500;line-height:1.3'+(isDone?';text-decoration:line-through':'')+'">'+ex.nome+'</div>'
       +'<div style="font-size:13px;color:#888;margin-top:2px">'+ex.detalhe+'</div>'+noteHTML+'</div>'
