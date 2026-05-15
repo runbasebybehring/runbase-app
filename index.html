@@ -738,7 +738,8 @@ function athTab(tab){
   renderAthlete();
 }
 function renderAthlete(){
-  var pending=workouts.filter(function(w){return w.done&&!w.feedback;}).length;
+  // ✅ CORREÇÃO 3: badge conta todos os treinos sem feedback (não depende de done)
+  var pending=workouts.filter(function(w){return !w.feedback;}).length;
   var pb=document.getElementById('pendBadge');
   if(pending>0){pb.textContent=pending;pb.style.display='flex';}else{pb.style.display='none';}
   if(athView==='home')renderAthHome();
@@ -750,10 +751,11 @@ function renderAthlete(){
 }
 function renderAthHome(){
   var a=athleteData,week=athleteWeeks.find(function(w){return w.is_current;})||athleteWeeks[0];
-  var fp=workouts.findIndex(function(w){return !w.done;});
+  // ✅ CORREÇÃO 2: próximo treino = primeiro sem feedback (não depende de done)
+  var fp=workouts.findIndex(function(w){return !w.feedback;});
   var today=fp>=0?workouts[fp]:null;
-  var done=workouts.filter(function(w){return w.done;}).length;
-  var fbs=workouts.filter(function(w){return w.feedback;}).length;
+  var done=workouts.filter(function(w){return w.feedback;}).length;
+  var fbs=done;
   var pct=workouts.length>0?Math.round((done/workouts.length)*100):0;
   document.getElementById('athlete-content').innerHTML=
     '<div style="margin-bottom:22px"><div class="greeting-sub">Olá,</div><div class="greeting-name">'+a.name.split(' ')[0]+'.</div></div>'+
@@ -821,7 +823,8 @@ function renderAthForca(){
 function gymSave(el){var storageKey=el.dataset.k;var i=el.dataset.i;var saved={};try{saved=JSON.parse(localStorage.getItem(storageKey)||'{}');}catch(e){}saved[i]=el.value;localStorage.setItem(storageKey,JSON.stringify(saved));}
 
 function renderAthFeedback(){
-  var pend=workouts.filter(function(w){return w.done&&!w.feedback;});
+  // ✅ CORREÇÃO 1: mostrar todos os treinos sem feedback (independente de done)
+  var pend=workouts.filter(function(w){return !w.feedback;});
   var done=workouts.filter(function(w){return w.feedback;});
   var pendHTML='';
   if(pend.length>0){pendHTML=eyebrow('Aguardando feedback')+pend.map(function(w){var idx=workouts.indexOf(w);return '<div style="background:var(--gold-dim2);border:1px solid rgba(200,149,42,0.15);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--text-muted);margin-bottom:4px">'+w.day_label+' — '+w.type+'</div><div style="font-size:13px;color:var(--text-dim);font-weight:300">'+w.description+'</div></div><button onclick="openModal('+idx+')" style="background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:6px;padding:9px 14px;color:var(--black);font-family:DM Mono,monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;flex-shrink:0;margin-left:12px">Dar</button></div>';}).join('');}
