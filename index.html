@@ -100,6 +100,12 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--red)}
 .rcn-s{margin-top:12px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--light)}
 .gi{width:100%;background:var(--cream2);border:1.5px solid var(--border);padding:6px 10px;color:var(--dark);font-family:'Space Mono',monospace;font-size:11px;outline:none;margin-top:6px}
 .gi:focus{border-color:var(--red)}
+.alc{background:var(--white);border:1.5px solid var(--border);border-left:4px solid;padding:12px 14px;margin-bottom:8px}
+.alc.high{border-left-color:var(--red)}.alc.medium{border-left-color:#F9A825}.alc.low{border-left-color:var(--blue)}
+.alh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.alt{font-size:12px;color:var(--dark);line-height:1.5}
+.alr{background:none;border:1px solid var(--border);color:var(--mid);font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:4px 8px;cursor:pointer;flex-shrink:0}
+.alr:active{background:var(--cream2)}
 </style>
 </head>
 <body>
@@ -153,6 +159,7 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--red)}
     <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Hidratação durante o treino</div><div style="display:flex;gap:4px" id="hidra-grid"></div></div>
     <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Usou gel / nutrição?</div><div style="display:flex;gap:4px;flex-wrap:wrap" id="gel-grid"></div></div>
     <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Frequência cardíaca</div><div style="display:flex;gap:4px" id="fc-grid"></div></div>
+    <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Sentiu dor ou desconforto?</div><div style="display:flex;gap:4px" id="dor-grid"></div></div>
     <div style="margin-bottom:20px"><div class="ew mid" style="margin-bottom:8px">Comentário (opcional)</div><textarea id="fb-comment" class="ft" rows="2" placeholder="Dor, dúvida, algo diferente..."></textarea></div>
     <button id="submit-fb" class="sb2" onclick="submitFeedback()">preencha esforço e energia</button>
   </div>
@@ -176,7 +183,7 @@ var REL={
 
 var cu=null,ad=null,aw=[],az=[],wo=[],afs=[],aas=[];
 var cv='dashboard',cda=null,cdt='semana',av2='home',owx=0,fti=null;
-var sr=null,se=null,sf=null,ss=null,sh=null,sg=null,sfc=null;
+var sr=null,se=null,sf=null,ss=null,sh=null,sg=null,sfc=null,sd=null;
 
 function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById('screen-'+id).classList.add('active');}
 function showToast(msg,ok){if(ok===undefined)ok=true;var t=document.getElementById('toast');t.textContent=msg;t.style.background=ok?'var(--dark)':'var(--red)';t.style.display='block';setTimeout(function(){t.style.display='none';},2800);}
@@ -212,8 +219,14 @@ async function rcd(){
   var res=await sb.from('athletes').select('*');aas=res.data||[];
   var fr=await sb.from('feedbacks').select('*,athletes(name,img),workouts(day_label,type,description)').order('created_at',{ascending:false}).limit(20);
   afs=fr.data||[];var fb=document.getElementById('fbBadge');if(afs.length>0){fb.textContent=afs.length;fb.style.display='flex';}
+  var alr=await sb.from('adjustment_alerts').select('*,athletes(name,img)').eq('resolved',false).order('created_at',{ascending:false}).limit(10);
+  var openAlerts=alr.data||[];
+  var alertCard='';
+  if(openAlerts.length>0){
+    alertCard='<div class="card" style="margin-bottom:20px;border-left:4px solid var(--red)">'+ew2('⚠ Alertas Abertos ('+openAlerts.length+')')+openAlerts.slice(0,4).map(function(a){return '<div class="alt" style="margin-bottom:6px"><strong>'+(a.athletes?a.athletes.name:'')+':</strong> '+a.message+'</div>';}).join('')+(openAlerts.length>4?'<div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-top:4px">+ '+(openAlerts.length-4)+' outros — veja no perfil de cada aluno</div>':'')+'</div>';
+  }
   var list=aas.map(function(a){return '<div class="ar" onclick="oad(\''+a.id+'\')">'+av3(a.img,46)+'<div style="flex:1;min-width:0"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:18px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:6px">'+a.race+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tg(a.pace,'m')+' '+tg(a.vol,'m')+'</div></div><div style="color:var(--light);font-size:18px;flex-shrink:0">›</div></div>';}).join('');
-  document.getElementById('coach-content').innerHTML='<div style="margin-bottom:24px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:400;font-style:italic;font-size:14px;color:var(--mid)">Bom dia,</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:42px;color:var(--dark);line-height:1">VIC.</div></div>'+'<div class="card" style="margin-bottom:20px">'+ew2('Visão Geral')+sg2([{v:aas.length,l:'Alunos',a:true},{v:afs.length,l:'Feedbacks'},{v:'Jul 26',l:'Mês'}])+'</div>'+'<div>'+ew2('Alunos')+list+'</div>';
+  document.getElementById('coach-content').innerHTML='<div style="margin-bottom:24px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:400;font-style:italic;font-size:14px;color:var(--mid)">Bom dia,</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:42px;color:var(--dark);line-height:1">VIC.</div></div>'+alertCard+'<div class="card" style="margin-bottom:20px">'+ew2('Visão Geral')+sg2([{v:aas.length,l:'Alunos',a:true},{v:afs.length,l:'Feedbacks'},{v:'Jul 26',l:'Mês'}])+'</div>'+'<div>'+ew2('Alunos')+list+'</div>';
 }
 
 async function ral(){
@@ -224,25 +237,88 @@ async function ral(){
 
 async function oad(id){cda=aas.find(function(a){return a.id===id;});cdt='semana';cv='athletes';document.querySelectorAll('.nav-btn[id^="cnav"]').forEach(function(b){b.classList.remove('active');});document.getElementById('cnav-athletes').classList.add('active');await rcdl();}
 
+/**
+ * Motor de Ajuste Semanal (regras, não altera o plano sozinho — só sinaliza).
+ * Calcula, por semana: aderência, RPE médio e sinal de dor, usando os
+ * dados que o app já coleta (workouts concluídos + feedbacks).
+ */
+function computeAthleteAlerts(weeksData,feedbacksAll){
+  var byWorkout={};
+  (feedbacksAll||[]).forEach(function(f){byWorkout[f.workout_id]=f;});
+  var stats=(weeksData||[]).map(function(wk){
+    var ws=wk.workouts||[];
+    var total=ws.length;
+    var done=ws.filter(function(w){return byWorkout[w.id];}).length;
+    var rpes=ws.map(function(w){return byWorkout[w.id]?byWorkout[w.id].rpe:null;}).filter(function(v){return v!==null&&v!==undefined;});
+    var rpeAvg=rpes.length?(rpes.reduce(function(a,b){return a+b;},0)/rpes.length):null;
+    var dor=ws.some(function(w){return byWorkout[w.id]&&byWorkout[w.id].dor;});
+    var adherence=total>0?Math.round((done/total)*100):null;
+    return {week:wk,total:total,done:done,adherence:adherence,rpeAvg:rpeAvg,dor:dor};
+  });
+  var alerts=[];
+  var cwIdx=stats.findIndex(function(s){return s.week.is_current;});
+  if(cwIdx===-1)cwIdx=stats.length-1;
+  var cw=stats[cwIdx];
+  if(!cw)return alerts;
+  if(cw.adherence!==null&&cw.total>0&&cw.adherence<70){
+    alerts.push({type:'low_adherence',severity:cw.adherence<50?'high':'medium',message:'Aderência de '+cw.adherence+'% em '+cw.week.label+' ('+cw.done+'/'+cw.total+' treinos). Considere manter ou reduzir volume na próxima semana.'});
+  }
+  var prev=stats[cwIdx-1];
+  if(cw.rpeAvg!==null&&prev&&prev.rpeAvg!==null&&cw.rpeAvg>=8&&prev.rpeAvg>=8){
+    alerts.push({type:'high_rpe_streak',severity:'high',message:'RPE médio ≥8 em '+prev.week.label+' e '+cw.week.label+' seguidas. Sugestão: inserir semana de recuperação antes de progredir volume.'});
+  }
+  if(cw.dor){
+    alerts.push({type:'pain_flag',severity:'high',message:'Aluno reportou dor/desconforto em algum treino de '+cw.week.label+'. Revisar antes de liberar o próximo bloco.'});
+  }
+  return alerts;
+}
+
+async function syncAlerts(athleteId,alerts){
+  var ex=await sb.from('adjustment_alerts').select('*').eq('athlete_id',athleteId).eq('resolved',false);
+  var existing=ex.data||[];
+  var currentTypes=alerts.map(function(a){return a.type;});
+  var existingTypes=existing.map(function(e){return e.alert_type;});
+  var toResolve=existing.filter(function(e){return currentTypes.indexOf(e.alert_type)===-1;});
+  for(var i=0;i<toResolve.length;i++){
+    await sb.from('adjustment_alerts').update({resolved:true,resolved_at:new Date().toISOString(),resolved_by:'sistema'}).eq('id',toResolve[i].id);
+  }
+  var toInsert=alerts.filter(function(a){return existingTypes.indexOf(a.type)===-1;}).map(function(a){return {athlete_id:athleteId,week_start:new Date().toISOString().slice(0,10),alert_type:a.type,severity:a.severity,message:a.message};});
+  if(toInsert.length>0){await sb.from('adjustment_alerts').insert(toInsert);}
+  var fin=await sb.from('adjustment_alerts').select('*').eq('athlete_id',athleteId).eq('resolved',false).order('created_at',{ascending:false});
+  return fin.data||[];
+}
+
+async function resolveAlert(id){
+  await sb.from('adjustment_alerts').update({resolved:true,resolved_at:new Date().toISOString(),resolved_by:'coach'}).eq('id',id);
+  showToast('Alerta resolvido');
+  await rcdl();
+}
+
 async function rcdl(){
   var a=cda;
   var zr=await sb.from('zones').select('*').eq('athlete_id',a.id).order('sort_order');
   var wr=await sb.from('weeks').select('*,workouts(*)').eq('athlete_id',a.id).order('week_number');
   var zones=zr.data||[];var weeks=wr.data||[];
   var cw=weeks.find(function(w){return w.is_current;})||weeks[0];
-  var tb2=function(id,lbl){return '<button class="tb'+(cdt===id?' active':'')+'" onclick="cdts(\''+id+'\')">'+lbl+'</button>';};
+  var tb2=function(id,lbl,count){return '<button class="tb'+(cdt===id?' active':'')+'" onclick="cdts(\''+id+'\')">'+lbl+(count?' ('+count+')':'')+'</button>';};
   var dh='';if(cw&&cw.workouts){dh=cw.workouts.sort(function(x,y){return x.sort_order-y.sort_order;}).map(function(d){return '<div class="dr"><div style="display:flex;gap:8px;align-items:center;margin-bottom:5px;flex-wrap:wrap"><span style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);min-width:28px">'+d.day_label+'</span>'+tg(d.type,'r')+'</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+d.description+'</div></div>';}).join('');}
-  var fr=await sb.from('feedbacks').select('*,workouts(day_label,type,description)').eq('athlete_id',a.id).order('created_at',{ascending:false}).limit(10);
-  var fbs=fr.data||[];
-  var fh=fbs.length>0?fbs.map(function(f){return '<div class="fc" style="border-left-color:'+RC[f.rpe-1]+'"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+(f.workouts?f.workouts.day_label+' — '+f.workouts.type:'')+'</div></div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'<span style="font-size:10px;color:var(--light)">/10</span></div></div>'+tg('energia '+f.energia,'g')+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:8px">"'+f.comment+'"</div>':'')+'</div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:20px 0">Nenhum feedback ainda</div>';
-  document.getElementById('coach-content').innerHTML='<button class="bb" onclick="cda=null;renderCoach()">← Alunos</button>'+'<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">'+av3(a.img,60)+'<div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:24px;color:var(--dark);margin-bottom:4px">'+a.name+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:8px">'+a.goal+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tg(a.pace,'r')+' '+tg(a.vol,'m')+'</div></div></div>'+(a.obs?'<div class="card rl" style="margin-bottom:14px"><div class="ew" style="margin-bottom:6px">Observações</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+a.obs+'</div></div>':'')+'<div class="tr">'+tb2('semana','Semana')+tb2('feedbacks','Feedbacks')+tb2('zonas','Zonas')+'</div>'+(cdt==='semana'&&cw?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-style:italic;font-size:18px;color:var(--dark)">'+cw.label+'</div>'+tg(cw.volume,'b')+'</div><div style="display:flex;flex-direction:column;gap:8px">'+dh+'</div>':'')+(cdt==='feedbacks'?'<div>'+ew2('Feedbacks recentes')+fh+'</div>':'')+(cdt==='zonas'?'<div class="card">'+ew2('Zonas de Ritmo')+zp(zones)+'</div>':'');
+  var fr=await sb.from('feedbacks').select('*,workouts(day_label,type,description)').eq('athlete_id',a.id).order('created_at',{ascending:false});
+  var fbsAll=fr.data||[];
+  var fbs=fbsAll.slice(0,10);
+  var fh=fbs.length>0?fbs.map(function(f){return '<div class="fc" style="border-left-color:'+RC[f.rpe-1]+'"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+(f.workouts?f.workouts.day_label+' — '+f.workouts.type:'')+'</div></div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'<span style="font-size:10px;color:var(--light)">/10</span></div></div>'+tg('energia '+f.energia,'g')+(f.dor?' '+tg('dor/desconforto','r'):'')+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:8px">"'+f.comment+'"</div>':'')+'</div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:20px 0">Nenhum feedback ainda</div>';
+
+  var computedAlerts=computeAthleteAlerts(weeks,fbsAll);
+  var openAlerts=await syncAlerts(a.id,computedAlerts);
+  var ah=openAlerts.length>0?openAlerts.map(function(al){return '<div class="alc '+al.severity+'"><div class="alh"><div class="alt">'+al.message+'</div><button class="alr" onclick="resolveAlert(\''+al.id+'\')">Resolver</button></div></div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:20px 0">Nenhum alerta aberto</div>';
+
+  document.getElementById('coach-content').innerHTML='<button class="bb" onclick="cda=null;renderCoach()">← Alunos</button>'+'<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">'+av3(a.img,60)+'<div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:24px;color:var(--dark);margin-bottom:4px">'+a.name+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:8px">'+a.goal+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tg(a.pace,'r')+' '+tg(a.vol,'m')+'</div></div></div>'+(a.obs?'<div class="card rl" style="margin-bottom:14px"><div class="ew" style="margin-bottom:6px">Observações</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+a.obs+'</div></div>':'')+'<div class="tr">'+tb2('semana','Semana')+tb2('feedbacks','Feedbacks')+tb2('zonas','Zonas')+tb2('alertas','Alertas',openAlerts.length||null)+'</div>'+(cdt==='semana'&&cw?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-style:italic;font-size:18px;color:var(--dark)">'+cw.label+'</div>'+tg(cw.volume,'b')+'</div><div style="display:flex;flex-direction:column;gap:8px">'+dh+'</div>':'')+(cdt==='feedbacks'?'<div>'+ew2('Feedbacks recentes')+fh+'</div>':'')+(cdt==='zonas'?'<div class="card">'+ew2('Zonas de Ritmo')+zp(zones)+'</div>':'')+(cdt==='alertas'?'<div>'+ew2('Alertas de ajuste')+ah+'</div>':'');
 }
 function cdts(t){cdt=t;rcdl();}
 
 async function rcf(){
   var res=await sb.from('feedbacks').select('*,athletes(name,img),workouts(day_label,type,description)').order('created_at',{ascending:false}).limit(50);
   var fbs=res.data||[];var fb=document.getElementById('fbBadge');if(fbs.length>0){fb.textContent=fbs.length;fb.style.display='flex';}
-  var cards=fbs.map(function(f){var ex=[];if(f.fadiga)ex.push('pernas '+f.fadiga);if(f.sono)ex.push('sono '+f.sono);if(f.hidratacao)ex.push('hidra '+f.hidratacao);if(f.gel&&f.gel!=='não usei')ex.push(f.gel);if(f.frequencia_cardiaca&&f.frequencia_cardiaca!=='normal')ex.push('fc '+f.frequencia_cardiaca);return '<div class="cfc" style="border-left-color:'+RC[f.rpe-1]+'">'+'<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'+av3(f.athletes?f.athletes.img:'??',34)+'<div style="flex:1"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:16px">'+(f.athletes?f.athletes.name:'')+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-top:2px">'+(f.workouts?f.workouts.day_label+' — '+f.workouts.type:'')+'</div></div><div style="text-align:right"><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:30px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'</div><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--light)">RPE</div></div></div>'+(f.workouts?'<div style="font-size:12px;color:var(--light);margin-bottom:8px">'+f.workouts.description+'</div>':'')+'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:'+(f.comment?'8px':'0')+'">'+tg('energia '+(f.energia||''),'g')+' '+ex.map(function(e){return tg(e,'m');}).join('')+'</div>'+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+f.comment+'"</div>':'')+'</div>';}).join('');
+  var cards=fbs.map(function(f){var ex=[];if(f.fadiga)ex.push('pernas '+f.fadiga);if(f.sono)ex.push('sono '+f.sono);if(f.hidratacao)ex.push('hidra '+f.hidratacao);if(f.gel&&f.gel!=='não usei')ex.push(f.gel);if(f.frequencia_cardiaca&&f.frequencia_cardiaca!=='normal')ex.push('fc '+f.frequencia_cardiaca);if(f.dor)ex.push('dor');return '<div class="cfc" style="border-left-color:'+RC[f.rpe-1]+'">'+'<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">'+av3(f.athletes?f.athletes.img:'??',34)+'<div style="flex:1"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:16px">'+(f.athletes?f.athletes.name:'')+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-top:2px">'+(f.workouts?f.workouts.day_label+' — '+f.workouts.type:'')+'</div></div><div style="text-align:right"><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:30px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'</div><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--light)">RPE</div></div></div>'+(f.workouts?'<div style="font-size:12px;color:var(--light);margin-bottom:8px">'+f.workouts.description+'</div>':'')+'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:'+(f.comment?'8px':'0')+'">'+tg('energia '+(f.energia||''),'g')+' '+ex.map(function(e){return tg(e,e==='dor'?'r':'m');}).join('')+'</div>'+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+f.comment+'"</div>':'')+'</div>';}).join('');
   document.getElementById('coach-content').innerHTML=tt('FEEDBACKS')+'<div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-bottom:16px;letter-spacing:.1em;text-transform:uppercase">Todos os alunos</div>'+(cards||'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:40px 0;text-align:center">Nenhum feedback ainda</div>');
 }
 
@@ -318,7 +394,7 @@ function gymSave(el){var sk=el.dataset.k;var i=el.dataset.i;var sv={};try{sv=JSO
 function rafb(){
   var pend=wo.filter(function(w){return w.done&&!w.feedback;});var done=wo.filter(function(w){return w.feedback;});
   var ph='';if(pend.length>0){ph=ew2('Aguardando feedback')+pend.map(function(w){var idx=wo.indexOf(w);return '<div style="background:var(--red-bg);border:1.5px solid var(--red);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:4px">'+w.day_label+' — '+w.type+'</div><div style="font-size:13px;color:var(--dark)">'+w.description+'</div></div><button onclick="openModal('+idx+')" style="background:var(--red);border:none;padding:8px 14px;color:#fff;font-family:Space Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;flex-shrink:0;margin-left:12px">DAR</button></div>';}).join('');}
-  var dh='';if(done.length>0){dh=ew2('Enviados')+done.map(function(w){var f=w.feedback;var ex=[];if(f.fadiga)ex.push('pernas '+f.fadiga);if(f.sono)ex.push('sono '+f.sono);if(f.hidratacao)ex.push('hidra '+f.hidratacao);if(f.gel&&f.gel!=='não usei')ex.push(f.gel);if(f.frequencia_cardiaca&&f.frequencia_cardiaca!=='normal')ex.push('fc '+f.frequencia_cardiaca);return '<div class="fc"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+w.day_label+' — '+w.type+'</div><div style="font-size:12px;color:var(--mid);margin-top:2px">'+w.description+'</div></div><div style="text-align:right"><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'</div><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--light)">RPE</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+(ex.length||f.comment?'8px':'0')+'">'+tg('energia '+(f.energia||''),'g')+' '+ex.map(function(e){return tg(e,'m');}).join('')+'</div>'+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+f.comment+'"</div>':'')+'</div>';}).join('');}
+  var dh='';if(done.length>0){dh=ew2('Enviados')+done.map(function(w){var f=w.feedback;var ex=[];if(f.fadiga)ex.push('pernas '+f.fadiga);if(f.sono)ex.push('sono '+f.sono);if(f.hidratacao)ex.push('hidra '+f.hidratacao);if(f.gel&&f.gel!=='não usei')ex.push(f.gel);if(f.frequencia_cardiaca&&f.frequencia_cardiaca!=='normal')ex.push('fc '+f.frequencia_cardiaca);return '<div class="fc"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+w.day_label+' — '+w.type+'</div><div style="font-size:12px;color:var(--mid);margin-top:2px">'+w.description+'</div></div><div style="text-align:right"><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'</div><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--light)">RPE</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+(ex.length||f.comment?'8px':'0')+'">'+tg('energia '+(f.energia||''),'g')+' '+ex.map(function(e){return tg(e,'m');}).join('')+(f.dor?' '+tg('dor/desconforto','r'):'')+'</div>'+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+f.comment+'"</div>':'')+'</div>';}).join('');}
   var empty=pend.length===0&&done.length===0?'<div style="text-align:center;padding:40px;color:var(--light);font-family:Space Mono,monospace;font-size:11px">Nenhum treino concluído ainda</div>':'';
   document.getElementById('athlete-content').innerHTML=tt('FEEDBACK')+ph+dh+empty;
 }
@@ -338,7 +414,7 @@ function openModal(idx){
   fti=idx;var w=wo[idx];
   document.getElementById('fb-title').textContent=w.day_label+' — '+w.type;
   document.getElementById('fb-desc').textContent=w.description;
-  sr=null;se=null;sf=null;ss=null;sh=null;sg=null;sfc=null;
+  sr=null;se=null;sf=null;ss=null;sh=null;sg=null;sfc=null;sd=null;
   document.getElementById('fb-comment').value='';
   var rg=document.getElementById('rpe-grid');rg.innerHTML='';
   for(var n=1;n<=10;n++){(function(n){var b=document.createElement('button');b.className='rb';b.textContent=n;b.onclick=function(){sr=n;urpe();};rg.appendChild(b);})(n);}
@@ -349,6 +425,7 @@ function openModal(idx){
   mpg('hidra-grid',['pouca','suficiente','bastante'],['#E65100','#2E7D32','#1565C0'],function(v){sh=v;});
   mpg('gel-grid',['não usei','1 gel','2 géis','3+ géis'],'#C41731',function(v){sg=v;});
   mpg('fc-grid',['normal','elevada','muito alta'],['#2E7D32','#E65100','#B71C1C'],function(v){sfc=v;});
+  mpg('dor-grid',['não','sim'],['#2E7D32','#C41731'],function(v){sd=(v==='sim');});
   upd();document.getElementById('fb-modal').classList.add('open');
 }
 function urpe(){document.querySelectorAll('.rb').forEach(function(b,i){var n=i+1;if(n===sr){b.style.background=RC[n-1]+'22';b.style.borderColor=RC[n-1];b.style.color=RC[n-1];}else{b.style.background='var(--white)';b.style.borderColor='var(--border)';b.style.color='var(--mid)';}});document.getElementById('rpe-label').textContent=RL[sr]||'';upd();}
@@ -358,7 +435,7 @@ async function submitFeedback(){
   if(!sr||!se)return;
   var w=wo[fti];var btn=document.getElementById('submit-fb');
   btn.textContent='SALVANDO...';btn.disabled=true;
-  var res=await sb.from('feedbacks').insert({workout_id:w.id,athlete_id:cu.id,rpe:sr,energia:se,fadiga:sf,sono:ss,hidratacao:sh,gel:sg,frequencia_cardiaca:sfc,comment:document.getElementById('fb-comment').value}).select().single();
+  var res=await sb.from('feedbacks').insert({workout_id:w.id,athlete_id:cu.id,rpe:sr,energia:se,fadiga:sf,sono:ss,hidratacao:sh,gel:sg,frequencia_cardiaca:sfc,dor:!!sd,comment:document.getElementById('fb-comment').value}).select().single();
   btn.textContent='ENVIAR FEEDBACK';btn.disabled=false;
   if(res.error){showToast('Erro ao salvar',false);return;}
   wo[fti].done=true;wo[fti].feedback=res.data;
