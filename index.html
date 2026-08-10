@@ -145,8 +145,7 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--red)}
     <button class="nav-btn" id="anav-relatorio" onclick="athTab('relatorio')"><span class="icon">◑</span><span class="lbl">Relatório</span></button>
   </nav>
 </div>
-<div id="fb-modal" class="mo">
-  <div class="mb">
+<div id="fb-modal" class="mo">  <div class="mb">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div><div class="ew">Feedback do treino</div><div id="fb-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:20px;color:var(--dark)"></div><div id="fb-desc" style="font-size:12px;color:var(--mid);margin-top:2px;line-height:1.4"></div></div>
       <button onclick="closeModal()" style="background:none;border:none;color:var(--mid);cursor:pointer;font-size:22px;padding:0;margin-left:12px">✕</button>
@@ -162,6 +161,19 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--red)}
     <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Sentiu dor ou desconforto?</div><div style="display:flex;gap:4px" id="dor-grid"></div></div>
     <div style="margin-bottom:20px"><div class="ew mid" style="margin-bottom:8px">Comentário (opcional)</div><textarea id="fb-comment" class="ft" rows="2" placeholder="Dor, dúvida, algo diferente..."></textarea></div>
     <button id="submit-fb" class="sb2" onclick="submitFeedback()">preencha esforço e energia</button>
+  </div>
+</div>
+<div id="checkin-modal" class="mo">
+  <div class="mb">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div><div class="ew">Check-in semanal</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:20px;color:var(--dark)">Como foi sua semana?</div></div>
+      <button onclick="closeCheckinModal()" style="background:none;border:none;color:var(--mid);cursor:pointer;font-size:22px;padding:0;margin-left:12px">✕</button>
+    </div>
+    <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">Conseguiu fazer todos os treinos?</div><div style="display:flex;gap:4px" id="ck-adesao-grid"></div></div>
+    <div style="margin-bottom:18px"><div class="ew mid" style="margin-bottom:10px">No geral, como foi a semana?</div><div style="display:flex;gap:4px" id="ck-sensacao-grid"></div></div>
+    <div style="margin-bottom:20px"><div class="ew mid" style="margin-bottom:8px">Quer contar mais alguma coisa? (opcional)</div><textarea id="ck-comment" class="ft" rows="2" placeholder="Algo que quer que eu saiba..."></textarea></div>
+    <button id="submit-ck" class="sb2" onclick="submitCheckin()">preencha as opções acima</button>
+    <button onclick="closeCheckinModal()" style="background:none;border:none;color:var(--mid);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-top:12px;width:100%;padding:8px;cursor:pointer">responder depois</button>
   </div>
 </div>
 <script>
@@ -184,6 +196,8 @@ var REL={
 var cu=null,ad=null,aw=[],az=[],wo=[],afs=[],aas=[];
 var cv='dashboard',cda=null,cdt='semana',av2='home',owx=0,fti=null;
 var sr=null,se=null,sf=null,ss=null,sh=null,sg=null,sfc=null,sd=null;
+var ckAdesao=null,ckSensacao=null,currentWeekStartGlobal=null,checkinDoneThisWeek=false,ckPromptedThisSession=false;
+function getWeekStart(d){var dt=new Date(d);var day=dt.getDay();var diff=(day===0?-6:1-day);var monday=new Date(dt);monday.setDate(dt.getDate()+diff);return monday.toISOString().slice(0,10);}
 
 function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById('screen-'+id).classList.add('active');}
 function showToast(msg,ok){if(ok===undefined)ok=true;var t=document.getElementById('toast');t.textContent=msg;t.style.background=ok?'var(--dark)':'var(--red)';t.style.display='block';setTimeout(function(){t.style.display='none';},2800);}
@@ -304,6 +318,10 @@ async function rcdl(){
   var tb2=function(id,lbl,count){return '<button class="tb'+(cdt===id?' active':'')+'" onclick="cdts(\''+id+'\')">'+lbl+(count?' ('+count+')':'')+'</button>';};
   var dh='';if(cw&&cw.workouts){dh=cw.workouts.sort(function(x,y){return x.sort_order-y.sort_order;}).map(function(d){return '<div class="dr"><div style="display:flex;gap:8px;align-items:center;margin-bottom:5px;flex-wrap:wrap"><span style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);min-width:28px">'+d.day_label+'</span>'+tg(d.type,'r')+'</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+d.description+'</div></div>';}).join('');}
   var fr=await sb.from('feedbacks').select('*,workouts(day_label,type,description)').eq('athlete_id',a.id).order('created_at',{ascending:false});
+  var ckr2=await sb.from('weekly_checkins').select('*').eq('athlete_id',a.id).order('week_start',{ascending:false}).limit(8);
+  var ckins=ckr2.data||[];
+  var ckAcolor={'sim':'g','parcial':'m','não':'r'};
+  var ckh=ckins.length>0?ckins.map(function(c){return '<div class="fc" style="border-left-color:'+(c.adesao==='sim'?'#2E7D32':c.adesao==='parcial'?'#F9A825':'#C41731')+'"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">semana de '+fmtDate(c.week_start)+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+(c.comment?'8px':'0')+'">'+tg('treinos: '+c.adesao,ckAcolor[c.adesao]||'m')+' '+tg(c.sensacao,'m')+'</div>'+(c.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+c.comment+'"</div>':'')+'</div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:10px 0">Nenhum check-in ainda</div>';
   var fbsAll=fr.data||[];
   var fbs=fbsAll.slice(0,10);
   var fh=fbs.length>0?fbs.map(function(f){return '<div class="fc" style="border-left-color:'+RC[f.rpe-1]+'"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+(f.workouts?f.workouts.day_label+' — '+f.workouts.type:'')+'</div>'+(f.performed_at?'<div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-top:2px">realizado em '+fmtDate(f.performed_at)+'</div>':'')+'</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'<span style="font-size:10px;color:var(--light)">/10</span></div></div>'+tg('energia '+f.energia,'g')+(f.dor?' '+tg('dor/desconforto','r'):'')+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:8px">"'+f.comment+'"</div>':'')+'</div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:20px 0">Nenhum feedback ainda</div>';
@@ -312,7 +330,7 @@ async function rcdl(){
   var openAlerts=await syncAlerts(a.id,computedAlerts);
   var ah=openAlerts.length>0?openAlerts.map(function(al){return '<div class="alc '+al.severity+'"><div class="alh"><div class="alt">'+al.message+'</div><button class="alr" onclick="resolveAlert(\''+al.id+'\')">Resolver</button></div></div>';}).join(''):'<div style="color:var(--light);font-family:Space Mono,monospace;font-size:11px;padding:20px 0">Nenhum alerta aberto</div>';
 
-  document.getElementById('coach-content').innerHTML='<button class="bb" onclick="cda=null;renderCoach()">← Alunos</button>'+'<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">'+av3(a.img,60)+'<div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:24px;color:var(--dark);margin-bottom:4px">'+a.name+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:8px">'+a.goal+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tg(a.pace,'r')+' '+tg(a.vol,'m')+'</div></div></div>'+(a.obs?'<div class="card rl" style="margin-bottom:14px"><div class="ew" style="margin-bottom:6px">Observações</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+a.obs+'</div></div>':'')+'<div class="tr">'+tb2('semana','Semana')+tb2('feedbacks','Feedbacks')+tb2('zonas','Zonas')+tb2('alertas','Alertas',openAlerts.length||null)+'</div>'+(cdt==='semana'&&cw?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-style:italic;font-size:18px;color:var(--dark)">'+cw.label+'</div>'+tg(cw.volume,'b')+'</div><div style="display:flex;flex-direction:column;gap:8px">'+dh+'</div>':'')+(cdt==='feedbacks'?'<div>'+ew2('Feedbacks recentes')+fh+'</div>':'')+(cdt==='zonas'?'<div class="card">'+ew2('Zonas de Ritmo')+zp(zones)+'</div>':'')+(cdt==='alertas'?'<div>'+ew2('Alertas de ajuste')+ah+'</div>':'');
+  document.getElementById('coach-content').innerHTML='<button class="bb" onclick="cda=null;renderCoach()">← Alunos</button>'+'<div style="display:flex;gap:14px;align-items:center;margin-bottom:16px">'+av3(a.img,60)+'<div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:24px;color:var(--dark);margin-bottom:4px">'+a.name+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:8px">'+a.goal+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+tg(a.pace,'r')+' '+tg(a.vol,'m')+'</div></div></div>'+(a.obs?'<div class="card rl" style="margin-bottom:14px"><div class="ew" style="margin-bottom:6px">Observações</div><div style="font-size:13px;color:var(--mid);line-height:1.5">'+a.obs+'</div></div>':'')+'<div class="tr">'+tb2('semana','Semana')+tb2('feedbacks','Feedbacks')+tb2('zonas','Zonas')+tb2('alertas','Alertas',openAlerts.length||null)+'</div>'+(cdt==='semana'&&cw?'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-style:italic;font-size:18px;color:var(--dark)">'+cw.label+'</div>'+tg(cw.volume,'b')+'</div><div style="display:flex;flex-direction:column;gap:8px">'+dh+'</div>':'')+(cdt==='feedbacks'?'<div>'+ew2('Check-ins semanais')+ckh+'</div><div style="margin-top:16px">'+ew2('Feedbacks recentes')+fh+'</div>':'')+(cdt==='zonas'?'<div class="card">'+ew2('Zonas de Ritmo')+zp(zones)+'</div>':'')+(cdt==='alertas'?'<div>'+ew2('Alertas de ajuste')+ah+'</div>':'');
 }
 function cdts(t){cdt=t;rcdl();}
 
@@ -341,12 +359,16 @@ async function loadAthlete(){
   az=zr.data||[];
   var cw=aw.find(function(w){return w.is_current;})||aw[0];
   owx=aw.indexOf(cw);
+  currentWeekStartGlobal=getWeekStart(new Date());
+  var ckr=await sb.from('weekly_checkins').select('*').eq('athlete_id',cu.id).eq('week_start',currentWeekStartGlobal).maybeSingle();
+  checkinDoneThisWeek=!!(ckr&&ckr.data);
   if(cw&&cw.workouts){
     wo=cw.workouts.sort(function(a,b){return a.sort_order-b.sort_order;}).map(function(w){return Object.assign({},w,{done:false,feedback:null});});
     var allw=[];aw.forEach(function(wk){(wk.workouts||[]).forEach(function(w){allw.push(w.id);});});
     if(allw.length>0){var fr=await sb.from('feedbacks').select('*').in('workout_id',allw);if(fr.data){fr.data.forEach(function(f){var w=wo.find(function(x){return x.id===f.workout_id;});if(w){w.done=true;w.feedback=f;}});}}
   }
   show('athlete');athTab('home');
+  if(!checkinDoneThisWeek&&!ckPromptedThisSession){ckPromptedThisSession=true;setTimeout(openCheckinModal,700);}
 }
 
 function athTab(tab){av2=tab;document.querySelectorAll('.nav-btn[id^="anav"]').forEach(function(b){b.classList.remove('active');});document.getElementById('anav-'+tab).classList.add('active');renderAthlete();}
@@ -364,7 +386,7 @@ function rah(){
   var fp=wo.findIndex(function(w){return !w.done;});var today=fp>=0?wo[fp]:null;
   var done=wo.filter(function(w){return w.done;}).length;var fbs=wo.filter(function(w){return w.feedback;}).length;
   var pct=wo.length>0?Math.round((done/wo.length)*100):0;
-  document.getElementById('athlete-content').innerHTML='<div style="margin-bottom:24px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:400;font-style:italic;font-size:14px;color:var(--mid)">Olá,</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:40px;color:var(--dark);line-height:1">'+a.name.split(' ')[0].toUpperCase()+'.</div></div>'+(today?'<div class="card rl" style="margin-bottom:16px">'+ew2('Próximo Treino')+'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+tg(today.day_label,'m')+' '+tg(today.type,'r')+'</div><div style="font-size:14px;margin-bottom:16px;line-height:1.5;color:var(--dark)">'+today.description+'</div><button class="btn btn-r" onclick="openModal('+fp+')">CONCLUIR + FEEDBACK</button></div>':'<div class="card gl" style="margin-bottom:16px"><div class="ew" style="color:var(--green);margin-bottom:6px">Semana concluída</div><div style="font-size:14px;color:var(--mid)">Todos os treinos desta semana foram realizados!</div></div>')+'<div class="card" style="margin-bottom:16px">'+ew2(wk?wk.label:'Semana atual','blue')+sg2([{v:done+'/'+(wk&&wk.workouts?wk.workouts.length:0),l:'Treinos',a:true},{v:fbs,l:'Feedbacks'},{v:wk?wk.volume:'—',l:'Volume'}])+'<div class="pb"><div class="pf" style="width:'+pct+'%"></div></div></div>'+'<div class="card">'+ew2('Objetivo')+'<div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:22px;color:var(--red);margin-bottom:6px;line-height:1.2">'+a.goal+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+a.pace+' · '+a.vol+'</div></div>';
+  document.getElementById('athlete-content').innerHTML='<div style="margin-bottom:24px"><div style="font-family:Barlow Condensed,sans-serif;font-weight:400;font-style:italic;font-size:14px;color:var(--mid)">Olá,</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:40px;color:var(--dark);line-height:1">'+a.name.split(' ')[0].toUpperCase()+'.</div></div>'+(!checkinDoneThisWeek?'<div class="card bl" style="margin-bottom:16px;cursor:pointer" onclick="openCheckinModal()">'+ew2('Check-in da semana','blue')+'<div style="font-size:13px;color:var(--mid)">Leva 10 segundos — toque aqui pra responder.</div></div>':'')+(today?'<div class="card rl" style="margin-bottom:16px">'+ew2('Próximo Treino')+'<div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">'+tg(today.day_label,'m')+' '+tg(today.type,'r')+'</div><div style="font-size:14px;margin-bottom:16px;line-height:1.5;color:var(--dark)">'+today.description+'</div><button class="btn btn-r" onclick="openModal('+fp+')">CONCLUIR + FEEDBACK</button></div>':'<div class="card gl" style="margin-bottom:16px"><div class="ew" style="color:var(--green);margin-bottom:6px">Semana concluída</div><div style="font-size:14px;color:var(--mid)">Todos os treinos desta semana foram realizados!</div></div>')+'<div class="card" style="margin-bottom:16px">'+ew2(wk?wk.label:'Semana atual','blue')+sg2([{v:done+'/'+(wk&&wk.workouts?wk.workouts.length:0),l:'Treinos',a:true},{v:fbs,l:'Feedbacks'},{v:wk?wk.volume:'—',l:'Volume'}])+'<div class="pb"><div class="pf" style="width:'+pct+'%"></div></div></div>'+'<div class="card">'+ew2('Objetivo')+'<div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:22px;color:var(--red);margin-bottom:6px;line-height:1.2">'+a.goal+'</div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+a.pace+' · '+a.vol+'</div></div>';
 }
 
 function rap(){
@@ -443,6 +465,27 @@ async function submitFeedback(){
   if(res.error){showToast('Erro ao salvar',false);return;}
   wo[fti].done=true;wo[fti].feedback=res.data;
   closeModal();showToast('Feedback enviado ✓');renderAthlete();
+}
+
+function openCheckinModal(){
+  ckAdesao=null;ckSensacao=null;
+  document.getElementById('ck-comment').value='';
+  mpg('ck-adesao-grid',['sim','parcial','não'],['#2E7D32','#F9A825','#C41731'],function(v){ckAdesao=v;updCk();});
+  mpg('ck-sensacao-grid',['ótima','boa','difícil'],['#2E7D32','#558B2F','#C41731'],function(v){ckSensacao=v;updCk();});
+  updCk();
+  document.getElementById('checkin-modal').classList.add('open');
+}
+function closeCheckinModal(){document.getElementById('checkin-modal').classList.remove('open');}
+function updCk(){var ok=ckAdesao!==null&&ckSensacao!==null;var btn=document.getElementById('submit-ck');btn.classList.toggle('ready',ok);btn.textContent=ok?'ENVIAR CHECK-IN':'preencha as opções acima';}
+async function submitCheckin(){
+  if(!ckAdesao||!ckSensacao)return;
+  var btn=document.getElementById('submit-ck');
+  btn.textContent='SALVANDO...';btn.disabled=true;
+  var res=await sb.from('weekly_checkins').upsert({athlete_id:cu.id,week_start:currentWeekStartGlobal,adesao:ckAdesao,sensacao:ckSensacao,comment:document.getElementById('ck-comment').value},{onConflict:'athlete_id,week_start'}).select().single();
+  btn.disabled=false;
+  if(res.error){btn.textContent='ENVIAR CHECK-IN';showToast('Erro ao salvar',false);return;}
+  checkinDoneThisWeek=true;
+  closeCheckinModal();showToast('Check-in enviado ✓');renderAthlete();
 }
 </script>
 </body>
