@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Run Base by Behring</title>
+<title>Run Base</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,700;1,900&family=Barlow:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -114,7 +114,6 @@ input[type=email]:focus,input[type=password]:focus{border-color:var(--red)}
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px">
     <div style="margin-bottom:48px;text-align:center">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:72px;line-height:.85;color:var(--red);letter-spacing:-.03em">RUN<br><span style="color:var(--blue)">BASE</span></div>
-      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--mid);letter-spacing:.3em;margin-top:16px;text-transform:uppercase">by behring</div>
     </div>
     <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px">
       <input type="email" id="login-email" placeholder="Email" autocomplete="email">
@@ -406,7 +405,7 @@ function rar(){
   var sth='<div class="rsg">'+rel.stats.map(function(s){return '<div class="rst"><div class="rsv">'+s.v+'</div><div class="rsl">'+s.l+'</div><div class="rss">'+s.s+'</div></div>';}).join('')+'</div>';
   var prh=rel.prog.map(function(p){return '<div class="rpi"><div class="rph"><span class="rpl">'+p.l+'</span><span class="rpv">'+p.v+'</span></div><div class="rpb"><div class="rpf" style="width:0%;background:'+p.c+'" data-w="'+p.w+'"></div></div></div>';}).join('');
   var ih='<div class="rig">'+rel.infos.map(function(i){return '<div class="ri '+i.cls+'"><div class="ri-t">'+i.t+'</div><p>'+i.x+'</p></div>';}).join('')+'</div>';
-  document.getElementById('athlete-content').innerHTML='<div style="margin-bottom:16px"><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px">'+rel.mes+' · '+rel.obj+'</div>'+tt('RELATÓRIO MENSAL')+'<div style="margin-bottom:4px">'+bh+'</div></div>'+sth+ew2('Resumo do Mês')+'<div class="rs">'+rel.resumo+'</div>'+ew2('Análise')+'<div style="margin-bottom:16px">'+prh+'</div>'+ew2('Destaques')+ih+ew2('Nota do Coach')+'<div class="rcn"><p>'+rel.nota+'</p><div class="rcn-s">— Run Base by Behring · Jul 2026</div></div>';
+  document.getElementById('athlete-content').innerHTML='<div style="margin-bottom:16px"><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px">'+rel.mes+' · '+rel.obj+'</div>'+tt('RELATÓRIO MENSAL')+'<div style="margin-bottom:4px">'+bh+'</div></div>'+sth+ew2('Resumo do Mês')+'<div class="rs">'+rel.resumo+'</div>'+ew2('Análise')+'<div style="margin-bottom:16px">'+prh+'</div>'+ew2('Destaques')+ih+ew2('Nota do Coach')+'<div class="rcn"><p>'+rel.nota+'</p><div class="rcn-s">— Run Base · Jul 2026</div></div>';
   setTimeout(function(){document.querySelectorAll('.rpf').forEach(function(b){b.style.width=b.dataset.w+'%';});},100);
 }
 
