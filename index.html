@@ -348,19 +348,86 @@ function rap(){
 }
 function tw(wi){var body=document.getElementById('week-body-'+wi);var arrow=document.getElementById('arrow-'+wi);var io=body.classList.contains('open');body.classList.toggle('open',!io);arrow.textContent=io?'▼':'▲';owx=io?-1:wi;}
 
-function raf(){
+var gymLogsCache={};
+async function raf(){
   var id=cu?cu.id:'';var rel=REL[id]||BRIEFING[id];var hg=rel&&rel.gym&&rel.gym.length>0;
   if(!hg){document.getElementById('athlete-content').innerHTML=tt('FORÇA')+'<div style="text-align:center;padding:40px;color:var(--light);font-family:Space Mono,monospace;font-size:11px;line-height:1.8">Treino de força ainda<br>não disponível.</div>';return;}
-  var sk='gym_'+id;var sv={};try{sv=JSON.parse(localStorage.getItem(sk)||'{}');}catch(e){}
-  var html=tt('FORÇA')+'<div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-bottom:16px">Anote suas cargas. Ficam salvas automaticamente.</div>';
-  rel.gym.forEach(function(d){
-    html+='<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:2px">'+d.dia+'</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:16px;color:var(--dark)">'+d.tipo+'</div></div>'+tg(d.tempo,'m')+'</div>'+(d.intro?'<div style="font-size:12px;color:var(--mid);line-height:1.7;padding:10px 12px;background:var(--cream2);border-left:3px solid var(--red);margin-bottom:14px">'+d.intro+'</div>':'');
-    d.blocos.forEach(function(bl,bi){var k=d.dia+'_'+bi;var v=sv[k]||'';html+='<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--red);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">'+bl.b+'</div><div style="font-size:12px;color:var(--mid);line-height:1.6">'+bl.e+'</div>'+(bl.c?'<input class="gi" type="text" placeholder="Carga / observação..." value="'+v+'" data-k="'+sk+'" data-i="'+k+'" oninput="gymSave(this)">':'')+'</div>';});
-    html+='</div>';
+  // Load latest logs from Supabase
+  var logsRes=await sb.from('gym_logs').select('*').eq('athlete_id',id).order('created_at',{ascending:false}).limit(200);
+  var logs=logsRes.data||[];
+  // Build map: exercise_key -> latest carga
+  var latestMap={};var historyMap={};
+  logs.forEach(function(l){
+    if(!latestMap[l.exercise_key]){latestMap[l.exercise_key]=l.carga;}
+    if(!historyMap[l.exercise_key])historyMap[l.exercise_key]=[];
+    if(historyMap[l.exercise_key].length<5)historyMap[l.exercise_key].push({carga:l.carga,date:l.created_at});
   });
+  gymLogsCache={id:id,latestMap:latestMap,historyMap:historyMap,gym:rel.gym};
+  renderGym();
+}
+function renderGym(){
+  var id=cu?cu.id:'';var rel=REL[id]||BRIEFING[id];
+  var c=gymLogsCache;
+  var html=tt('FORÇA')+'<div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid);margin-bottom:8px">Registre suas cargas a cada treino.</div>';
+  rel.gym.forEach(function(d,di){
+    html+='<div class="card" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:2px">'+d.dia+'</div><div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:16px;color:var(--dark)">'+d.tipo+'</div></div>'+tg(d.tempo,'m')+'</div>'+(d.intro?'<div style="font-size:12px;color:var(--mid);line-height:1.7;padding:10px 12px;background:var(--cream2);border-left:3px solid var(--red);margin-bottom:14px">'+d.intro+'</div>':'');
+    d.blocos.forEach(function(bl,bi){
+      var k=di+'_'+bi;
+      var latest=c.latestMap?c.latestMap[k]:'';
+      var hist=c.historyMap?c.historyMap[k]:[];
+      var histHTML='';
+      if(hist&&hist.length>1){
+        histHTML='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">'+hist.slice(1).map(function(h){
+          var d2=new Date(h.date);var label=(d2.getDate())+'/'+(d2.getMonth()+1);
+          return '<span style="font-family:Space Mono,monospace;font-size:8px;color:var(--light);background:var(--cream2);padding:2px 6px;border-radius:2px">'+label+': '+h.carga+'</span>';
+        }).join('')+'</div>';
+      }
+      html+='<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--red);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">'+bl.b+'</div><div style="font-size:12px;color:var(--mid);line-height:1.6;margin-bottom:4px">'+bl.e+'</div>'+(bl.c?'<input class="gi" type="text" placeholder="Carga de hoje..." value="'+(latest||'')+'" data-di="'+di+'" data-bi="'+bi+'" data-name="'+bl.b+'" id="ginput_'+di+'_'+bi+'">'+(histHTML):'')+'</div>';
+    });
+    html+='<button onclick="gymSaveDay('+di+')" style="width:100%;margin-top:12px;padding:10px;border:none;background:var(--red);color:#fff;font-family:Barlow Condensed,sans-serif;font-weight:900;font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">SALVAR TREINO DE HOJE</button></div>';
+  });
+  // Add evolution section
+  html+='<div class="card" style="margin-top:8px"><div style="margin-bottom:12px">'+ew2('Evolução de Cargas','blue')+'</div>';
+  if(c.historyMap&&Object.keys(c.historyMap).length>0){
+    var rel2=REL[id]||BRIEFING[id];
+    rel2.gym.forEach(function(d,di){
+      var hasData=false;
+      d.blocos.forEach(function(bl,bi){var k=di+'_'+bi;if(c.historyMap[k]&&c.historyMap[k].length>0)hasData=true;});
+      if(!hasData)return;
+      html+='<div style="font-family:Space Mono,monospace;font-size:8px;color:var(--mid);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;margin-top:12px">'+d.dia+' — '+d.tipo+'</div>';
+      d.blocos.forEach(function(bl,bi){
+        var k=di+'_'+bi;var hist=c.historyMap[k];
+        if(!hist||hist.length===0)return;
+        html+='<div style="margin-bottom:8px"><div style="font-size:11px;color:var(--dark);font-weight:600;margin-bottom:4px">'+bl.b+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+hist.map(function(h,i){
+          var d2=new Date(h.date);var label=(d2.getDate())+'/'+(d2.getMonth()+1);
+          var isLatest=i===0;
+          return '<span style="font-family:Space Mono,monospace;font-size:8px;color:'+(isLatest?'var(--red)':'var(--mid)')+';background:'+(isLatest?'var(--red-bg)':'var(--cream2)')+';padding:3px 8px;border-radius:2px;border:'+(isLatest?'1px solid var(--red)':'1px solid var(--border)')+'">'+label+': '+h.carga+'</span>';
+        }).join('')+'</div></div>';
+      });
+    });
+  } else {
+    html+='<div style="font-size:12px;color:var(--light);text-align:center;padding:16px 0;font-family:Space Mono,monospace">Ainda sem registros. Salve seu primeiro treino!</div>';
+  }
+  html+='</div>';
   document.getElementById('athlete-content').innerHTML=html;
 }
-function gymSave(el){var sk=el.dataset.k;var i=el.dataset.i;var sv={};try{sv=JSON.parse(localStorage.getItem(sk)||'{}');}catch(e){}sv[i]=el.value;localStorage.setItem(sk,JSON.stringify(sv));}
+async function gymSaveDay(di){
+  var id=cu?cu.id:'';var rel=REL[id]||BRIEFING[id];var d=rel.gym[di];
+  var inserts=[];
+  d.blocos.forEach(function(bl,bi){
+    if(!bl.c)return;
+    var inp=document.getElementById('ginput_'+di+'_'+bi);
+    if(!inp||!inp.value.trim())return;
+    inserts.push({athlete_id:id,exercise_key:di+'_'+bi,exercise_name:bl.b,carga:inp.value.trim()});
+  });
+  if(inserts.length===0){showToast('Preencha pelo menos uma carga',false);return;}
+  var btn=event.target;btn.textContent='SALVANDO...';btn.disabled=true;
+  var res=await sb.from('gym_logs').insert(inserts);
+  btn.textContent='SALVAR TREINO DE HOJE';btn.disabled=false;
+  if(res.error){showToast('Erro ao salvar',false);return;}
+  showToast('Treino salvo! ✓');
+  await raf();
+}
 
 function rafb(){
   var pend=wo.filter(function(w){return w.done&&!w.feedback;});var done=wo.filter(function(w){return w.feedback;});
