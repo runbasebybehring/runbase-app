@@ -320,7 +320,7 @@ async function loadAthlete(){
 function athTab(tab){av2=tab;document.querySelectorAll('.nav-btn[id^="anav"]').forEach(function(b){b.classList.remove('active');});document.getElementById('anav-'+tab).classList.add('active');renderAthlete();}
 
 function renderAthlete(){
-  var pend=wo.filter(function(w){return w.done&&!w.feedback;}).length;
+  var pend=wo.filter(function(w){return !w.done;}).length;
   var pb=document.getElementById('pendBadge');
   if(pend>0){pb.textContent=pend;pb.style.display='flex';}else{pb.style.display='none';}
   if(av2==='home')rah();else if(av2==='planilha')rap();else if(av2==='forca')raf();else if(av2==='zonas')raz();else if(av2==='feedback')rafb();else if(av2==='relatorio')rar();
@@ -444,7 +444,7 @@ function raz(){
   document.getElementById('athlete-content').innerHTML=html;
 }
 function rafb(){
-  var pend=wo.filter(function(w){return w.done&&!w.feedback;});var done=wo.filter(function(w){return w.feedback;});
+  var pend=wo.filter(function(w){return !w.done;});var done=wo.filter(function(w){return w.feedback;});
   var ph='';if(pend.length>0){ph=ew2('Aguardando feedback')+pend.map(function(w){var idx=wo.indexOf(w);return '<div style="background:var(--red-bg);border:1.5px solid var(--red);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--red);margin-bottom:4px">'+w.day_label+' — '+w.type+'</div><div style="font-size:13px;color:var(--dark)">'+w.description+'</div></div><button onclick="openModal('+idx+')" style="background:var(--red);border:none;padding:8px 14px;color:#fff;font-family:Space Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;flex-shrink:0;margin-left:12px">DAR</button></div>';}).join('');}
   var dh='';if(done.length>0){dh=ew2('Enviados')+done.map(function(w){var f=w.feedback;var ex=[];if(f.fadiga)ex.push('pernas '+f.fadiga);if(f.sono)ex.push('sono '+f.sono);if(f.hidratacao)ex.push('hidra '+f.hidratacao);if(f.gel&&f.gel!=='não usei')ex.push(f.gel);if(f.frequencia_cardiaca&&f.frequencia_cardiaca!=='normal')ex.push('fc '+f.frequencia_cardiaca);return '<div class="fc"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><div><div style="font-family:Space Mono,monospace;font-size:9px;color:var(--mid)">'+w.day_label+' — '+w.type+'</div><div style="font-size:12px;color:var(--mid);margin-top:2px">'+w.description+'</div></div><div style="text-align:right"><div style="font-family:Barlow Condensed,sans-serif;font-weight:900;font-style:italic;font-size:28px;color:'+RC[f.rpe-1]+';line-height:1">'+f.rpe+'</div><div style="font-family:Space Mono,monospace;font-size:8px;color:var(--light)">RPE</div></div></div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+(ex.length||f.comment?'8px':'0')+'">'+tg('energia '+(f.energia||''),'g')+' '+ex.map(function(e){return tg(e,'m');}).join('')+'</div>'+(f.comment?'<div style="font-size:12px;color:var(--mid);font-style:italic;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">"'+f.comment+'"</div>':'')+'</div>';}).join('');}
   var empty=pend.length===0&&done.length===0?'<div style="text-align:center;padding:40px;color:var(--light);font-family:Space Mono,monospace;font-size:11px">Nenhum treino concluído ainda</div>':'';
