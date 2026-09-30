@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const [ath, plan, fbs, gym, prev] = await Promise.all([
       db.from("athletes").select("name,goal,race,pace,vol,obs").eq("id", athlete_id).single(),
       db.from("athlete_plans").select("block").eq("athlete_id", athlete_id).maybeSingle(),
-      db.from("feedbacks").select("rpe,energia,fadiga,sono,hidratacao,gel,frequencia_cardiaca,dor,comment,performed_at,workouts(day_label,type,description)")
+      db.from("feedbacks").select("kind,strength_day,completion,load_trend,pain_exercises,rpe,energia,fadiga,sono,hidratacao,gel,frequencia_cardiaca,dor,comment,performed_at,workouts(day_label,type,description)")
         .eq("athlete_id", athlete_id).gte("performed_at", period).lt("performed_at", endStr).order("performed_at"),
       db.from("gym_logs").select("exercise_name,carga,created_at").eq("athlete_id", athlete_id).gte("created_at", period).lt("created_at", endStr).order("created_at"),
       db.from("reports").select("title,summary,coach_note").eq("athlete_id", athlete_id).eq("status", "published").lt("period", period).order("period", { ascending: false }).limit(1),
@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const system = `Você é o Vic Behring, head coach da Run Base (corrida + força, São Paulo). Escreve o relatório mensal de um aluno.
 Tom: direto, humano, específico, sem frases genéricas de motivação, sem exageros. Português do Brasil. Frases curtas.
 Use só o que está nos dados. Se houver pouca informação, diga isso com naturalidade e foque no próximo passo. Nunca invente paces, distâncias ou resultados.
-Dor relatada deve aparecer como ponto de atenção, sem diagnóstico.
+Dor relatada deve aparecer como ponto de atenção, sem diagnóstico. Feedbacks com kind "strength" são treinos de força (completion = se completou, load_trend = carga, pain_exercises = exercícios com desconforto); comente corrida e força.
 Use **negrito** em no máximo 2 trechos por texto.`;
     const user = `Mês do relatório: ${mes}.
 Dados (JSON):

@@ -85,3 +85,11 @@ revoke insert, update, delete, truncate, references, trigger on public.coach_fee
 revoke execute on function public.advance_week_if_complete() from anon, authenticated, public;
 
 -- 7) Dados que estavam fixos no index.html (REL/BRIEFING) foram copiados para athlete_plans e reports.
+
+-- 8) Feedback de treino de força
+alter table public.feedbacks
+  add column kind text not null default 'run' check (kind in ('run','strength')),
+  add column strength_day text,
+  add column completion text check (completion in ('sim','parcial','não')),
+  add column load_trend text check (load_trend in ('subiu','manteve','baixou')),
+  add column pain_exercises jsonb not null default '[]';

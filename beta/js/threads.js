@@ -24,13 +24,19 @@
   RB.fbCard = function (f, o) {
     o = o || {};
     var w = f.workouts || {};
+    var st = f.kind === 'strength';
+    var wlabel = st ? (f.strength_day || (w.day_label ? w.day_label + ' — ' + w.type : 'Treino de força')) : (w.day_label ? w.day_label + ' — ' + w.type : '');
     var reps = o.replies || [];
     var unread = T.unread(reps);
     var head = o.athlete
-      ? '<div class="fbc-h">' + RB.av(o.athlete.img, 34) + '<div class="fbc-who"><div class="fbc-n">' + RB.esc(o.athlete.name) + '</div><div class="fbc-m">' + RB.esc((w.day_label ? w.day_label + ' — ' + w.type : '')) + ' · ' + RB.fmtDate(f.created_at, true) + '</div></div>'
-      : '<div class="fbc-h"><div class="fbc-who"><div class="fbc-m">' + RB.esc((w.day_label ? w.day_label + ' — ' + w.type : 'Treino')) + ' · ' + RB.fmtDate(f.performed_at || f.created_at) + '</div></div>';
+      ? '<div class="fbc-h">' + RB.av(o.athlete.img, 34) + '<div class="fbc-who"><div class="fbc-n">' + RB.esc(o.athlete.name) + '</div><div class="fbc-m">' + (st ? '<span class="kind-f">FORÇA</span> ' : '') + RB.esc(wlabel) + ' · ' + RB.fmtDate(f.created_at, true) + '</div></div>'
+      : '<div class="fbc-h"><div class="fbc-who"><div class="fbc-m">' + (st ? '<span class="kind-f">FORÇA</span> ' : '') + RB.esc(wlabel || 'Treino') + ' · ' + RB.fmtDate(f.performed_at || f.created_at) + '</div></div>';
     head += '<div class="fbc-rpe" style="color:' + RB.rpeColor(f.rpe) + '">' + (f.rpe || '–') + '<span>RPE</span></div></div>';
-    var tags = '<div class="fbc-tags">' + (f.energia ? RB.tag('energia ' + f.energia, 'g') : '') + (f.dor ? RB.tag('dor', 'r') : '') +
+    var tags = st
+      ? '<div class="fbc-tags">' + (f.completion ? RB.tag(f.completion === 'sim' ? 'completou' : f.completion === 'parcial' ? 'completou parcial' : 'não completou', f.completion === 'sim' ? 'g' : f.completion === 'parcial' ? 'm' : 'r') : '') +
+        (f.load_trend ? RB.tag('carga ' + f.load_trend, f.load_trend === 'subiu' ? 'b' : 'm') : '') + (f.energia ? RB.tag('energia ' + f.energia, 'm') : '') +
+        (f.dor ? ((f.pain_exercises || []).length ? f.pain_exercises.map(function (e) { return RB.tag('dor: ' + e, 'r'); }).join('') : RB.tag('dor', 'r')) : '') + '</div>'
+      : '<div class="fbc-tags">' + (f.energia ? RB.tag('energia ' + f.energia, 'g') : '') + (f.dor ? RB.tag('dor', 'r') : '') +
       RB.fbExtras(f).map(function (e) { return RB.tag(e, 'm'); }).join('') + '</div>';
     var desc = o.showDesc && w.description ? '<div class="fbc-d">' + RB.esc(w.description) + '</div>' : '';
     var com = f.comment ? '<div class="fbc-c">“' + RB.esc(f.comment) + '”</div>' : '';

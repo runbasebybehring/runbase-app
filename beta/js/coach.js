@@ -66,7 +66,7 @@
       '<div class="card">' + RB.ew('Visão geral') + RB.statGrid([{ v: String(C.athletes.length), l: 'Alunos', a: true }, { v: String(wk.length), l: 'Feedbacks 7d' }, { v: String(wait.length), l: 'Sem resposta' }]) + '</div>';
     if (pain.length) {
       html += '<div class="card rl">' + RB.ew('⚠ Dor relatada nos últimos 7 dias') + pain.map(function (f) {
-        return '<div class="alert-row" onclick="RB.threads.open(' + f.id + ')">' + RB.av(f.athletes && f.athletes.img, 28) + '<div style="flex:1"><b>' + RB.esc(f.athletes ? f.athletes.name : '') + '</b> · ' + RB.esc(f.workouts ? f.workouts.type : '') + (f.comment ? '<div class="muted-s">“' + RB.esc(f.comment) + '”</div>' : '') + '</div><span class="chev">›</span></div>';
+        return '<div class="alert-row" onclick="RB.threads.open(' + f.id + ')">' + RB.av(f.athletes && f.athletes.img, 28) + '<div style="flex:1"><b>' + RB.esc(f.athletes ? f.athletes.name : '') + '</b> · ' + RB.esc(f.kind === 'strength' ? 'Força' + ((f.pain_exercises || []).length ? ': ' + f.pain_exercises.join(', ') : '') : (f.workouts ? f.workouts.type : '')) + (f.comment ? '<div class="muted-s">“' + RB.esc(f.comment) + '”</div>' : '') + '</div><span class="chev">›</span></div>';
       }).join('') + '</div>';
     }
     if (wait.length) {
@@ -116,7 +116,7 @@
       var fbs = fr2.data || [];
       var reps = await RB.threads.load(fbs.map(function (f) { return f.id; }));
       var rp = fbs.filter(function (f) { return f.rpe; }).slice(0, 20).reverse();
-      body.innerHTML = (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.workouts ? f.workouts.type : '', color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
+      body.innerHTML = (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
         (fbs.length ? fbs.map(function (f) { return RB.fbCard(f, { athlete: a, replies: reps[f.id] }); }).join('') : RB.empty('Nenhum feedback ainda'));
     } else if (C.dtab === 'relatorios') {
       await RB.reports.list(a, body);

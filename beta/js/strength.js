@@ -50,6 +50,9 @@
       var open = !!G.open[di];
       html += '<div class="card gday' + (open ? ' open' : '') + '"><div class="gday-h" onclick="RB.strength.toggle(' + di + ')"><div><div class="gday-d">' + RB.esc(d.dia) + '</div><div class="gday-t">' + RB.esc(d.tipo) + '</div></div>' +
         '<div class="gday-r">' + (d.tempo ? RB.tag(d.tempo, 'm') : '') + '<span class="arrow">' + (open ? '▲' : '▼') + '</span></div></div>';
+      var last = G.lastDone(d);
+      html += '<div class="gday-f">' + (last ? '<span class="gday-ok">✓ Feito em ' + RB.fmtDate(last.performed_at + 'T12:00:00') + ' · RPE ' + last.rpe + '</span>' : '<span class="gday-no">Ainda sem registro</span>') +
+        '<button class="mini" onclick="RB.athlete.strengthForm({day:' + di + '})">Concluir treino</button></div>';
       if (open) {
         html += '<div class="gday-b">' + (d.intro ? '<div class="intro">' + RB.md(d.intro) + '</div>' : '');
         if (d.grupos) {
@@ -81,6 +84,14 @@
     c.el.innerHTML = html;
   }
 
+  G.dayLabel = function (d) { return d.dia + ' — ' + d.tipo; };
+  G.lastDone = function (d) {
+    var lbl = G.dayLabel(d);
+    return (RB.athlete.feedbacks || []).find(function (f) { return f.kind === 'strength' && f.strength_day === lbl; }) || null;
+  };
+  G.flat = flat;
+  G.days = function () { return c.gym || (RB.athlete.plan && RB.athlete.plan.strength) || []; };
+  G.redraw = function () { if (c.el && document.body.contains(c.el) && RB.athlete.tab === 'forca') draw(); };
   G.toggle = function (di) { G.open[di] = !G.open[di]; draw(); };
   G.tech = function (di, bi) {
     var bl = flat(c.gym[di])[bi];

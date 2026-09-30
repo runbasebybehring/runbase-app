@@ -187,7 +187,7 @@
     var dor = last.filter(function (f) { return f.dor; }).length;
     return RB.statGrid([{ v: String(A.feedbacks.length), l: 'Feedbacks', a: true }, { v: avg ? avg.toFixed(1).replace('.', ',') : '—', l: 'RPE médio' }, { v: String(dor), l: 'Com dor' }]) +
       '<div class="card">' + RB.ew('RPE dos últimos ' + last.length + ' treinos', 'mid') +
-      RB.lineChart(rpes.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.workouts ? f.workouts.type : '', color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) +
+      RB.lineChart(rpes.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) +
       '<div class="ch-note">Toque num ponto para ver o treino. Faixa clara = RPE 3–6.</div></div>' +
       '<div class="rig2"><div class="card">' + RB.ew('Sono', 'mid') + RB.barList(cnt('sono', ['ruim', 'ok', 'bom', 'ótimo'], ['#B71C1C', '#F9A825', '#2E7D32', '#1565C0'])) + '</div>' +
       '<div class="card">' + RB.ew('Energia', 'mid') + RB.barList(cnt('energia', ['péssima', 'ruim', 'ok', 'boa', 'ótima'], ['#B71C1C', '#E65100', '#F9A825', '#558B2F', '#2E7D32'])) + '</div></div>' +
@@ -206,19 +206,60 @@
     frequencia_cardiaca: [['normal', 'elevada', 'muito alta'], ['#2E7D32', '#E65100', '#B71C1C']]
   };
   var LABELS = { energia: 'Energia antes do treino', fadiga: 'Fadiga muscular', sono: 'Sono na noite anterior', dor: 'Sentiu alguma dor?', hidratacao: 'Hidratação durante o treino', gel: 'Usou gel / nutrição?', frequencia_cardiaca: 'Frequência cardíaca' };
+  var SOPTS = {
+    completion: [['sim', 'parcial', 'não'], ['#2E7D32', '#F9A825', '#B71C1C']],
+    load_trend: [['subiu', 'manteve', 'baixou'], ['#2E7D32', '#2B4EAA', '#E65100']],
+    energia: [['péssima', 'ruim', 'ok', 'boa', 'ótima'], ['#B71C1C', '#E65100', '#F9A825', '#558B2F', '#2E7D32']],
+    dor: [['não', 'sim'], ['#2E7D32', '#B71C1C']]
+  };
+  var SLABELS = { completion: 'Completou o treino?', load_trend: 'Carga em relação à última vez', energia: 'Energia antes do treino', dor: 'Sentiu dor ou desconforto?' };
+  A.isStrengthWorkout = function (w) { return /FOR[ÇC]A|MUSCULA|FORTALEC|ACADEMIA|GYM/i.test((w.type || '') + ' ' + (w.day_label || '')); };
+
+  function rpeBlock() {
+    return '<div class="fq">' + RB.ew('Percepção de esforço (1–10)', 'mid') + '<div class="rg">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return '<button class="rb" data-k="rpe" data-v="' + n + '" onclick="RB.athlete.pick(this)">' + n + '</button>'; }).join('') + '</div><div id="rpe-label" class="rpe-l"></div></div>';
+  }
+  function optBlock(k, opts, label) {
+    return '<div class="fq">' + RB.ew(label, 'mid') + '<div class="opts">' + opts[0].map(function (v, i) { return '<button class="eb" data-k="' + k + '" data-v="' + v + '" data-c="' + opts[1][i] + '" onclick="RB.athlete.pick(this)">' + v + '</button>'; }).join('') + '</div></div>';
+  }
+  function tail() {
+    return '<div class="fq">' + RB.ew('Comentário (opcional)', 'mid') + '<textarea id="fb-comment" class="ft" rows="2" placeholder="' + (F.kind === 'strength' ? 'Carga, técnica, algo diferente...' : 'Dor, dúvida, algo diferente...') + '"></textarea></div>' +
+      '<div class="fq">' + RB.ew('Data do treino', 'mid') + '<input type="date" class="fi" id="fb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
+      '<button id="submit-fb" class="sb2" onclick="RB.athlete.submit()">' + needText() + '</button>';
+  }
+  function needText() { return F.kind === 'strength' ? 'preencha esforço e se completou' : 'preencha esforço e energia'; }
+  function ready() { return F.kind === 'strength' ? !!(F.rpe && F.completion) : !!(F.rpe && F.energia); }
+
   A.feedbackForm = function (workoutId) {
     var w; A.weeks.forEach(function (wk) { wk.workouts.forEach(function (x) { if (x.id === workoutId) w = x; }); });
     if (!w) return;
-    F = { w: w };
+    if (A.isStrengthWorkout(w)) return A.strengthForm({ workout: w });
+    F = { w: w, kind: 'run' };
     var html = '<div class="sh-top"><div>' + RB.ew('Feedback do treino') + '<div class="sh-t">' + RB.esc(w.day_label + ' — ' + w.type) + '</div><div class="sh-s">' + RB.esc(w.description) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
-      '<div class="fq">' + RB.ew('Percepção de esforço (1–10)', 'mid') + '<div class="rg">' + [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return '<button class="rb" data-k="rpe" data-v="' + n + '" onclick="RB.athlete.pick(this)">' + n + '</button>'; }).join('') + '</div><div id="rpe-label" class="rpe-l"></div></div>' +
-      Object.keys(OPTS).map(function (k) {
-        return '<div class="fq">' + RB.ew(LABELS[k], 'mid') + '<div class="opts">' + OPTS[k][0].map(function (v, i) { return '<button class="eb" data-k="' + k + '" data-v="' + v + '" data-c="' + OPTS[k][1][i] + '" onclick="RB.athlete.pick(this)">' + v + '</button>'; }).join('') + '</div></div>';
-      }).join('') +
-      '<div class="fq">' + RB.ew('Comentário (opcional)', 'mid') + '<textarea id="fb-comment" class="ft" rows="2" placeholder="Dor, dúvida, algo diferente..."></textarea></div>' +
-      '<div class="fq">' + RB.ew('Data do treino', 'mid') + '<input type="date" class="fi" id="fb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
-      '<button id="submit-fb" class="sb2" onclick="RB.athlete.submit()">preencha esforço e energia</button>';
+      rpeBlock() + Object.keys(OPTS).map(function (k) { return optBlock(k, OPTS[k], LABELS[k]); }).join('') + tail();
     RB.openSheet(html);
+  };
+
+  // feedback de força: o = {day: índice do programa} ou {workout: treino da planilha}
+  A.strengthForm = function (o) {
+    var days = RB.strength.days();
+    var d = o.day != null ? days[o.day] : null;
+    if (!d && o.workout && days.length === 1) d = days[0];
+    F = { kind: 'strength', w: o.workout || null, day: d, pain: [] };
+    var title = d ? RB.strength.dayLabel(d) : (o.workout.day_label + ' — ' + o.workout.type);
+    F.label = title;
+    var exs = d ? RB.strength.flat(d).filter(function (e) { return e.c !== false || e.tec; }) : [];
+    var html = '<div class="sh-top"><div>' + RB.ew('Feedback do treino de força') + '<div class="sh-t">' + RB.esc(title) + '</div>' + (o.workout ? '<div class="sh-s">' + RB.esc(o.workout.description) + '</div>' : '') + '</div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      rpeBlock() + ['completion', 'load_trend', 'energia', 'dor'].map(function (k) { return optBlock(k, SOPTS[k], SLABELS[k]); }).join('') +
+      (exs.length ? '<div class="fq" id="pain-ex" style="display:none">' + RB.ew('Em qual exercício? <span class="hint">pode marcar mais de um</span>', 'mid') + '<div class="chips-sel">' +
+        exs.map(function (e, i) { return '<button class="csel" data-i="' + i + '" onclick="RB.athlete.pickPain(this)">' + RB.esc(e.b) + '</button>'; }).join('') + '</div></div>' : '') +
+      tail();
+    F.exs = exs;
+    RB.openSheet(html);
+  };
+  A.pickPain = function (b) {
+    var name = F.exs[+b.dataset.i].b, i = F.pain.indexOf(name);
+    if (i >= 0) F.pain.splice(i, 1); else F.pain.push(name);
+    b.classList.toggle('on', i < 0);
   };
   A.pick = function (b) {
     var k = b.dataset.k, v = b.dataset.v;
@@ -229,23 +270,24 @@
       x.style.background = on ? c + '22' : ''; x.style.borderColor = on ? c : ''; x.style.color = on ? c : '';
     });
     if (k === 'rpe') { var l = RB.$('rpe-label'); l.textContent = v + ' — ' + RB.RPE_LABELS[+v]; l.style.color = RB.rpeColor(+v); }
-    var ok = F.rpe && F.energia, btn = RB.$('submit-fb');
-    btn.classList.toggle('ready', !!ok); btn.textContent = ok ? 'ENVIAR FEEDBACK' : 'preencha esforço e energia';
+    if (k === 'dor' && RB.$('pain-ex')) RB.$('pain-ex').style.display = v === 'sim' ? 'block' : 'none';
+    var btn = RB.$('submit-fb');
+    btn.classList.toggle('ready', ready()); btn.textContent = ready() ? 'ENVIAR FEEDBACK' : needText();
   };
   A.submit = async function () {
-    if (!F.rpe || !F.energia) return;
+    if (!ready()) return;
     var btn = RB.$('submit-fb'); btn.textContent = 'SALVANDO...'; btn.disabled = true;
-    var payload = {
-      workout_id: F.w.id, athlete_id: RB.state.user.id, rpe: F.rpe, energia: F.energia, fadiga: F.fadiga || null, sono: F.sono || null,
-      hidratacao: F.hidratacao || null, gel: F.gel || null, frequencia_cardiaca: F.frequencia_cardiaca || null, dor: F.dor === 'sim',
-      comment: RB.$('fb-comment').value.trim() || null, performed_at: RB.$('fb-date').value || undefined
-    };
+    var base = { athlete_id: RB.state.user.id, rpe: F.rpe, energia: F.energia || null, dor: F.dor === 'sim', comment: RB.$('fb-comment').value.trim() || null, performed_at: RB.$('fb-date').value || undefined };
+    var payload = F.kind === 'strength'
+      ? Object.assign(base, { kind: 'strength', workout_id: F.w ? F.w.id : null, strength_day: F.label, completion: F.completion, load_trend: F.load_trend || null, pain_exercises: F.dor === 'sim' ? F.pain : [] })
+      : Object.assign(base, { workout_id: F.w.id, fadiga: F.fadiga || null, sono: F.sono || null, hidratacao: F.hidratacao || null, gel: F.gel || null, frequencia_cardiaca: F.frequencia_cardiaca || null });
     var res = await sb.from('feedbacks').insert(payload).select('*,workouts(day_label,type,description,week_id)').single();
     btn.disabled = false;
     if (res.error) { btn.textContent = 'ENVIAR FEEDBACK'; RB.toast('Erro ao salvar', false); return; }
-    A.feedbacks.unshift(res.data); A.byWorkout[F.w.id] = res.data;
+    A.feedbacks.unshift(res.data);
+    if (F.w) A.byWorkout[F.w.id] = res.data;
     RB.closeSheet();
-    RB.toast(F.dor === 'sim' ? 'Enviado ✓ — o coach vai ver o alerta de dor' : 'Feedback enviado ✓');
+    RB.toast(F.dor === 'sim' ? 'Enviado ✓ — o coach vai ver o alerta de dor' : (F.kind === 'strength' ? 'Treino de força registrado ✓' : 'Feedback enviado ✓'));
     A.go(A.tab);
   };
 

@@ -14,7 +14,7 @@
   // ---------- números do mês, direto dos feedbacks ----------
   R.autoStats = async function (athleteId, period) {
     var m = R.monthRange(period);
-    var fr = await sb.from('feedbacks').select('id,rpe,energia,sono,fadiga,dor,comment,performed_at,created_at,workout_id,workouts(week_id,type,day_label)')
+    var fr = await sb.from('feedbacks').select('id,rpe,energia,sono,fadiga,dor,comment,performed_at,created_at,workout_id,kind,strength_day,completion,load_trend,pain_exercises,workouts(week_id,type,day_label)')
       .eq('athlete_id', athleteId).gte('performed_at', m.start).lt('performed_at', m.end).order('performed_at');
     var fbs = fr.data || [];
     var gr = await sb.from('gym_logs').select('created_at').eq('athlete_id', athleteId).gte('created_at', m.start).lt('created_at', m.end);
@@ -38,11 +38,21 @@
       return o;
     };
     var rpes = fbs.filter(function (f) { return f.rpe; });
+    var str = fbs.filter(function (f) { return f.kind === 'strength'; });
+    var strR = str.filter(function (f) { return f.rpe; });
+    var pains = {}; str.forEach(function (f) { (f.pain_exercises || []).forEach(function (e) { pains[e] = (pains[e] || 0) + 1; }); });
     return {
       month: m.label,
       n: fbs.length,
       rpe_avg: rpes.length ? Math.round(rpes.reduce(function (a, f) { return a + f.rpe; }, 0) / rpes.length * 10) / 10 : null,
-      rpe: rpes.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.workouts ? f.workouts.type : '' }; }),
+      rpe: rpes.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : '') }; }),
+      strength: str.length ? {
+        n: str.length,
+        rpe_avg: strR.length ? Math.round(strR.reduce(function (a, f) { return a + f.rpe; }, 0) / strR.length * 10) / 10 : null,
+        completion: { 'sim': str.filter(function (f) { return f.completion === 'sim'; }).length, 'parcial': str.filter(function (f) { return f.completion === 'parcial'; }).length, 'não': str.filter(function (f) { return f.completion === 'não'; }).length },
+        subiu: str.filter(function (f) { return f.load_trend === 'subiu'; }).length,
+        pain: pains
+      } : null,
       adesao: planned ? Math.round(done / planned * 100) : null,
       planned: planned, done: done,
       dor: fbs.filter(function (f) { return f.dor; }).length,
@@ -83,7 +93,16 @@
       RB.lineChart(a.rpe, { aria: 'RPE por treino no mês', band: [3, 6] }) +
       '<div class="ch-note">Faixa clara = zona de treino confortável a moderada (RPE 3–6)</div></div>' +
       '<div class="rig2"><div class="card">' + RB.ew('Sono', 'mid') + RB.barList(R.distRows(a.sono, 'sono')) + '</div>' +
-      '<div class="card">' + RB.ew('Energia', 'mid') + RB.barList(R.distRows(a.energia, 'energia')) + '</div></div>';
+      '<div class="card">' + RB.ew('Energia', 'mid') + RB.barList(R.distRows(a.energia, 'energia')) + '</div></div>' +
+      R.strengthBlock(a.strength);
+  };
+  R.strengthBlock = function (s) {
+    if (!s || !s.n) return '';
+    var pains = Object.keys(s.pain || {});
+    return '<div class="card">' + RB.ew('Treino de força', 'mid') +
+      '<div class="str-g"><div><b>' + s.n + '</b><span>sessões</span></div><div><b>' + (s.rpe_avg != null ? String(s.rpe_avg).replace('.', ',') : '—') + '</b><span>RPE médio</span></div><div><b>' + s.subiu + '</b><span>vezes subiu carga</span></div></div>' +
+      RB.barList([{ l: 'completou', n: s.completion['sim'], c: '#2E7D32' }, { l: 'parcial', n: s.completion['parcial'], c: '#F9A825' }, { l: 'não', n: s.completion['não'], c: '#B71C1C' }]) +
+      (pains.length ? '<div class="str-pain">⚠ Desconforto em: ' + pains.map(function (p) { return RB.esc(p) + (s.pain[p] > 1 ? ' (' + s.pain[p] + 'x)' : ''); }).join(', ') + '</div>' : '') + '</div>';
   };
   R.view = function (r, opts) {
     opts = opts || {};
@@ -197,7 +216,8 @@
     if (!a) return '<div class="muted-s">Sem números automáticos.</div>';
     if (!a.n) return '<div class="muted-s">Nenhum feedback registrado em ' + RB.esc(a.month) + '.</div>';
     return '<div class="ed-auto-t">Números automáticos · ' + RB.esc(a.month) + '</div><div class="ed-auto-g">' +
-      R.autoTiles(a).map(function (t) { return '<div><b>' + RB.esc(t.v) + '</b><span>' + RB.esc(t.l) + '</span></div>'; }).join('') + '</div>';
+      R.autoTiles(a).map(function (t) { return '<div><b>' + RB.esc(t.v) + '</b><span>' + RB.esc(t.l) + '</span></div>'; }).join('') + '</div>' +
+      (a.strength ? '<div class="ed-auto-s">Força: ' + a.strength.n + ' sessões · RPE ' + (a.strength.rpe_avg != null ? String(a.strength.rpe_avg).replace('.', ',') : '—') + '</div>' : '');
   }
   R.changePeriod = async function () {
     var v = RB.$('r-period').value; if (!v) return;

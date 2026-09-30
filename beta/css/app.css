@@ -371,3 +371,18 @@ button{font-family:inherit}
 .login-tag{font-family:'Space Mono',monospace;font-size:8px;color:var(--light);margin-top:48px;letter-spacing:.15em;text-transform:uppercase;text-align:center;line-height:1.8}
 .hdr-r{display:flex;align-items:center;gap:10px}
 .logout{background:none;border:none;cursor:pointer;color:var(--mid);font-size:16px}
+
+/* feedback de força */
+.gday-f{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 16px 12px;margin-top:-4px}
+.gday-f .mini{margin-top:0;flex-shrink:0}
+.gday-ok{font-family:'Space Mono',monospace;font-size:9px;color:var(--green);letter-spacing:.04em}
+.gday-no{font-family:'Space Mono',monospace;font-size:9px;color:var(--light);letter-spacing:.04em}
+.kind-f{display:inline-block;background:var(--blue);color:#fff;font-size:7px;letter-spacing:.1em;padding:1px 5px;margin-right:2px;vertical-align:1px}
+.chips-sel{display:flex;flex-wrap:wrap;gap:6px}
+.csel{border:1.5px solid var(--border);background:var(--white);color:var(--mid);font-size:12px;padding:7px 10px;cursor:pointer;text-align:left}
+.csel.on{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.str-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-bottom:12px}
+.str-g b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:24px;color:var(--blue)}
+.str-g span{font-family:'Space Mono',monospace;font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid)}
+.str-pain{font-size:12px;color:var(--red);margin-top:8px;line-height:1.5}
+.ed-auto-s{font-family:'Space Mono',monospace;font-size:9px;color:var(--blue);margin-top:8px;text-align:center}
