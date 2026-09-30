@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>Run Base by Behring</title>
+<meta name="theme-color" content="#F7F1EA">
+<meta name="description" content="App de treino da Run Base by Behring">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Run Base">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=2.0.0">
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<div id="screen-login" class="screen active">
+  <div class="login">
+    <div class="login-logo">
+      <div class="login-w">RUN<br><span>BASE</span></div>
+      <div class="login-by">by behring</div>
+    </div>
+    <div class="login-f">
+      <input type="email" id="login-email" placeholder="Email" autocomplete="email">
+      <input type="password" id="login-password" placeholder="Senha" autocomplete="current-password">
+      <div id="login-error" class="em">Email ou senha incorretos</div>
+      <button id="login-btn" class="login-btn" onclick="RB.login()">ENTRAR</button>
+    </div>
+    <div class="login-tag">It's not about the pace.<br>It's about the base.</div>
+  </div>
+</div>
+
+<div id="screen-coach" class="screen">
+  <div class="header"><div class="logo">RUN<span>BASE</span></div><div class="hdr-r"><span class="tag r">Coach</span><button class="logout" onclick="RB.logout()" aria-label="Sair">⎋</button></div></div>
+  <div id="coach-content" class="content"></div>
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="dashboard" onclick="RB.coach.go('dashboard')"><span class="icon">◈</span><span class="lbl">Home</span></button>
+    <button class="nav-btn" data-tab="athletes" onclick="RB.coach.go('athletes')"><span class="icon">◉</span><span class="lbl">Alunos</span></button>
+    <button class="nav-btn" data-tab="feedbacks" onclick="RB.coach.go('feedbacks')"><span class="icon">◎</span><span class="lbl">Feedbacks</span><div class="badge" id="fbBadge" style="display:none">0</div></button>
+    <button class="nav-btn" data-tab="calendar" onclick="RB.coach.go('calendar')"><span class="icon">◷</span><span class="lbl">Agenda</span></button>
+  </nav>
+</div>
+
+<div id="screen-athlete" class="screen">
+  <div class="header"><div class="logo">RUN<span>BASE</span></div><div class="hdr-r"><div class="av" id="ath-avatar" style="width:34px;height:34px;font-size:10px"></div><button class="logout" onclick="RB.logout()" aria-label="Sair">⎋</button></div></div>
+  <div id="athlete-content" class="content"></div>
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="home" onclick="RB.athlete.go('home')"><span class="icon">◈</span><span class="lbl">Home</span></button>
+    <button class="nav-btn" data-tab="planilha" onclick="RB.athlete.go('planilha')"><span class="icon">▤</span><span class="lbl">Planilha</span></button>
+    <button class="nav-btn" data-tab="forca" onclick="RB.athlete.go('forca')"><span class="icon">◆</span><span class="lbl">Força</span></button>
+    <button class="nav-btn" data-tab="zonas" onclick="RB.athlete.go('zonas')"><span class="icon">◉</span><span class="lbl">Zonas</span></button>
+    <button class="nav-btn" data-tab="feedback" onclick="RB.athlete.go('feedback')"><span class="icon">◎</span><span class="lbl">Feedback</span><div class="badge" id="pendBadge" style="display:none">0</div></button>
+    <button class="nav-btn" data-tab="relatorio" onclick="RB.athlete.go('relatorio')"><span class="icon">◑</span><span class="lbl">Relatório</span><div class="badge" id="relBadge" style="display:none">0</div></button>
+  </nav>
+</div>
+
+<div id="sheet" class="sheet">
+  <div class="sheet-bg" onclick="RB.closeSheet()"></div>
+  <div class="sheet-panel" id="sheet-body"></div>
+</div>
+<div id="print-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=2.0.0"></script>
+<script src="js/core.js?v=2.0.0"></script>
+<script src="js/charts.js?v=2.0.0"></script>
+<script src="js/threads.js?v=2.0.0"></script>
+<script src="js/reports.js?v=2.0.0"></script>
+<script src="js/strength.js?v=2.0.0"></script>
+<script src="js/athlete.js?v=2.0.0"></script>
+<script src="js/coach.js?v=2.0.0"></script>
+</body>
+</html>
