@@ -1,11 +1,11 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
-var VERSION = 'rb-v2.1.0';
+var VERSION = 'rb-v2.2.0';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.1.0',
-  'js/config.js?v=2.1.0', 'js/core.js?v=2.1.0', 'js/charts.js?v=2.1.0', 'js/threads.js?v=2.1.0',
-  'js/reports.js?v=2.1.0', 'js/strength.js?v=2.1.0', 'js/athlete.js?v=2.1.0', 'js/coach.js?v=2.1.0',
+  'css/app.css?v=2.2.0',
+  'js/config.js?v=2.2.0', 'js/core.js?v=2.2.0', 'js/charts.js?v=2.2.0', 'js/threads.js?v=2.2.0',
+  'js/reports.js?v=2.2.0', 'js/strength.js?v=2.2.0', 'js/milestones.js?v=2.2.0', 'js/athlete.js?v=2.2.0', 'js/coach.js?v=2.2.0',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png'
 ];
 self.addEventListener('install', function (e) {

@@ -14,14 +14,13 @@
     var since = new Date(Date.now() - 60 * 864e5).toISOString();
     var r = await Promise.all([
       sb.from('athletes').select('*').order('name'),
-      sb.from('feedbacks').select('*,athletes(name,img),workouts(day_label,type,description)').gte('created_at', since).order('created_at', { ascending: false }),
-      sb.from('gym_logs').select('athlete_id,created_at').order('created_at', { ascending: true })
+      sb.from('feedbacks').select('*,athletes(name,img),workouts(day_label,type,description)').gte('created_at', since).order('created_at', { ascending: false })
     ]);
     C.athletes = r[0].data || [];
     C.fbs = r[1].data || [];
     C.replies = await RB.threads.load(C.fbs.map(function (f) { return f.id; }));
-    var first = {}; (r[2].data || []).forEach(function (l) { if (!first[l.athlete_id]) first[l.athlete_id] = l.created_at; });
-    C.gymWeeks = {}; Object.keys(first).forEach(function (id) { C.gymWeeks[id] = RB.weeksSince(first[id]); });
+    await RB.ms.coachLoad();
+    C.gymWeeks = {}; Object.keys(RB.ms.coach.gym).forEach(function (id) { C.gymWeeks[id] = RB.ms.coach.gym[id].weeks; });
     C.lastFb = {}; C.fbs.forEach(function (f) { if (!C.lastFb[f.athlete_id]) C.lastFb[f.athlete_id] = f.created_at; });
     RB.setBadge('fbBadge', C.awaiting().length);
     C.render();
@@ -64,6 +63,7 @@
     var wk = C.fbs.filter(function (f) { return new Date(f.created_at) > weekAgo; });
     var html = '<div class="hello"><div class="hello-s">' + hi + '</div><div class="hello-n">' + RB.esc(RB.cfg.coachName.toUpperCase()) + '.</div></div>' +
       '<div class="card">' + RB.ew('Visão geral') + RB.statGrid([{ v: String(C.athletes.length), l: 'Alunos', a: true }, { v: String(wk.length), l: 'Feedbacks 7d' }, { v: String(wait.length), l: 'Sem resposta' }]) + '</div>';
+    html += RB.ms.coachCards(C.athletes);
     if (pain.length) {
       html += '<div class="card rl">' + RB.ew('⚠ Dor relatada nos últimos 7 dias') + pain.map(function (f) {
         return '<div class="alert-row" onclick="RB.threads.open(' + f.id + ')">' + RB.av(f.athletes && f.athletes.img, 28) + '<div style="flex:1"><b>' + RB.esc(f.athletes ? f.athletes.name : '') + '</b> · ' + RB.esc(f.kind === 'strength' ? 'Força' + ((f.pain_exercises || []).length ? ': ' + f.pain_exercises.join(', ') : '') : (f.workouts ? f.workouts.type : '')) + (f.comment ? '<div class="muted-s">“' + RB.esc(f.comment) + '”</div>' : '') + '</div><span class="chev">›</span></div>';
@@ -88,6 +88,11 @@
     C.athlete = C.athletes.find(function (a) { return a.id === id; });
     C.dtab = 'semana'; C.tab = 'athletes';
     C.render();
+  };
+  C.newReport = async function (id) {
+    C.open(id); C.dtab = 'relatorios';
+    await detail(RB.$('coach-content'));
+    RB.reports.newFor();
   };
   C.dt = function (t) { C.dtab = t; detail(RB.$('coach-content')); };
   async function detail(el) {

@@ -93,3 +93,23 @@ alter table public.feedbacks
   add column completion text check (completion in ('sim','parcial','não')),
   add column load_trend text check (load_trend in ('subiu','manteve','baixou')),
   add column pain_exercises jsonb not null default '[]';
+
+-- 9) Avisos de marcos (4 semanas de planilha / 4 semanas no mesmo treino de força)
+create table public.acks (
+  user_id uuid not null default auth.uid(), key text not null,
+  created_at timestamptz not null default now(), primary key (user_id, key)
+);
+alter table public.acks enable row level security;
+create policy acks_own on public.acks for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+alter table public.athlete_plans add column strength_started_at timestamptz;
+-- preenchido com a data do primeiro registro de carga (ou hoje, se não havia registros)
+create or replace function public.touch_strength_start() returns trigger language plpgsql as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.strength is not null and new.strength_started_at is null then new.strength_started_at := now(); end if;
+  elsif new.strength is distinct from old.strength then
+    new.strength_started_at := now();
+  end if;
+  return new;
+end $$;
+create trigger trg_strength_start before insert or update on public.athlete_plans for each row execute function public.touch_strength_start();

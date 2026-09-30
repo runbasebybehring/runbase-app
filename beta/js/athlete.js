@@ -27,6 +27,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
+    await RB.ms.loadAcks();
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -86,6 +87,7 @@
         return '<div class="cm" onclick="RB.threads.open(' + f.id + ')"><div class="cm-w">' + RB.esc(f.workouts ? f.workouts.day_label + ' — ' + f.workouts.type : 'Treino') + '</div><div class="cm-b">' + RB.esc(last.body.length > 120 ? last.body.slice(0, 120) + '…' : last.body) + '</div><div class="cm-a">Responder ›</div></div>';
       }).join('') + '</div>';
     }
+    html += RB.ms.athleteCards(A);
     // relatório novo
     var newRep = A.reports.find(function (r) { return !r.seen_at; });
     if (newRep) html += '<div class="card newrep" onclick="RB.athlete.go(\'relatorio\')">' + RB.ew('Novo relatório', 'blue') + '<div class="newrep-t">' + RB.esc(newRep.title) + ' está disponível</div><div class="cm-a">Ver relatório ›</div></div>';

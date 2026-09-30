@@ -19,7 +19,7 @@
     var hist = {};
     logs.forEach(function (l) { (hist[l.exercise_key] = hist[l.exercise_key] || []); if (hist[l.exercise_key].length < 6) hist[l.exercise_key].push({ carga: l.carga, date: l.created_at }); });
     var first = logs.length ? logs[logs.length - 1].created_at : null;
-    c = { gym: gym, hist: hist, weeks: RB.weeksSince(first), el: el };
+    c = { gym: gym, hist: hist, weeks: plan.strength_started_at ? RB.ms.strengthWeeks(plan) : RB.weeksSince(first), el: el };
     if (G.open[0] === undefined) G.open[0] = true;
     draw();
   };

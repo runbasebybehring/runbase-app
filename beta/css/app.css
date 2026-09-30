@@ -386,3 +386,16 @@ button{font-family:inherit}
 .str-g span{font-family:'Space Mono',monospace;font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid)}
 .str-pain{font-size:12px;color:var(--red);margin-top:8px;line-height:1.5}
 .ed-auto-s{font-family:'Space Mono',monospace;font-size:9px;color:var(--blue);margin-top:8px;text-align:center}
+
+/* marcos */
+.ms-win{border:2px solid var(--green)}
+.ms-big{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:30px;color:var(--dark);line-height:1;margin:2px 0 8px}
+.ms-card .btn{margin-top:12px}
+.ms-box{border-left:4px solid var(--blue)}
+.ms-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)}
+.ms-box .ew+.ms-item{border-top:none;padding-top:0}
+.ms-t{flex:1;font-size:13px;color:var(--mid);line-height:1.5}
+.ms-t b{color:var(--dark)}
+.ms-a{display:flex;gap:6px;margin-top:6px}
+.ms-a .mini{margin-top:0}
+.mini.ghost{border-color:var(--border);color:var(--mid)}
