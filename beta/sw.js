@@ -1,11 +1,11 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
-var VERSION = 'rb-v2.4.5';
+var VERSION = 'rb-v2.4.6';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.4.5',
-  'js/config.js?v=2.4.5', 'js/core.js?v=2.4.5', 'js/charts.js?v=2.4.5', 'js/threads.js?v=2.4.5',
-  'js/reports.js?v=2.4.5', 'js/strength.js?v=2.4.5', 'js/pace.js?v=2.4.5', 'js/push.js?v=2.4.5', 'js/events.js?v=2.4.5', 'js/editor.js?v=2.4.5', 'js/share.js?v=2.4.5', 'js/milestones.js?v=2.4.5', 'js/athlete.js?v=2.4.5', 'js/coach.js?v=2.4.5',
+  'css/app.css?v=2.4.6',
+  'js/config.js?v=2.4.6', 'js/core.js?v=2.4.6', 'js/charts.js?v=2.4.6', 'js/threads.js?v=2.4.6',
+  'js/reports.js?v=2.4.6', 'js/strength.js?v=2.4.6', 'js/pace.js?v=2.4.6', 'js/push.js?v=2.4.6', 'js/events.js?v=2.4.6', 'js/editor.js?v=2.4.6', 'js/share.js?v=2.4.6', 'js/milestones.js?v=2.4.6', 'js/athlete.js?v=2.4.6', 'js/coach.js?v=2.4.6',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/aileron-latin-800-italic.woff2', 'fonts/aileron-latin-800-normal.woff2', 'fonts/aileron-latin-700-normal.woff2', 'fonts/aileron-latin-400-normal.woff2'
 ];
 self.addEventListener('install', function (e) {

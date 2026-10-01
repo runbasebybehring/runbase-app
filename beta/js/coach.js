@@ -95,14 +95,14 @@
     await detail(RB.$('coach-content'));
     RB.reports.newFor();
   };
-  C.dt = function (t) { C.dtab = t; detail(RB.$('coach-content')); };
+  C.dt = function (t) { C.dtab = t; return detail(RB.$('coach-content')); };
   async function detail(el) {
     var a = C.athlete;
     var head = '<button class="bb" onclick="RB.coach.go(\'athletes\')">← Alunos</button>' +
       '<div class="ath-h">' + RB.av(a.img, 60) + '<div><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div></div>';
     var gw = C.gymWeeks[a.id] || 0;
-    if (gw >= RB.cfg.gymSwapWeeks) head += '<div class="card rl">' + RB.ew('⚠ Treino de força há ' + gw + ' semanas') + '<div class="p">Está na hora de considerar trocar os exercícios ou progredir a carga/estrutura.</div></div>';
-    head += RB.seg([['planilha', 'Planilha'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios'], ['plano', 'Plano']], C.dtab, 'RB.coach.dt');
+    if (gw >= RB.cfg.gymSwapWeeks) head += '<div class="card rl">' + RB.ew('⚠ Treino de força há ' + gw + ' semanas') + '<div class="p">Está na hora de considerar trocar os exercícios ou progredir a carga/estrutura.</div><button class="btn btn-o sm" style="margin-top:12px" onclick="RB.edit.gotoForca()">EDITAR TREINO DE FORÇA</button></div>';
+    head += RB.seg([['planilha', 'Planilha de corrida'], ['plano', 'Força e plano'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios']], C.dtab, 'RB.coach.dt').replace('class="tr"', 'class="tr tr4"');
     el.innerHTML = head + '<div id="dt-body"><div class="ld"><div class="sp"></div></div></div>';
     var body = RB.$('dt-body');
     if (C.dtab === 'planilha') {

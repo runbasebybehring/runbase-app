@@ -516,3 +516,11 @@ button{font-family:inherit}
 .wbl-total{font-family:'Space Mono',monospace;font-size:9px;color:var(--mid);margin-top:8px;line-height:1.6;letter-spacing:.03em}
 .zchip.pace{--zc:var(--dark)}
 .next-d .dr-t{font-size:14px}
+
+/* abas do perfil do aluno (coach): 2x2, nada escondido fora da tela */
+.tr.tr4{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
+.tr.tr4 .tb{white-space:normal;padding:11px 6px;font-size:9px;border-left:none}
+.tr.tr4 .tb:nth-child(2n){border-left:1.5px solid var(--dark)}
+.tr.tr4 .tb:nth-child(n+3){border-top:1.5px solid var(--dark)}
+.tb{min-width:0}
+.go-forca{text-align:left;padding:0 0 14px;color:var(--blue)}

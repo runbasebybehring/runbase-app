@@ -29,7 +29,8 @@
   };
 
   function drawPlanilha() {
-    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button></div>';
+    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button></div>' +
+      '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>';
     if (!P.weeks.length) html += RB.empty('Nenhuma semana ainda.<br>Crie a primeira acima.');
     var cur = P.weeks.find(function (w) { return w.is_current; });
     P.weeks.slice().reverse().forEach(function (wk) {
@@ -56,6 +57,7 @@
     });
     P.el.innerHTML = html;
   }
+  E.gotoForca = async function () { await RB.coach.dt('plano'); E.open('forca'); };
   E.toggleWeek = function (id) { P.open[id] = !P.open[id]; drawPlanilha(); };
   var reload = function () { return E.planilha(P.athlete, P.el); };
   var findWeek = function (id) { return P.weeks.find(function (w) { return w.id === id; }); };
