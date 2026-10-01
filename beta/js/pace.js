@@ -57,9 +57,85 @@
       var z = b.zona ? P.zone(zones, String(b.zona).replace(/\D/g, '')) : null;
       return '<div class="wbl wbl-' + RB.esc(b.fase || 'principal') + '"><div class="wbl-f">' + RB.esc(P.FASES[b.fase] || 'Principal') + '</div>' +
         '<div class="wbl-m"><span class="wbl-v">' + (b.reps ? RB.esc(b.reps) + '× ' : '') + RB.esc(b.vol || '') + '</span>' +
-        (b.zona ? '<span class="zchip" style="--zc:' + RB.esc(z ? z.color : '#999') + '"><b>' + RB.esc(b.zona) + '</b>' + (z ? ' ' + RB.esc(P.show(z.pace)) : '') + '</span>' : '') + '</div>' +
+        (b.pace ? '<span class="zchip pace"><b>PACE</b> ' + RB.esc(P.show(b.pace)) + '</span>' :
+          (b.zona ? '<span class="zchip" style="--zc:' + RB.esc(z ? z.color : '#999') + '"><b>' + RB.esc(b.zona + (b.zona2 ? '–' + b.zona2 : '')) + '</b>' + (z && !b.zona2 ? ' ' + RB.esc(P.show(z.pace)) : '') + '</span>' : '')) + '</div>' +
+        (b.pace && b.zona ? '<div class="wbl-o">' + RB.esc(b.zona) + (z ? ' · ' + RB.esc(P.show(z.pace)) : '') + '</div>' : '') +
         (b.obs ? '<div class="wbl-o">' + RB.esc(b.obs) + '</div>' : '') + '</div>';
     }).join('') + '</div>';
+  };
+
+  // ---- leitura automática das descrições antigas: "2km aquece + 6x1000m a 4:25–4:35 (recupera 400m trote) + 2km desaquece. Total: ~13km."
+  var RX_PACE = /(?:\bpace\s+(?:de\s+)?)?(?:\ba\s+)?(\d{1,2}:\d{2})(?:\s*[–-]\s*(\d{1,2}:\d{2}))?\s*(?:\/\s*km|min\/km)?/i;
+  var RX_VOL = /(\d+(?:[.,]\d+)?)\s*(km|k|m|min|'|s|"|h)(?![a-zà-ú\/])/i;
+  var RX_ZONE = /\bZ\s?([1-5])(?:\s*[–-]\s*Z?\s?([1-5]))?\b/i;
+  var RX_START = /^(\d|Z\s?\d|\(|aquec|desaquec|caminhada|trote|leve|últimos)/i;
+  function tidy(t) {
+    return t.replace(/\(\s*[,;]\s*/g, '(').replace(/\s*[,;]\s*\)/g, ')').replace(/\(\s*\)/g, '').replace(/\s+([,.;)])/g, '$1')
+      .replace(/\s{2,}/g, ' ').replace(/^[\s,;:·—–-]+|[\s,;:·—–-]+$/g, '').replace(/^\(([^()]*)\)$/, '$1').trim();
+  }
+  function seg(raw) {
+    var t = raw.trim().replace(/\.$/, ''), b = { fase: 'principal' };
+    if (/desaquec|desaq\b|volta à calma/i.test(t)) b.fase = 'desaq';
+    else if (/aquec/i.test(t)) b.fase = 'aquec';
+    var m = t.match(/^(\d+)\s*x\s*:?\s*/i) || t.match(/^(\d+)\s+(?=(acelera|strides?|tiros?|educativos?|retas?)\b)/i);
+    if (m) { b.reps = m[1]; t = t.slice(m[0].length); }
+    t = t.replace(/^\(([^()]*)\)$/, '$1');
+    m = t.match(RX_VOL);
+    if (m) {
+      var u = m[2].toLowerCase(); u = u === "'" ? 'min' : u === '"' ? 's' : u === 'k' ? 'km' : u;
+      var n = /^\d{1,2}\.\d{3}$/.test(m[1]) ? m[1].replace('.', '') : m[1].replace('.', ',');
+      b.vol = n + u; t = t.replace(m[0], ' ');
+    }
+    m = t.match(RX_ZONE);
+    if (m) { b.zona = 'Z' + m[1]; if (m[2]) b.zona2 = 'Z' + m[2]; t = t.replace(m[0], ' '); }
+    m = t.match(RX_PACE);
+    if (m) { b.pace = m[1] + (m[2] ? '–' + m[2] : '') + ' /km'; t = t.replace(m[0], ' '); }
+    t = t.replace(/\b(aquecimento|aquece|aquecer|desaquecimento|desaquece|desaquecer)\b/gi, ' ').replace(/\s+de\s*$/i, '').replace(/\bde\s+(?=\s|$)/i, ' ').replace(/\s+em\s*$/i, '').replace(/^\s*em\s+/i, '');
+    b.obs = tidy(t);
+    return b;
+  }
+  P.parse = function (desc) {
+    if (!desc || desc.indexOf(' + ') < 0) return null;
+    var d = desc.trim(), total = '', intro = '', outro = '', notes = [];
+    var tm = d.match(/\s*Total:?\s*([^.]*?)\.?\s*$/i) || d.match(/\s*·\s*(~?\d+(?:[.,]\d+)?\s*km)\s*$/i);
+    if (tm) { total = tm[1].trim(); d = d.slice(0, tm.index).trim(); }
+    // "10km: 2km leve + ..." / "18km — 13km Z2 + ..."
+    var hm = d.match(/^(\d+(?:[.,]\d+)?\s*km[^:—+]{0,12}?)\s*(?::|—)\s+/i);
+    if (hm) { if (!total) total = hm[1].trim(); d = d.slice(hm[0].length); }
+    // separa nos " + " que não estão dentro de parênteses
+    var parts = [], depth = 0, cur = '';
+    for (var i = 0; i < d.length; i++) {
+      var ch = d[i];
+      if (ch === '(') depth++; else if (ch === ')') depth = Math.max(0, depth - 1);
+      if (depth === 0 && d.substr(i, 3) === ' + ') { parts.push(cur); cur = ''; i += 2; continue; }
+      cur += ch;
+    }
+    parts.push(cur);
+    if (parts.length < 2) return null;
+    var f = parts[0].match(/^(.*[.!])\s+(\S[\s\S]*)$/);
+    if (f) { intro = f[1].trim(); parts[0] = f[2]; }
+    var l = parts[parts.length - 1].match(/^([\s\S]*?)\.\s+([A-ZÀ-Ú][\s\S]*)$/);
+    if (l) { parts[parts.length - 1] = l[1]; outro = l[2].trim(); }
+    var blocks = [];
+    parts.forEach(function (p) { if (RX_START.test(p.trim())) blocks.push(seg(p)); else notes.push(p.trim().replace(/\.$/, '')); });
+    if (blocks.length < 2) return null;
+    // "10' leve + ... + 10' leve": primeiro e último leves viram aquecimento e desaquecimento
+    if (blocks.length >= 3) {
+      var easy = function (b) { return !b.reps && (/^(leve|trote)/i.test(b.obs || '') || b.zona === 'Z1'); };
+      if (blocks[0].fase === 'principal' && easy(blocks[0])) blocks[0].fase = 'aquec';
+      var z = blocks[blocks.length - 1];
+      if (z.fase === 'principal' && easy(z)) z.fase = 'desaq';
+    }
+    if (notes.length) outro = notes.join(' · ') + (outro ? '. ' + outro : '');
+    return { intro: intro, blocks: blocks, outro: outro, total: total };
+  };
+  // corpo do treino: blocos do coach, ou blocos lidos da descrição, ou texto + pace das zonas citadas
+  P.workout = function (d, zones) {
+    if (d.structure && d.structure.length) return '<div class="dr-t">' + RB.esc(d.description) + '</div>' + P.blocks(d.structure, zones);
+    var p = P.parse(d.description);
+    if (!p) return '<div class="dr-t">' + RB.esc(d.description) + '</div>' + P.chips(d.description, zones);
+    return (p.intro ? '<div class="dr-t">' + RB.esc(p.intro) + '</div>' : '') + P.blocks(p.blocks, zones) +
+      ((p.outro || p.total) ? '<div class="wbl-total">' + RB.esc(p.outro) + (p.outro && p.total ? ' · ' : '') + (p.total ? 'Total: ' + RB.esc(p.total) : '') + '</div>' : '');
   };
 
   // calculadora: distância + tempo → pace, ou distância + pace → tempo

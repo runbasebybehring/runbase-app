@@ -512,3 +512,7 @@ button{font-family:inherit}
 .fbc-met{font-family:'Space Mono',monospace;font-size:10px;color:var(--dark);margin:2px 0 8px}
 .fbc-met a{color:var(--blue);margin-left:6px}
 .share-b{margin:0 0 8px}
+
+.wbl-total{font-family:'Space Mono',monospace;font-size:9px;color:var(--mid);margin-top:8px;line-height:1.6;letter-spacing:.03em}
+.zchip.pace{--zc:var(--dark)}
+.next-d .dr-t{font-size:14px}

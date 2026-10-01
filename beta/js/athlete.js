@@ -94,7 +94,7 @@
     if (newRep) html += '<div class="card newrep" onclick="RB.athlete.go(\'relatorio\')">' + RB.ew('Novo relatório', 'blue') + '<div class="newrep-t">' + RB.esc(newRep.title) + ' está disponível</div><div class="cm-a">Ver relatório ›</div></div>';
 
     html += next
-      ? '<div class="card rl">' + RB.ew('Próximo treino') + '<div class="tags">' + RB.tag(next.day_label, 'm') + ' ' + RB.tag(next.type, 'r') + '</div><div class="next-d">' + RB.esc(next.description) + '</div>' + RB.pace.blocks(next.structure, A.zones) + (next.structure && next.structure.length ? '' : RB.pace.chips(next.description, A.zones)) + '<button class="btn btn-r" onclick="RB.athlete.feedbackForm(' + next.id + ')">CONCLUIR + FEEDBACK</button></div>'
+      ? '<div class="card rl">' + RB.ew('Próximo treino') + '<div class="tags">' + RB.tag(next.day_label, 'm') + ' ' + RB.tag(next.type, 'r') + '</div><div class="next-d">' + RB.pace.workout(next, A.zones) + '</div>' + '<button class="btn btn-r" onclick="RB.athlete.feedbackForm(' + next.id + ')">CONCLUIR + FEEDBACK</button></div>'
       : '<div class="card gl">' + RB.ew('Semana concluída', 'green') + '<div class="p">Todos os treinos desta semana foram realizados!</div></div>';
 
     var streak = A.streak();
@@ -145,7 +145,7 @@
         '<div class="wk-r"><span class="wk-done">' + dn + '/' + wk.workouts.length + '</span><span class="wk-v">' + RB.esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>' +
         '<div class="wbd' + (io ? ' open' : '') + '">' + wk.workouts.map(function (d) {
           var f = A.byWorkout[d.id];
-          return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div><div class="dr-t">' + RB.esc(d.description) + '</div>' + RB.pace.blocks(d.structure, A.zones) + (d.structure && d.structure.length ? '' : RB.pace.chips(d.description, A.zones)) +
+          return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div>' + RB.pace.workout(d, A.zones) +
             (!f && (ic || (A.cur && wk.week_number === A.cur.week_number - 1)) ? '<button class="mini" onclick="RB.athlete.feedbackForm(' + d.id + ')">Dar feedback</button>' : '') + '</div>';
         }).join('') + '</div></div>';
     });
