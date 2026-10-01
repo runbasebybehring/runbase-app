@@ -62,7 +62,7 @@ Use **negrito** em no máximo 2 trechos por texto.`;
 Dados (JSON):
 ${JSON.stringify(data)}
 
-Preencha o relatório usando a ferramenta "relatorio". Use 3 ou 4 destaques, e o último deve ser do tipo "next" (próximo passo).`;
+Responda chamando a ferramenta "relatorio" (obrigatório, não escreva o relatório em texto solto). Use 3 ou 4 destaques, e o último deve ser do tipo "next" (próximo passo).`;
 
     const tool = {
       name: "relatorio",
@@ -92,7 +92,7 @@ Preencha o relatório usando a ferramenta "relatorio". Use 3 ou 4 destaques, e o
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 2000, system, tools: [tool], tool_choice: { type: "tool", name: "relatorio" }, messages: [{ role: "user", content: user }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 8000, system, tools: [tool], tool_choice: { type: "auto" }, messages: [{ role: "user", content: user }] }),
     });
     if (!r.ok) {
       const detail = (await r.text()).slice(0, 500);
@@ -101,8 +101,13 @@ Preencha o relatório usando a ferramenta "relatorio". Use 3 ou 4 destaques, e o
     }
     const out = await r.json();
     const block = (out.content ?? []).find((c: { type?: string }) => c.type === "tool_use");
-    if (!block?.input) { console.error("sem tool_use", JSON.stringify(out).slice(0, 500)); return json({ error: "ai_bad_output" }, 502); }
-    return json(block.input);
+    if (block?.input) return json(block.input);
+    // plano B: o modelo respondeu em texto — tenta achar o JSON
+    const text: string = (out.content ?? []).map((c: { text?: string }) => c.text ?? "").join("").replace(/```(?:json)?/g, "");
+    const m = text.match(/\{[\s\S]*\}/);
+    try { if (m) return json(JSON.parse(m[0])); } catch (_) { /* segue */ }
+    console.error("sem tool_use", JSON.stringify(out).slice(0, 800));
+    return json({ error: "ai_bad_output" }, 502);
   } catch (e) {
     console.error("generate-report falhou", String(e));
     return json({ error: String(e) }, 500);
