@@ -106,11 +106,15 @@
   E.delWeek = async function (id) {
     var w = findWeek(id);
     if (w.workouts.some(function (x) { return P.fb[x.id]; })) { RB.toast('Esta semana tem feedbacks do aluno e não pode ser excluída', false); return; }
-    if (w.is_current) { RB.toast('Troque a semana atual antes de excluir esta', false); return; }
-    if (!confirm('Excluir "' + w.label + '" e os ' + w.workouts.length + ' treinos dela?')) return;
+    // semana atual pode ser excluída: a anterior (ou a próxima) vira a atual
+    var others = P.weeks.filter(function (x) { return x.id !== id; });
+    var heir = w.is_current ? (others.filter(function (x) { return x.week_number < w.week_number; }).pop() || others[0] || null) : null;
+    var msg = 'Excluir "' + w.label + '"' + (w.workouts.length ? ' e os ' + w.workouts.length + ' treinos dela' : '') + '?' + (heir ? '\n\n"' + heir.label + '" passa a ser a semana atual.' : '');
+    if (!confirm(msg)) return;
     if (w.workouts.length) { var r1 = await sb.from('workouts').delete().eq('week_id', id); if (r1.error) { RB.toast('Erro ao excluir', false); return; } }
     var r2 = await sb.from('weeks').delete().eq('id', id);
     if (r2.error) { RB.toast('Erro ao excluir', false); return; }
+    if (heir) await sb.from('weeks').update({ is_current: true }).eq('id', heir.id);
     RB.toast('Semana excluída'); reload();
   };
   E.move = async function (wid, i, dir) {
