@@ -170,3 +170,83 @@ drop policy media_read on public.exercise_media;
 create policy media_read on public.exercise_media for select to authenticated
   using (athlete_id is null or athlete_id = (select auth.uid()) or public.is_coach());
 -- + vídeo do agachamento sumô passa a ser da Krishna; + 18 vídeos padrão de máquinas (aplicado pelo SQL Editor em 01/10/2026)
+
+-- 17) Modelos de treino, testes, resumo semanal, plano de prova, mural e áudio
+create table if not exists public.templates (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('strength','week')),
+  name text not null, data jsonb not null,
+  created_at timestamptz not null default now());
+alter table public.templates enable row level security;
+create policy templates_coach on public.templates for all to authenticated using (public.is_coach()) with check (public.is_coach());
+
+create table if not exists public.tests (
+  id uuid primary key default gen_random_uuid(),
+  athlete_id uuid not null references public.athletes(id) on delete cascade,
+  test_date date not null default current_date,
+  distance_km numeric not null check (distance_km > 0 and distance_km < 100),
+  duration_sec int not null check (duration_sec > 0 and duration_sec < 86400),
+  notes text, created_at timestamptz not null default now());
+create index if not exists tests_athlete_idx on public.tests (athlete_id, test_date);
+alter table public.tests enable row level security;
+create policy tests_read on public.tests for select to authenticated using (athlete_id = (select auth.uid()) or public.is_coach());
+create policy tests_insert on public.tests for insert to authenticated with check (athlete_id = (select auth.uid()) or public.is_coach());
+create policy tests_delete on public.tests for delete to authenticated using (athlete_id = (select auth.uid()) or public.is_coach());
+
+create table if not exists public.digests (
+  week_start date primary key, content jsonb not null,
+  created_at timestamptz not null default now());
+alter table public.digests enable row level security;
+create policy digests_coach on public.digests for select to authenticated using (public.is_coach());
+
+alter table public.athlete_plans add column if not exists race_plan jsonb;
+alter table public.athletes add column if not exists mural boolean not null default true;
+alter table public.feedbacks add column if not exists audio_path text;
+alter table public.feedback_replies add column if not exists audio_path text;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('feedback-audio','feedback-audio', false, 15728640, array['audio/mp4','audio/aac','audio/mpeg','audio/webm','audio/ogg','audio/x-m4a','audio/wav'])
+on conflict (id) do nothing;
+create policy "audio envia" on storage.objects for insert to authenticated
+  with check (bucket_id = 'feedback-audio' and ((storage.foldername(name))[1] = (select auth.uid())::text or public.is_coach()));
+create policy "audio le" on storage.objects for select to authenticated
+  using (bucket_id = 'feedback-audio' and ((storage.foldername(name))[1] = (select auth.uid())::text or public.is_coach()));
+
+-- mural: só primeiro nome e números, só de quem participa do mural
+create or replace function public.community_feed()
+returns table (first_name text, img text, kind text, label text, distance_km numeric, duration_sec int, performed_at date, is_me boolean)
+language sql stable security definer set search_path = public as $$
+  select split_part(a.name, ' ', 1), a.img, f.kind,
+         case when f.kind = 'strength' then 'Força' else coalesce(w.type, 'Corrida') end,
+         f.distance_km, f.duration_sec, coalesce(f.performed_at, f.created_at::date), f.athlete_id = auth.uid()
+  from feedbacks f join athletes a on a.id = f.athlete_id left join workouts w on w.id = f.workout_id
+  where auth.uid() is not null and a.mural and f.created_at > now() - interval '21 days'
+  order by coalesce(f.performed_at, f.created_at::date) desc, f.created_at desc limit 40;
+$$;
+create or replace function public.community_board()
+returns table (first_name text, img text, streak int, month_km numeric, is_me boolean)
+language sql stable security definer set search_path = public as $$
+  with wk as (
+    select f.athlete_id, date_trunc('week', coalesce(f.performed_at, f.created_at::date))::date w
+    from feedbacks f group by 1, 2),
+  isl as (
+    select athlete_id, w, w + (row_number() over (partition by athlete_id order by w desc))::int * 7 g from wk),
+  cur as (select date_trunc('week', now() at time zone 'America/Sao_Paulo')::date c),
+  st as (
+    select i.athlete_id, count(*)::int n from isl i, cur
+    where i.g = (select i2.g from isl i2 where i2.athlete_id = i.athlete_id and i2.w in (cur.c, cur.c - 7) order by i2.w desc limit 1)
+    group by 1),
+  km as (
+    select athlete_id, sum(distance_km) k from feedbacks
+    where coalesce(performed_at, created_at::date) >= date_trunc('month', now() at time zone 'America/Sao_Paulo')::date group by 1)
+  select split_part(a.name, ' ', 1), a.img, coalesce(st.n, 0), coalesce(km.k, 0), a.id = auth.uid()
+  from athletes a left join st on st.athlete_id = a.id left join km on km.athlete_id = a.id
+  where auth.uid() is not null and a.mural
+  order by coalesce(st.n, 0) desc, coalesce(km.k, 0) desc;
+$$;
+revoke all on function public.community_feed() from public, anon;
+revoke all on function public.community_board() from public, anon;
+grant execute on function public.community_feed() to authenticated;
+grant execute on function public.community_board() to authenticated;
+-- 17b) Resumo semanal: public.run_weekly_digest() chama a função weekly-digest (x-cron-secret);
+--      cron 'runbase-resumo-semanal' toda segunda 10:52 UTC (07:52 em São Paulo). Funções novas: admin, weekly-digest; notify ganhou type "nudge".

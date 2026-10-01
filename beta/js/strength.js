@@ -20,7 +20,7 @@
     var rr = await Promise.all([sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300), RB.media.load(id)]);
     var logs = rr[0].data || [];
     var hist = {};
-    logs.forEach(function (l) { var k = hkey(l.exercise_name); (hist[k] = hist[k] || []); if (hist[k].length < 6) hist[k].push({ carga: l.carga, date: l.created_at }); });
+    logs.forEach(function (l) { var k = hkey(l.exercise_name); (hist[k] = hist[k] || []); if (hist[k].length < 12) hist[k].push({ carga: l.carga, date: l.created_at }); });
     var first = logs.length ? logs[logs.length - 1].created_at : null;
     c = { gym: gym, hist: hist, weeks: plan.strength_started_at ? RB.ms.strengthWeeks(plan) : RB.weeksSince(first), el: el };
     if (G.open[0] === undefined) G.open[0] = true;
@@ -34,7 +34,7 @@
       ((bl.tec || bl.warn) && !vid ? '<button class="info-i" onclick="RB.strength.tech(' + di + ',' + bi + ')" aria-label="Ver técnica">i</button>' : '');
     var body = '';
     if (bl.c) {
-      var rows = h.length ? h.map(function (x) { return '<div>' + RB.fmtDate(x.date) + '</div><div class="r">' + RB.esc(x.carga) + '</div>'; }).join('')
+      var rows = h.length ? h.slice(0, 6).map(function (x) { return '<div>' + RB.fmtDate(x.date) + '</div><div class="r">' + RB.esc(x.carga) + '</div>'; }).join('')
         : '<div class="none">Nenhum registro ainda</div>';
       var ns = sets(bl.e);
       var btn = '<button class="plus" onclick="RB.strength.add(' + di + ',' + bi + ',this)">+</button>';
@@ -80,9 +80,18 @@
       var part = '';
       flat(d).forEach(function (bl, bi) {
         var h = c.hist[hkey(bl.b)]; if (!h || !h.length) return;
-        part += '<div class="evo"><div class="evo-n">' + RB.esc(bl.b) + '</div><div class="evo-c">' + h.map(function (x, i) {
-          return '<span class="chip' + (i === 0 ? ' last' : '') + '">' + RB.fmtDate(x.date) + ': ' + RB.esc(x.carga) + '</span>';
-        }).join('') + '</div></div>';
+        var pts = h.map(function (x) { return { d: x.date, v: G.loadNum(x.carga), label: x.carga }; }).filter(function (p) { return p.v != null; }).reverse();
+        if (pts.length >= 2) {
+          var vs = pts.map(function (p) { return p.v; }), lo = Math.min.apply(null, vs), hi = Math.max.apply(null, vs);
+          var pad = Math.max(1, Math.ceil((hi - lo) * 0.25)), mn = Math.max(0, Math.floor(lo - pad)), mx = Math.ceil(hi + pad);
+          var diff = vs[vs.length - 1] - vs[0];
+          part += '<div class="evo"><div class="evo-n">' + RB.esc(bl.b) + (diff ? ' <span class="evo-d ' + (diff > 0 ? 'up' : 'dn') + '">' + (diff > 0 ? '+' : '') + String(Math.round(diff * 10) / 10).replace('.', ',') + ' kg</span>' : '') + '</div>' +
+            RB.lineChart(pts, { min: mn, max: mx, ticks: [mn, mx], h: 110, aria: 'Carga de ' + bl.b }) + '</div>';
+        } else {
+          part += '<div class="evo"><div class="evo-n">' + RB.esc(bl.b) + '</div><div class="evo-c">' + h.slice(0, 6).map(function (x, i) {
+            return '<span class="chip' + (i === 0 ? ' last' : '') + '">' + RB.fmtDate(x.date) + ': ' + RB.esc(x.carga) + '</span>';
+          }).join('') + '</div></div>';
+        }
       });
       if (part) ev += '<div class="evo-d">' + RB.esc(d.dia) + ' — ' + RB.esc(d.tipo) + '</div>' + part;
     });
@@ -148,6 +157,12 @@
     var it = G.aquec(c.gym[di], c.gym).items[ai];
     RB.openSheet('<div class="sh-top"><div>' + RB.ew(it.g || 'Aquecimento e ativação') + '<div class="sh-t">' + RB.esc(it.b) + '</div>' + (it.e ? '<div class="sh-s">' + RB.esc(it.e) + '</div>' : '') + '</div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       RB.media.player(RB.media.get(it.b)) + '<button class="btn btn-r" onclick="RB.closeSheet()">FECHAR</button>');
+  };
+  // maior número da carga registrada: "12 / 14 / 14" → 14 · "47,5kg" → 47.5
+  G.loadNum = function (c) {
+    var ns = String(c || '').match(/\d+(?:[.,]\d+)?/g); if (!ns) return null;
+    var v = Math.max.apply(null, ns.map(function (n) { return parseFloat(n.replace(',', '.')); }));
+    return v > 0 && v < 1000 ? v : null;
   };
   G.dayLabel = function (d) { return d.dia + ' — ' + d.tipo; };
   G.lastDone = function (d) {

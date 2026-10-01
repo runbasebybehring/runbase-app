@@ -27,7 +27,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.loadAcks(), RB.events.load()]);
+    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid)]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -68,7 +68,7 @@
     RB.setBadge('relBadge', A.reports.filter(function (r) { return !r.seen_at; }).length);
     RB.setBadge('evBadge', RB.events.pendingCount());
     var el = RB.$('athlete-content');
-    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.events.render(el); }, feedback: feedback, relatorio: relatorio })[tab](el);
+    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.galera.render(el); }, feedback: feedback, relatorio: relatorio })[tab](el);
     window.scrollTo(0, 0);
   };
 
@@ -102,6 +102,7 @@
       RB.statGrid([{ v: done + '/' + wo.length, l: 'Treinos', a: true }, { v: streak ? streak + (streak > 1 ? ' sem' : ' sem') : '—', l: 'Sequência' }, { v: wk ? wk.volume : '—', l: 'Volume' }]) +
       '<div class="pb"><div class="pf" style="width:' + pct + '%"></div></div>' +
       (streak >= 3 ? '<div class="streak-t">🔥 ' + streak + ' semanas seguidas treinando. Constância é o que constrói a base.</div>' : '') + '</div>';
+    html += RB.galera.homeCard(A.feedbacks);
 
     var ev = RB.events.upcoming()[0];
     if (ev) {
@@ -112,7 +113,8 @@
     }
     var rd = RB.raceDate(a), days = rd ? RB.daysTo(rd) : null;
     html += '<div class="card">' + RB.ew('Objetivo') + '<div class="goal">' + RB.esc(a.goal) + '</div><div class="goal-s">' + RB.esc(a.pace) + ' · ' + RB.esc(a.vol) + '</div>' +
-      (days != null && days >= 0 && days <= 365 ? '<div class="countdown"><div class="cd-n">' + days + '</div><div class="cd-l">' + (days === 1 ? 'dia para a prova' : days === 0 ? 'é hoje! Boa prova 🏁' : 'dias para a prova') + '<br><span>' + RB.esc(a.race) + '</span></div></div>' : '') + '</div>';
+      (days != null && days >= 0 && days <= 365 ? '<div class="countdown"><div class="cd-n">' + days + '</div><div class="cd-l">' + (days === 1 ? 'dia para a prova' : days === 0 ? 'é hoje! Boa prova 🏁' : 'dias para a prova') + '<br><span>' + RB.esc(a.race) + '</span></div></div>' : '') +
+      (days != null && days >= 0 && RB.perf.raceKm(a.race || a.goal) ? '<button class="btn ' + (days <= 21 ? 'btn-r' : 'btn-o') + ' sm" style="margin-top:12px" onclick="RB.perf.openRace()">' + (days <= 21 ? '🏁 VER PLANO DE PROVA' : 'Plano de prova') + '</button>' : '') + '</div>';
 
     var b = A.plan && A.plan.block;
     if (b && b.resumo) {
@@ -136,7 +138,7 @@
 
   // ---------- PLANILHA ----------
   function planilha(el) {
-    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard();
+    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard() + RB.perf.card(false);
     if (!A.weeks.length) { el.innerHTML = html + RB.empty('Planilha ainda não publicada.') + RB.pace.calcCard(); return; }
     A.weeks.forEach(function (wk) {
       var ic = A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
@@ -232,6 +234,7 @@
   }
   function tail() {
     return '<div class="fq">' + RB.ew('Comentário (opcional)', 'mid') + '<textarea id="fb-comment" class="ft" rows="2" placeholder="' + (F.kind === 'strength' ? 'Carga, técnica, algo diferente...' : 'Dor, dúvida, algo diferente...') + '"></textarea></div>' +
+      (RB.audio.supported() ? '<div class="fq">' + RB.ew('Prefere falar? <span class="hint">grave um áudio pro coach · até 3 min</span>', 'mid') + RB.audio.recorder('fb') + '</div>' : '') +
       '<div class="fq">' + RB.ew('Data do treino', 'mid') + '<input type="date" class="fi" id="fb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
       '<button id="submit-fb" class="sb2" onclick="RB.athlete.submit()">' + needText() + '</button>';
   }
@@ -302,6 +305,9 @@
     if (!ready()) return;
     var btn = RB.$('submit-fb'); btn.textContent = 'SALVANDO...'; btn.disabled = true;
     var base = { athlete_id: RB.state.user.id, rpe: F.rpe, energia: F.energia || null, dor: F.dor === 'sim', comment: RB.$('fb-comment').value.trim() || null, performed_at: RB.$('fb-date').value || undefined };
+    var audioPath = null;
+    try { audioPath = await RB.audio.upload(RB.state.user.id); } catch (e) { btn.disabled = false; btn.textContent = 'ENVIAR FEEDBACK'; RB.toast('Não deu para enviar o áudio', false); return; }
+    if (audioPath) base.audio_path = audioPath;
     var payload = F.kind === 'strength'
       ? Object.assign(base, { kind: 'strength', workout_id: F.w ? F.w.id : null, strength_day: F.label, completion: F.completion, load_trend: F.load_trend || null, pain_exercises: F.dor === 'sim' ? F.pain : [] })
       : Object.assign(base, runMetrics(), { workout_id: F.w.id, fadiga: F.fadiga || null, sono: F.sono || null, hidratacao: F.hidratacao || null, gel: F.gel || null, frequencia_cardiaca: F.frequencia_cardiaca || null });
@@ -327,6 +333,31 @@
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Lembrete') + '<div class="sh-t">Treinos da semana passada<br>sem feedback</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       '<div class="p" style="margin-bottom:20px">Você tem ' + overdue + ' treino' + (overdue > 1 ? 's' : '') + ' da semana passada sem feedback. Toda avaliação ajuda seu coach a ajustar o plano.</div>' +
       '<button class="btn btn-r" onclick="RB.closeSheet();RB.athlete.fbView=\'semana\';RB.athlete.go(\'feedback\')">DAR FEEDBACK AGORA</button><button class="btn btn-o" onclick="RB.closeSheet()">Lembrar depois</button>');
+  };
+
+  // ---------- MINHA CONTA ----------
+  A.account = function () {
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Minha conta') + '<div class="sh-t">' + RB.esc(A.me.name) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="fld"><div class="fld-l">Nova senha <span class="hint">mínimo 6 caracteres</span></div><input class="fi" type="password" id="my-pw" autocomplete="new-password"></div>' +
+      '<div class="fld"><div class="fld-l">Repita a nova senha</div><input class="fi" type="password" id="my-pw2" autocomplete="new-password"></div>' +
+      '<button class="btn btn-o" id="my-pw-go" onclick="RB.athlete.changePw()">TROCAR SENHA</button>' +
+      '<label class="ck-l big" style="margin-top:18px"><input type="checkbox" id="my-mural"' + (A.me.mural !== false ? ' checked' : '') + ' onchange="RB.athlete.setMural(this.checked)"> <span><b>Aparecer no mural da galera</b><br>Mostra seu primeiro nome, os treinos (tipo, km e tempo) e sua sequência de semanas para os outros alunos.</span></label>' +
+      '<button class="btn-link danger" style="margin-top:14px" onclick="RB.closeSheet();RB.logout()">Sair do app</button>');
+  };
+  A.changePw = async function () {
+    var p1 = RB.$('my-pw').value, p2 = RB.$('my-pw2').value;
+    if (p1.length < 6) { RB.toast('Senha com no mínimo 6 caracteres', false); return; }
+    if (p1 !== p2) { RB.toast('As senhas não conferem', false); return; }
+    var b = RB.$('my-pw-go'); b.disabled = true;
+    var r = await sb.auth.updateUser({ password: p1 });
+    b.disabled = false;
+    if (r.error) { RB.toast('Não deu para trocar a senha', false); return; }
+    RB.closeSheet(); RB.toast('Senha trocada ✓');
+  };
+  A.setMural = async function (on) {
+    var r = await sb.from('athletes').update({ mural: on }).eq('id', A.me.id);
+    if (r.error) { RB.toast('Não deu para salvar', false); return; }
+    A.me.mural = on; RB.toast(on ? 'Você está no mural ✓' : 'Você saiu do mural');
   };
 
   // ---------- RELATÓRIO ----------

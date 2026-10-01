@@ -43,6 +43,7 @@
     if (met || f.strava_url) desc += '<div class="fbc-met">' + (met ? '<b>' + met + '</b>' : '') + (f.strava_url ? ' <a href="' + RB.esc(f.strava_url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Strava ↗</a>' : '') + '</div>';
     if (!RB.state.isCoach && f.distance_km && f.duration_sec && !o.static) desc += '<button class="mini share-b" onclick="event.stopPropagation();RB.share.openId(' + f.id + ')">↗ Compartilhar imagem</button>';
     var com = f.comment ? '<div class="fbc-c">“' + RB.esc(f.comment) + '”</div>' : '';
+    if (f.audio_path) com += RB.audio.player(f.audio_path);
     var last = reps[reps.length - 1];
     var foot = '';
     if (last) {
@@ -77,7 +78,8 @@
     var msgs = reps.map(function (r) {
       var mine = r.author_id === RB.state.user.id;
       var who = mine ? 'Você' : (r.author_id === RB.cfg.coachId ? 'Coach' : name);
-      return '<div class="msg' + (mine ? ' me' : '') + '"><div class="msg-b">' + RB.md(r.body) + '</div><div class="msg-m">' + RB.esc(who) + ' · ' + RB.ago(r.created_at) + '</div></div>';
+      var onlyAudio = r.audio_path && r.body === '🎤 Áudio';
+      return '<div class="msg' + (mine ? ' me' : '') + '"><div class="msg-b">' + (onlyAudio ? '' : RB.md(r.body)) + (r.audio_path ? RB.audio.player(r.audio_path) : '') + '</div><div class="msg-m">' + RB.esc(who) + ' · ' + RB.ago(r.created_at) + '</div></div>';
     }).join('');
     var ph = coach ? 'Responder ' + RB.esc(name) + '...' : 'Escreva para o coach...';
     var quick = coach ? '<div class="quick">' + ['Boa! 👊', 'Segue o plano.', 'Vamos ajustar a próxima semana.', 'Me conta mais sobre a dor.'].map(function (q) {
@@ -87,15 +89,19 @@
       '<div class="sh-top"><div>' + RB.ew('Feedback do treino') + '</div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       RB.fbCard(f, { athlete: coach ? f.athletes : null, showDesc: true, static: true }) +
       '<div class="thread">' + (msgs || '<div class="muted-s" style="text-align:center;padding:12px 0">' + (coach ? 'Nenhuma resposta ainda.' : 'Seu coach vai ler e responder por aqui.') + '</div>') + '</div>' +
-      quick + '<div class="composer"><textarea id="reply-text" class="ft" rows="2" placeholder="' + ph + '"></textarea><button class="btn btn-r send" onclick="RB.threads.send()">ENVIAR</button></div>';
+      quick + RB.audio.recorder('th', 'Mandar áudio') + '<div class="composer"><textarea id="reply-text" class="ft" rows="2" placeholder="' + ph + '"></textarea><button class="btn btn-r send" onclick="RB.threads.send()">ENVIAR</button></div>';
     var th = document.querySelector('#sheet-body .thread'); if (th) th.scrollTop = th.scrollHeight;
   };
   T.quick = function (b) { var t = RB.$('reply-text'); t.value = (t.value ? t.value + ' ' : '') + b.textContent; t.focus(); };
   T.send = async function () {
     var t = RB.$('reply-text'), body = t.value.trim();
-    if (!body) return;
+    if (!body && !RB.audio.blob) return;
     var btn = document.querySelector('#sheet-body .send'); btn.disabled = true; btn.textContent = '...';
-    var res = await sb.from('feedback_replies').insert({ feedback_id: current.f.id, body: body, author_id: RB.state.user.id }).select('id').single();
+    var audioPath = null;
+    try { audioPath = await RB.audio.upload(current.f.athlete_id); } catch (e) { btn.disabled = false; btn.textContent = 'ENVIAR'; RB.toast('Não deu para enviar o áudio', false); return; }
+    var row = { feedback_id: current.f.id, body: body || '🎤 Áudio', author_id: RB.state.user.id };
+    if (audioPath) row.audio_path = audioPath;
+    var res = await sb.from('feedback_replies').insert(row).select('id').single();
     if (!res.error) RB.push.notify({ type: 'reply', reply_id: res.data.id });
     btn.disabled = false; btn.textContent = 'ENVIAR';
     if (res.error) { RB.toast('Erro ao enviar', false); return; }

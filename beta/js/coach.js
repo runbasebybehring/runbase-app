@@ -19,7 +19,7 @@
     C.athletes = r[0].data || [];
     C.fbs = r[1].data || [];
     C.replies = await RB.threads.load(C.fbs.map(function (f) { return f.id; }));
-    await RB.ms.coachLoad();
+    await Promise.all([RB.ms.coachLoad(), RB.radar.loadDigest()]);
     C.gymWeeks = {}; Object.keys(RB.ms.coach.gym).forEach(function (id) { C.gymWeeks[id] = RB.ms.coach.gym[id].weeks; });
     C.lastFb = {}; C.fbs.forEach(function (f) { if (!C.lastFb[f.athlete_id]) C.lastFb[f.athlete_id] = f.created_at; });
     RB.setBadge('fbBadge', C.awaiting().length);
@@ -65,12 +65,7 @@
     var wk = C.fbs.filter(function (f) { return new Date(f.created_at) > weekAgo; });
     var html = '<div class="hello"><div class="hello-s">' + hi + '</div><div class="hello-n">' + RB.esc(RB.cfg.coachName.toUpperCase()) + '.</div></div>' +
       RB.push.card() + '<div class="card">' + RB.ew('Visão geral') + RB.statGrid([{ v: String(C.athletes.length), l: 'Alunos', a: true }, { v: String(wk.length), l: 'Feedbacks 7d' }, { v: String(wait.length), l: 'Sem resposta' }]) + '</div>';
-    html += RB.ms.coachCards(C.athletes);
-    if (pain.length) {
-      html += '<div class="card rl">' + RB.ew('⚠ Dor relatada nos últimos 7 dias') + pain.map(function (f) {
-        return '<div class="alert-row" onclick="RB.threads.open(' + f.id + ')">' + RB.av(f.athletes && f.athletes.img, 28) + '<div style="flex:1"><b>' + RB.esc(f.athletes ? f.athletes.name : '') + '</b> · ' + RB.esc(f.kind === 'strength' ? 'Força' + ((f.pain_exercises || []).length ? ': ' + f.pain_exercises.join(', ') : '') : (f.workouts ? f.workouts.type : '')) + (f.comment ? '<div class="muted-s">“' + RB.esc(f.comment) + '”</div>' : '') + '</div><span class="chev">›</span></div>';
-      }).join('') + '</div>';
-    }
+    html += RB.radar.digestCard() + RB.radar.card(C.athletes, C.fbs) + RB.ms.coachCards(C.athletes);
     if (wait.length) {
       html += RB.ew('Aguardando sua resposta') + wait.slice(0, 4).map(function (f) { return RB.fbCard(f, { athlete: f.athletes, replies: C.replies[f.id] }); }).join('') +
         (wait.length > 4 ? '<button class="btn btn-o" onclick="RB.coach.go(\'feedbacks\')">Ver todos (' + wait.length + ')</button>' : '');
@@ -82,7 +77,7 @@
   }
 
   function list(el) {
-    el.innerHTML = RB.tt('ALUNOS') + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('');
+    el.innerHTML = RB.tt('ALUNOS') + '<button class="btn btn-r sm" style="margin-bottom:12px" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('');
   }
 
   // ---------- DETALHE DO ALUNO ----------
@@ -100,7 +95,7 @@
   async function detail(el) {
     var a = C.athlete;
     var head = '<button class="bb" onclick="RB.coach.go(\'athletes\')">← Alunos</button>' +
-      '<div class="ath-h">' + RB.av(a.img, 60) + '<div><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div></div>';
+      '<div class="ath-h">' + RB.av(a.img, 60) + '<div style="flex:1"><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div><button class="mini ghost acc-b" onclick="RB.radar.access()">Acesso</button></div>';
     var gw = C.gymWeeks[a.id] || 0;
     if (gw >= RB.cfg.gymSwapWeeks) head += '<div class="card rl">' + RB.ew('⚠ Treino de força há ' + gw + ' semanas') + '<div class="p">Está na hora de considerar trocar os exercícios ou progredir a carga/estrutura.</div><button class="btn btn-o sm" style="margin-top:12px" onclick="RB.edit.gotoForca()">EDITAR TREINO DE FORÇA</button></div>';
     head += RB.seg([['planilha', 'Planilha de corrida'], ['plano', 'Força e plano'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios']], C.dtab, 'RB.coach.dt').replace('class="tr"', 'class="tr tr4"');

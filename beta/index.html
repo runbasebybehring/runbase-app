@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="RUNBASE">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=2.7.1">
+<link rel="stylesheet" href="css/app.css?v=2.8.0">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -48,13 +48,13 @@
 </div>
 
 <div id="screen-athlete" class="screen">
-  <div class="header"><div class="logo">RUN<span>BASE</span></div><div class="hdr-r"><div class="av" id="ath-avatar" style="width:34px;height:34px;font-size:10px"></div><button class="logout" onclick="RB.logout()" aria-label="Sair">⎋</button></div></div>
+  <div class="header"><div class="logo">RUN<span>BASE</span></div><div class="hdr-r"><button class="av av-btn" id="ath-avatar" style="width:34px;height:34px;font-size:10px" onclick="RB.athlete.account()" aria-label="Minha conta"></button><button class="logout" onclick="RB.logout()" aria-label="Sair">⎋</button></div></div>
   <div id="athlete-content" class="content"></div>
   <nav class="nav">
     <button class="nav-btn active" data-tab="home" onclick="RB.athlete.go('home')"><span class="icon">◈</span><span class="lbl">Home</span></button>
     <button class="nav-btn" data-tab="planilha" onclick="RB.athlete.go('planilha')"><span class="icon">▤</span><span class="lbl">Planilha</span></button>
     <button class="nav-btn" data-tab="forca" onclick="RB.athlete.go('forca')"><span class="icon">◆</span><span class="lbl">Força</span></button>
-    <button class="nav-btn" data-tab="eventos" onclick="RB.athlete.go('eventos')"><span class="icon">✦</span><span class="lbl">Eventos</span><div class="badge" id="evBadge" style="display:none">0</div></button>
+    <button class="nav-btn" data-tab="eventos" onclick="RB.athlete.go('eventos')"><span class="icon">✦</span><span class="lbl">Galera</span><div class="badge" id="evBadge" style="display:none">0</div></button>
     <button class="nav-btn" data-tab="feedback" onclick="RB.athlete.go('feedback')"><span class="icon">◎</span><span class="lbl">Feedback</span><div class="badge" id="pendBadge" style="display:none">0</div></button>
     <button class="nav-btn" data-tab="relatorio" onclick="RB.athlete.go('relatorio')"><span class="icon">◑</span><span class="lbl">Relatório</span><div class="badge" id="relBadge" style="display:none">0</div></button>
   </nav>
@@ -67,20 +67,24 @@
 <div id="print-root"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=2.7.1"></script>
-<script src="js/core.js?v=2.7.1"></script>
-<script src="js/charts.js?v=2.7.1"></script>
-<script src="js/threads.js?v=2.7.1"></script>
-<script src="js/reports.js?v=2.7.1"></script>
-<script src="js/media.js?v=2.7.1"></script>
-<script src="js/strength.js?v=2.7.1"></script>
-<script src="js/pace.js?v=2.7.1"></script>
-<script src="js/push.js?v=2.7.1"></script>
-<script src="js/events.js?v=2.7.1"></script>
-<script src="js/editor.js?v=2.7.1"></script>
-<script src="js/share.js?v=2.7.1"></script>
-<script src="js/milestones.js?v=2.7.1"></script>
-<script src="js/athlete.js?v=2.7.1"></script>
-<script src="js/coach.js?v=2.7.1"></script>
+<script src="js/config.js?v=2.8.0"></script>
+<script src="js/core.js?v=2.8.0"></script>
+<script src="js/charts.js?v=2.8.0"></script>
+<script src="js/threads.js?v=2.8.0"></script>
+<script src="js/reports.js?v=2.8.0"></script>
+<script src="js/media.js?v=2.8.0"></script>
+<script src="js/strength.js?v=2.8.0"></script>
+<script src="js/pace.js?v=2.8.0"></script>
+<script src="js/push.js?v=2.8.0"></script>
+<script src="js/events.js?v=2.8.0"></script>
+<script src="js/editor.js?v=2.8.0"></script>
+<script src="js/share.js?v=2.8.0"></script>
+<script src="js/milestones.js?v=2.8.0"></script>
+<script src="js/radar.js?v=2.8.0"></script>
+<script src="js/perf.js?v=2.8.0"></script>
+<script src="js/community.js?v=2.8.0"></script>
+<script src="js/audio.js?v=2.8.0"></script>
+<script src="js/athlete.js?v=2.8.0"></script>
+<script src="js/coach.js?v=2.8.0"></script>
 </body>
 </html>

@@ -29,7 +29,7 @@
   };
 
   function drawPlanilha() {
-    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button></div>' +
+    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button><button class="btn btn-o sm" onclick="RB.edit.tplPick(\'week\')">+ DE UM MODELO</button></div>' +
       '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>' +
       '<div class="card cal-card" onclick="RB.edit.startForm()"><div>' + RB.ew('Calendário', 'blue') + '<div class="cal-t">' +
       (P.athlete.plan_start ? 'Semana 1 em ' + fmtBR(P.athlete.plan_start) + ' · avança toda segunda' : 'Sem data · a semana só muda manualmente') + '</div></div><span class="mini">Alterar</span></div>';
@@ -53,6 +53,7 @@
           '<div class="wk-acts"><button onclick="RB.edit.weekForm(' + wk.id + ')">Editar semana</button>' +
           (wk.is_current ? '' : '<button onclick="RB.edit.makeCurrent(' + wk.id + ')">Tornar semana atual</button>') +
           '<button onclick="RB.edit.dupWeek(' + wk.id + ')">Duplicar</button>' +
+          '<button onclick="RB.edit.tplSave(\'week\',' + wk.id + ')">Salvar como modelo</button>' +
           '<button class="danger" onclick="RB.edit.delWeek(' + wk.id + ')">Excluir</button></div></div>';
       }
       html += '</div>';
@@ -227,6 +228,93 @@
     RB.closeSheet(); RB.toast('Treino excluído'); reload();
   };
 
+  // ======================= PLANO DE PROVA / ZONAS DO TESTE =======================
+  E.raceForm = function () {
+    var rp = S.plan.race_plan || {};
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Plano de prova') + '<div class="sh-t">' + esc(S.athlete.race || 'Prova') + '</div><div class="sh-s">O aluno vê o plano no app (com destaque nas 3 semanas antes da prova).</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="calc-r"><div><div class="fld-l">Meta de tempo <span class="hint">h:mm:ss</span></div><input class="fi" id="rp-t" value="' + esc(rp.target || '') + '" placeholder="vazio = estimativa do teste" oninput="RB.edit.racePrev()"></div>' +
+      '<div><div class="fld-l">Gel a cada (min)</div><input class="fi" id="rp-g" inputmode="numeric" value="' + esc(rp.gel_min || 40) + '" oninput="RB.edit.racePrev()"></div></div>' +
+      '<div class="fld"><div class="fld-l">Recado para a prova <span class="hint">opcional · **negrito** funciona</span></div><textarea class="ft" id="rp-n" rows="3" placeholder="Largue no pelotão de 5:30, não persiga ninguém até o km 15.">' + esc(rp.notes || '') + '</textarea></div>' +
+      '<div class="card rp-prev" id="rp-prev"></div>' +
+      '<button class="btn btn-r" onclick="RB.edit.saveRace()">SALVAR PLANO</button>');
+    E.racePrev();
+  };
+  var raceVals = function () { return { target: RB.$('rp-t').value.trim(), gel_min: +RB.$('rp-g').value || 40, notes: RB.$('rp-n') ? RB.$('rp-n').value.trim() : '' }; };
+  E.racePrev = function () { RB.$('rp-prev').innerHTML = RB.perf.raceHtml(S.athlete, raceVals(), RB.perf.tests); };
+  E.saveRace = async function () {
+    var v = raceVals();
+    if (v.target && !RB.pace.parseHMS(v.target)) { RB.toast('Meta no formato h:mm:ss', false); return; }
+    var r = await sb.from('athlete_plans').upsert({ athlete_id: S.athlete.id, race_plan: v, updated_at: new Date().toISOString() }).select().single();
+    if (r.error) { RB.toast('Erro ao salvar', false); return; }
+    RB.closeSheet(); RB.toast('Plano de prova salvo ✓'); RB.coach.dt('plano');
+  };
+  // abre o editor de zonas com os paces sugeridos pelo teste
+  E.zonesWith = function (paces) {
+    E.open('zonas');
+    paces.forEach(function (p, i) { if (X.data[i]) X.data[i].pace = p; });
+    drawX();
+    RB.toast('Zonas preenchidas pelo teste — revise e salve');
+  };
+
+  // ======================= MODELOS =======================
+  // modelos de treino de força (o programa inteiro) e de semana de corrida (treinos da semana)
+  var TPL = { list: [] };
+  E.tplSave = async function (kind, wid) {
+    var data, sug;
+    if (kind === 'week') {
+      var w = findWeek(wid);
+      if (!w.workouts.length) { RB.toast('Semana sem treinos', false); return; }
+      data = { volume: w.volume || '', workouts: w.workouts.map(function (x) { return { day_label: x.day_label, type: x.type, description: x.description, structure: x.structure || null }; }) };
+      sug = (w.label || '').replace(/^Semana\s*\d+\s*[—–-]?\s*/i, '') || 'Semana modelo';
+    } else {
+      data = clone(X.data);
+      if (!data.length) { RB.toast('Treino de força vazio', false); return; }
+      sug = (data[0].tipo || 'Treino de força');
+    }
+    var name = prompt('Nome do modelo:', sug); if (!name || !name.trim()) return;
+    var r = await sb.from('templates').insert({ kind: kind, name: name.trim(), data: data });
+    RB.toast(r.error ? 'Erro ao salvar o modelo' : 'Modelo salvo ✓', !r.error);
+  };
+  E.tplPick = async function (kind) {
+    TPL.kind = kind;
+    RB.openSheet('<div class="ld"><div class="sp"></div></div>');
+    var r = await sb.from('templates').select('*').eq('kind', kind).order('created_at', { ascending: false });
+    TPL.list = r.data || [];
+    var desc = function (t) {
+      if (kind === 'week') return (t.data.workouts || []).length + ' treinos' + (t.data.volume ? ' · ' + esc(t.data.volume) : '');
+      var n = 0; (t.data || []).forEach(function (d) { n += flat(d).length; }); return (t.data || []).length + ' dia(s) · ' + n + ' exercícios';
+    };
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Modelos') + '<div class="sh-t">' + (kind === 'week' ? 'Semanas de corrida' : 'Treinos de força') + '</div>' +
+      '<div class="sh-s">' + (kind === 'week' ? 'A semana escolhida entra no fim da planilha deste aluno.' : 'O modelo substitui o treino de força que está no editor. Você revisa antes de salvar.') + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      (TPL.list.length ? TPL.list.map(function (t, i) {
+        return '<div class="tpl-r"><div><b>' + esc(t.name) + '</b><div class="muted-s">' + desc(t) + ' · ' + RB.fmtDate(t.created_at) + '</div></div><div class="tpl-a"><button class="mini" onclick="RB.edit.tplApply(' + i + ')">Usar</button><button class="mini ghost" onclick="RB.edit.tplDel(' + i + ')">✕</button></div></div>';
+      }).join('') : RB.empty('Nenhum modelo ainda.<br>' + (kind === 'week' ? 'Abra uma semana e toque em "Salvar como modelo".' : 'Monte um treino e toque em "Salvar como modelo".'))));
+  };
+  E.tplApply = async function (i) {
+    var t = TPL.list[i];
+    if (TPL.kind === 'week') {
+      RB.closeSheet();
+      var w = await createWeek(t.data);
+      if (w) { await sb.from('weeks').update({ label: 'Semana ' + w.week_number + ' — ' + t.name }).eq('id', w.id); RB.toast('Semana criada a partir do modelo ✓'); await reload(); E.weekForm(w.id); }
+      return;
+    }
+    if (X.data.length && !confirm('Substituir o treino de força do editor pelo modelo "' + t.name + '"?')) return;
+    X.data = clone(t.data).map(function (d) {
+      if (!d.grupos) d.grupos = [{ nome: '', foco: '', rec: '', exercicios: d.blocos || [] }];
+      delete d.blocos; d.aquec = d.aquec || []; return d;
+    });
+    RB.closeSheet(); drawX();
+    X.isNew = true; drawX();
+    RB.toast('Modelo aplicado — revise e toque em Salvar');
+  };
+  E.markNew = function (v) { if (X) X.isNew = v; };
+  E.tplDel = async function (i) {
+    var t = TPL.list[i];
+    if (!confirm('Excluir o modelo "' + t.name + '"? Os alunos que já usam esse treino não mudam.')) return;
+    await sb.from('templates').delete().eq('id', t.id);
+    E.tplPick(TPL.kind);
+  };
+
   // ======================= PLANO =======================
   var S = null; // { athlete, el, plan, zones, profile }
   var COLORS = [['red', 'Vermelho'], ['blue', 'Azul'], ['green', 'Verde'], ['off', 'Folga']];
@@ -237,7 +325,8 @@
     el.innerHTML = '<div class="ld"><div class="sp"></div></div>';
     var r = await Promise.all([
       sb.from('athlete_plans').select('*').eq('athlete_id', athlete.id).maybeSingle(),
-      sb.from('zones').select('*').eq('athlete_id', athlete.id).order('sort_order')
+      sb.from('zones').select('*').eq('athlete_id', athlete.id).order('sort_order'),
+      RB.perf.load(athlete.id)
     ]);
     var plan = r[0].data || { athlete_id: athlete.id, block: null, week_layout: null, strength: null };
     S = { athlete: athlete, el: el, plan: plan, zones: r[1].data || [] };
@@ -248,6 +337,8 @@
       section('Perfil e objetivo', esc(athlete.goal || '—') + '<br><span class="muted-s">' + esc(athlete.race || '') + ' · ' + esc(athlete.pace || '') + '</span>', 'perfil') +
       section('Bloco atual', b.mes ? '<b>' + esc(b.mes) + '</b>' + (b.obj ? ' · ' + esc(b.obj) : '') + '<br><span class="muted-s">' + esc((b.resumo || '').slice(0, 120)) + (b.resumo && b.resumo.length > 120 ? '…' : '') + '</span>' : 'não cadastrado', 'bloco') +
       section('Organização da semana', plan.week_layout && plan.week_layout.length ? '<div class="wkgrid">' + plan.week_layout.map(wkCell).join('') + '</div>' : 'não cadastrada', 'semana') +
+      RB.perf.card(true) +
+      section('Plano de prova', (function () { var pl = RB.perf.plan(athlete, plan.race_plan, RB.perf.tests); return !pl ? 'Sem distância no campo "Prova" do perfil' : pl.missing ? 'Defina a meta de tempo (ou registre um teste)' : 'Meta <b>' + RB.pace.fmtHMS(pl.target) + '</b> · ' + RB.pace.fmtPace(pl.target / pl.km) + ' /km<br><span class="muted-s">' + esc(pl.from) + (pl.gels.length ? ' · ' + pl.gels.length + ' gel(s)' : '') + '</span>'; })(), 'prova') +
       section('Zonas de treino', S.zones.length ? S.zones.map(function (z) { return '<span class="zchip" style="--zc:' + esc(z.color) + '"><b>' + esc(z.zone.split('·')[0].trim()) + '</b> ' + esc(z.pace) + '</span>'; }).join(' ') : 'não cadastradas', 'zonas') +
       section('Treino de força', sumStr + (s.length ? '<br><span class="muted-s">Programa atual há ' + sw + ' semana(s)</span>' : ''), 'forca') +
       (s.length ? '<button class="btn btn-o" onclick="RB.edit.videos()">▶ VÍDEOS DOS EXERCÍCIOS</button>' : '');
@@ -267,6 +358,7 @@
   // editor em tela cheia com estado em memória
   var X = null; // { key, data }
   E.open = function (key) {
+    if (key === 'prova') return E.raceForm();
     var p = S.plan, a = S.athlete;
     var data;
     if (key === 'perfil') data = { goal: a.goal || '', race: a.race || '', pace: a.pace || '', vol: a.vol || '', img: a.img || '' };
@@ -335,7 +427,8 @@
         '<div class="hint" style="margin-top:10px">Comece o nome com Z1…Z5 para o app ligar a zona aos treinos e mostrar o pace ao aluno.</div>';
     }
     if (X.key === 'forca') {
-      h = '<div class="hint" style="margin-bottom:12px">Marque "registra carga" nos exercícios em que o aluno deve anotar a carga. O histórico de cargas segue pelo nome do exercício.</div>' +
+      h = '<div class="tpl-bar"><button class="mini" onclick="RB.edit.tplPick(\'strength\')">Aplicar modelo</button><button class="mini ghost" onclick="RB.edit.tplSave(\'strength\')">Salvar como modelo</button></div>' +
+        '<div class="hint" style="margin-bottom:12px">Marque "registra carga" nos exercícios em que o aluno deve anotar a carga. O histórico de cargas segue pelo nome do exercício.</div>' +
         d.map(function (day, di) {
           return '<div class="card fd-ed"><div class="fd-h"><b>Dia ' + (di + 1) + '</b><div class="blk-a">' + (di > 0 ? '<button onclick="RB.edit.arr(\'\',' + di + ',-1)">▲</button>' : '') + (di < d.length - 1 ? '<button onclick="RB.edit.arr(\'\',' + di + ',1)">▼</button>' : '') + '<button class="danger" onclick="RB.edit.arrDel(\'\',' + di + ')">Remover dia</button></div></div>' +
             '<div class="z-row">' + I(di + '.dia', day.dia, 'TER / QUI') + I(di + '.tempo', day.tempo, '50–60min') + '</div>' + I(di + '.tipo', day.tipo, 'FULL BODY — Força para corrida', 'full') +
@@ -360,7 +453,7 @@
             '<button class="mini" onclick="RB.edit.arrAdd(\'' + di + '.grupos\',{nome:\'\',foco:\'\',rec:\'\',exercicios:[]})">+ Bloco de exercícios</button></div>';
         }).join('') +
         '<button class="btn btn-o" onclick="RB.edit.arrAdd(\'\',{dia:\'\',tipo:\'\',tempo:\'\',intro:\'\',aquec:[],grupos:[{nome:\'\',foco:\'\',rec:\'\',exercicios:[]}]})">+ DIA DE TREINO</button>' +
-        '<label class="ck-l big"><input type="checkbox" id="str-new"> <span><b>É um programa novo</b><br>Zera a contagem de 4 semanas. Deixe desmarcado para pequenos ajustes de carga ou texto.</span></label>';
+        '<label class="ck-l big"><input type="checkbox" id="str-new"' + (X.isNew ? ' checked' : '') + ' onchange="RB.edit.isNew=this.checked;RB.edit.markNew(this.checked)"> <span><b>É um programa novo</b><br>Zera a contagem de 4 semanas. Deixe desmarcado para pequenos ajustes de carga ou texto.</span></label>';
     }
     h += '<button class="btn btn-r" onclick="RB.edit.saveX()">SALVAR</button>';
     var body = RB.$('ed-body'), st = body.parentNode.scrollTop;

@@ -117,6 +117,13 @@ Deno.serve(async (req) => {
       return json({ sent: await send((aths ?? []).map((a) => a.id), { title: `Novo evento: ${e.title}`, body: `${when}${e.location ? " · " + e.location : ""} — confirme sua presença.`, tab: "eventos", tag: "event" }) });
     }
 
+    if (body.type === "nudge") {
+      if (!isCoach) return json({ error: "forbidden" }, 403);
+      const text = String(body.text ?? "").trim().slice(0, 180) || "Como estão os treinos? Registra no app pra eu acompanhar.";
+      const tab = ["home", "feedback", "forca", "planilha"].includes(body.tab) ? body.tab : "home";
+      return json({ sent: await send([String(body.athlete_id)], { title: "Recado do coach 👋", body: text, tab, tag: "nudge" }) });
+    }
+
     return json({ error: "bad_request" }, 400);
   } catch (e) {
     return json({ error: String(e) }, 500);
