@@ -92,17 +92,10 @@
 
   // ---- aquecimento e ativação: lista estruturada (d.aquec) ou lida do texto antigo da introdução ----
   function cap(t) { t = String(t || '').trim(); return t.charAt(0).toUpperCase() + t.slice(1); }
-  G.parseAquec = function (text) {
-    var paras = String(text || '').split(/\n\s*\n/), first = paras[0] || '';
-    if (!/^\s*aquecimento/i.test(first)) return null;
-    var rest = paras.slice(1).join('\n\n').trim();
-    var ref = /igua(?:l|is)\s+(?:ao|aos|à|a|em)\s+(.+?)\.?\s*$/i.exec(first);
-    if (first.indexOf(':') < 0 && ref) return { items: null, ref: ref[1].trim(), intro: rest };
-    var body = first.replace(/^\s*aquecimento[^:]*:\s*/i, '').trim().replace(/\.\s*$/, '');
-    var group = 'Aquecimento', items = [];
+  function aqItems(body, group, items) {
     body.split(/\.\s+/).forEach(function (sent) {
       sent.split(/\s+·\s+/).forEach(function (part) {
-        part = part.trim(); if (!part) return;
+        part = part.trim().replace(/\.$/, ''); if (!part) return;
         var lab = /^([^:\d]{3,40}):\s*(.+)$/.exec(part);
         if (lab) { group = cap(lab[1]); part = lab[2]; }
         var edu = /^(.+?)\s+[—–-]\s+(.+)$/.exec(part);
@@ -111,6 +104,22 @@
         items.push(m ? { g: group, b: cap(m[1]), e: m[2].trim() } : { g: group, b: cap(part), e: '' });
       });
     });
+    return items;
+  }
+  G.parseAquec = function (text) {
+    var paras = String(text || '').split(/\n\s*\n/), first = paras[0] || '';
+    if (!/^\s*aquecimento/i.test(first)) return null;
+    // outros parágrafos com rótulo de ativação/aquecimento (ex.: "**Nos dias de escalada, ative antes:** ...") também viram itens
+    var extra = [], keep = [];
+    paras.slice(1).forEach(function (pp) {
+      var m = /^\s*\*\*(.+?):?\*\*:?\s*(.+)$/.exec(pp.replace(/\n/g, ' '));
+      if (m && /ativ|aquec|mobil/i.test(m[1]) && /\d/.test(m[2])) aqItems(m[2].trim(), cap(m[1].replace(/:$/, '')), extra); else keep.push(pp);
+    });
+    var rest = keep.join('\n\n').trim();
+    var ref = /igua(?:l|is)\s+(?:ao|aos|à|a|em)\s+(.+?)\.?\s*$/i.exec(first);
+    if (first.indexOf(':') < 0 && ref) return { items: null, ref: ref[1].trim(), extra: extra, intro: rest };
+    var body = first.replace(/^\s*aquecimento[^:]*:\s*/i, '').trim().replace(/\.\s*$/, '');
+    var items = aqItems(body, 'Aquecimento', []).concat(extra);
     return items.length ? { items: items, intro: rest } : null;
   };
   G.aquec = function (d, days) {
@@ -120,7 +129,7 @@
     if (!p.items && p.ref) {
       var src = (days || []).find(function (x) { return x !== d && x.dia && x.dia.toLowerCase().indexOf(p.ref.toLowerCase()) >= 0; });
       var sp = src ? (src.aquec && src.aquec.length ? { items: src.aquec } : G.parseAquec(src.intro)) : null;
-      return sp && sp.items ? { items: sp.items, intro: p.intro } : { items: [], intro: d.intro || '' };
+      return sp && sp.items ? { items: sp.items.concat(p.extra || []), intro: p.intro } : { items: [], intro: d.intro || '' };
     }
     return p;
   };
