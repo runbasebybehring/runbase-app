@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     const [ath, plan, fbs, gym, prev] = await Promise.all([
       db.from("athletes").select("name,goal,race,pace,vol,obs").eq("id", athlete_id).single(),
       db.from("athlete_plans").select("block").eq("athlete_id", athlete_id).maybeSingle(),
-      db.from("feedbacks").select("kind,strength_day,completion,load_trend,pain_exercises,rpe,energia,fadiga,sono,hidratacao,gel,frequencia_cardiaca,dor,comment,performed_at,workouts(day_label,type,description)")
+      db.from("feedbacks").select("kind,strength_day,completion,load_trend,pain_exercises,distance_km,duration_sec,rpe,energia,fadiga,sono,hidratacao,gel,frequencia_cardiaca,dor,comment,performed_at,workouts(day_label,type,description)")
         .eq("athlete_id", athlete_id).gte("performed_at", period).lt("performed_at", endStr).order("performed_at"),
       db.from("gym_logs").select("exercise_name,carga,created_at").eq("athlete_id", athlete_id).gte("created_at", period).lt("created_at", endStr).order("created_at"),
       db.from("reports").select("title,summary,coach_note").eq("athlete_id", athlete_id).eq("status", "published").lt("period", period).order("period", { ascending: false }).limit(1),
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       relatorio_anterior: prev.data?.[0] ?? null,
     };
 
-    const system = `Você é o Vic Behring, head coach da Run Base (corrida + força, São Paulo). Escreve o relatório mensal de um aluno.
+    const system = `Você é a Vic Behring, head coach da RUNBASE (corrida + força, São Paulo). Escreve o relatório mensal de um aluno.
 Tom: direto, humano, específico, sem frases genéricas de motivação, sem exageros. Português do Brasil. Frases curtas.
 Use só o que está nos dados. Se houver pouca informação, diga isso com naturalidade e foque no próximo passo. Nunca invente paces, distâncias ou resultados.
 Dor relatada deve aparecer como ponto de atenção, sem diagnóstico. Feedbacks com kind "strength" são treinos de força (completion = se completou, load_trend = carga, pain_exercises = exercícios com desconforto); comente corrida e força.
@@ -62,22 +62,49 @@ Use **negrito** em no máximo 2 trechos por texto.`;
 Dados (JSON):
 ${JSON.stringify(data)}
 
-Responda APENAS com um JSON válido neste formato:
-{"summary":"2 parágrafos curtos separados por \\n\\n sobre como foi o mês","highlights":[{"cls":"highlight|alert|note|next","t":"título curto começando com ★, ⚠, ↗ ou →","x":"1-2 frases"}],"coach_note":"mensagem pessoal de 2-3 frases, chamando o aluno pelo primeiro nome","badges":["2 a 3 selos curtos"]}
-Use 3 ou 4 destaques, e o último deve ser do tipo "next" (próximo passo).`;
+Preencha o relatório usando a ferramenta "relatorio". Use 3 ou 4 destaques, e o último deve ser do tipo "next" (próximo passo).`;
 
+    const tool = {
+      name: "relatorio",
+      description: "Devolve o texto do relatório mensal do aluno.",
+      input_schema: {
+        type: "object",
+        properties: {
+          summary: { type: "string", description: "2 parágrafos curtos separados por linha em branco sobre como foi o mês" },
+          highlights: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                cls: { type: "string", enum: ["highlight", "alert", "note", "next"] },
+                t: { type: "string", description: "título curto começando com ★, ⚠, ↗ ou →" },
+                x: { type: "string", description: "1-2 frases" },
+              },
+              required: ["cls", "t", "x"],
+            },
+          },
+          coach_note: { type: "string", description: "mensagem pessoal de 2-3 frases, chamando o aluno pelo primeiro nome" },
+          badges: { type: "array", items: { type: "string" }, description: "2 a 3 selos curtos" },
+        },
+        required: ["summary", "highlights", "coach_note", "badges"],
+      },
+    };
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 1500, system, messages: [{ role: "user", content: user }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 2000, system, tools: [tool], tool_choice: { type: "tool", name: "relatorio" }, messages: [{ role: "user", content: user }] }),
     });
-    if (!r.ok) return json({ error: "ai_failed", detail: (await r.text()).slice(0, 300) }, 502);
+    if (!r.ok) {
+      const detail = (await r.text()).slice(0, 500);
+      console.error("anthropic error", r.status, detail);
+      return json({ error: "ai_failed", status: r.status, detail }, 502);
+    }
     const out = await r.json();
-    const text: string = (out.content ?? []).map((c: { text?: string }) => c.text ?? "").join("");
-    const m = text.match(/\{[\s\S]*\}/);
-    if (!m) return json({ error: "ai_bad_output" }, 502);
-    return json(JSON.parse(m[0]));
+    const block = (out.content ?? []).find((c: { type?: string }) => c.type === "tool_use");
+    if (!block?.input) { console.error("sem tool_use", JSON.stringify(out).slice(0, 500)); return json({ error: "ai_bad_output" }, 502); }
+    return json(block.input);
   } catch (e) {
+    console.error("generate-report falhou", String(e));
     return json({ error: String(e) }, 500);
   }
 });
