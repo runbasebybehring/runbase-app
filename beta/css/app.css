@@ -536,7 +536,7 @@ body:has(.preview-overlay) .sheet{z-index:350}
 .vid-b{border:1.5px solid var(--red);background:var(--red);color:var(--cream);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;cursor:pointer;white-space:nowrap}
 .vid{background:#000;margin:0 0 14px;display:flex;justify-content:center}
 .vid video{width:100%;max-height:62vh;display:block}
-.vid.yt{position:relative;padding-top:100%}
+.vid.yt{position:relative;padding-top:56.25%}
 .vid.yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .vid-link{margin-bottom:14px;text-align:center;display:block}
 .vid-up{display:block;text-align:center}
@@ -551,3 +551,8 @@ body:has(.preview-overlay) .sheet{z-index:350}
 #lib-q{margin-bottom:10px;width:100%}
 .vid.yt.short{padding-top:150%}
 .lib-r .mini{white-space:nowrap;flex-shrink:0}
+.vs{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--mid)}
+.vs.on{color:var(--red)}
+.vs.def{color:var(--blue)}
+.vid-def{font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.4}
+.blk-a .vid-e.def{color:var(--blue);border-color:var(--blue)}

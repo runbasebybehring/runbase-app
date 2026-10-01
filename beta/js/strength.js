@@ -17,7 +17,7 @@
     var gym = plan && plan.strength;
     if (!gym || !gym.length) { el.innerHTML = RB.tt('FORÇA') + RB.empty('Treino de força ainda<br>não disponível.'); return; }
     var id = RB.state.user.id;
-    var rr = await Promise.all([sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300), RB.media.load()]);
+    var rr = await Promise.all([sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300), RB.media.load(id)]);
     var logs = rr[0].data || [];
     var hist = {};
     logs.forEach(function (l) { var k = hkey(l.exercise_name); (hist[k] = hist[k] || []); if (hist[k].length < 6) hist[k].push({ carga: l.carga, date: l.created_at }); });

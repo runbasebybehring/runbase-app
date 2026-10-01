@@ -159,3 +159,14 @@ create policy "coach envia videos" on storage.objects for insert to authenticate
 create policy "coach atualiza videos" on storage.objects for update to authenticated using (bucket_id='exercise-videos' and public.is_coach());
 create policy "coach apaga videos" on storage.objects for delete to authenticated using (bucket_id='exercise-videos' and public.is_coach());
 create policy "coach le videos" on storage.objects for select to authenticated using (bucket_id='exercise-videos' and public.is_coach());
+
+-- 16) Vídeo por aluno: exercise_media.athlete_id (nulo = vídeo padrão de máquina tradicional)
+alter table public.exercise_media add column athlete_id uuid references public.athletes(id) on delete cascade;
+alter table public.exercise_media drop constraint exercise_media_pkey;
+alter table public.exercise_media add column id uuid not null default gen_random_uuid() primary key;
+alter table public.exercise_media add constraint exercise_media_athlete_key unique nulls not distinct (athlete_id, key);
+create index exercise_media_athlete_idx on public.exercise_media (athlete_id);
+drop policy media_read on public.exercise_media;
+create policy media_read on public.exercise_media for select to authenticated
+  using (athlete_id is null or athlete_id = (select auth.uid()) or public.is_coach());
+-- + vídeo do agachamento sumô passa a ser da Krishna; + 18 vídeos padrão de máquinas (YouTube, Treino Mestre / FisioPrev / João Martins)
