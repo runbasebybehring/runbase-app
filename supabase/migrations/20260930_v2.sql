@@ -139,3 +139,8 @@ alter table public.feedbacks
   add column distance_km numeric(6,2) check (distance_km is null or (distance_km > 0 and distance_km < 1000)),
   add column duration_sec integer check (duration_sec is null or (duration_sec > 0 and duration_sec < 172800)),
   add column strava_url text check (strava_url is null or strava_url ~* '^https?://');
+
+-- 14) Semana atual pela data (01/10/2026): athletes.plan_start (segunda-feira da semana 1),
+--     sync_athlete_week / sync_all_weeks, cron diário 00h05 SP, trigger ao mudar plan_start.
+--     A regra antiga (avança só com 100% de feedback) vale só para quem não tem plan_start.
+--     Ponto de partida: plan_start calculado a partir da semana atual de cada aluno em 01/10/2026.

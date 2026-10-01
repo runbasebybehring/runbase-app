@@ -30,7 +30,9 @@
 
   function drawPlanilha() {
     var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button></div>' +
-      '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>';
+      '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>' +
+      '<div class="card cal-card" onclick="RB.edit.startForm()"><div>' + RB.ew('Calendário', 'blue') + '<div class="cal-t">' +
+      (P.athlete.plan_start ? 'Semana 1 em ' + fmtBR(P.athlete.plan_start) + ' · avança toda segunda' : 'Sem data · a semana só muda manualmente') + '</div></div><span class="mini">Alterar</span></div>';
     if (!P.weeks.length) html += RB.empty('Nenhuma semana ainda.<br>Crie a primeira acima.');
     var cur = P.weeks.find(function (w) { return w.is_current; });
     P.weeks.slice().reverse().forEach(function (wk) {
@@ -97,13 +99,50 @@
     if (r.error) { RB.toast('Erro ao salvar', false); return; }
     RB.closeSheet(); RB.toast('Semana salva ✓'); reload();
   };
+  // datas: a semana 1 começa numa segunda; a semana atual sai da data
+  var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+  var monday = function (d) { d = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return d; };
+  var fmtBR = function (s) { var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+  E.weekOfDate = function (start, date) {
+    var s = new Date(start + 'T12:00:00'); return Math.floor((monday(date) - monday(s)) / (7 * 864e5)) + 1;
+  };
+  async function setStart(dateStr, focusId) {
+    var r = await sb.from('athletes').update({ plan_start: dateStr }).eq('id', P.athlete.id).select().single();
+    if (r.error) { RB.toast('Erro ao salvar', false); return false; }
+    P.athlete.plan_start = r.data.plan_start;
+    if (focusId) P.open[focusId] = true;
+    return true;
+  }
   E.makeCurrent = async function (id) {
     var w = findWeek(id);
-    if (!confirm('Tornar "' + w.label + '" a semana atual do aluno?')) return;
-    var r1 = await sb.from('weeks').update({ is_current: false }).eq('athlete_id', P.athlete.id).eq('is_current', true);
-    var r2 = await sb.from('weeks').update({ is_current: true }).eq('id', id);
-    if (r1.error || r2.error) { RB.toast('Erro ao trocar a semana', false); return; }
-    RB.toast('Semana atual trocada ✓'); P.open[id] = true; reload();
+    // a semana escolhida vira a desta segunda-feira; as próximas seguem toda segunda
+    var start = monday(new Date()); start.setDate(start.getDate() - (w.week_number - 1) * 7);
+    if (!confirm('Tornar "' + w.label + '" a semana atual?\n\nA partir daí o app avança sozinho toda segunda-feira.')) return;
+    if (await setStart(iso(start), id)) { RB.toast('Semana atual trocada ✓'); reload(); }
+  };
+  E.startForm = function () {
+    var a = P.athlete;
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Calendário da planilha') + '<div class="sh-t">Quando começou a semana 1?</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="p" style="margin-bottom:12px">O app muda de semana sozinho toda segunda-feira, com ou sem feedback. Escolha qualquer dia da semana 1: ele usa a segunda-feira daquela semana.</div>' +
+      '<div class="fld"><div class="fld-l">Semana 1 começou em</div><input type="date" class="fi" id="ps-date" value="' + (a.plan_start || iso(monday(new Date()))) + '" oninput="RB.edit.startPreview()"></div>' +
+      '<div class="calc-out" id="ps-prev"></div>' +
+      '<button class="btn btn-r" onclick="RB.edit.saveStart()">SALVAR</button>' +
+      (a.plan_start ? '<button class="btn-link danger" onclick="RB.edit.clearStart()">Desligar o avanço automático</button>' : ''));
+    E.startPreview();
+  };
+  E.startPreview = function () {
+    var v = RB.$('ps-date').value, o = RB.$('ps-prev'); if (!v) { o.textContent = ''; return; }
+    var n = E.weekOfDate(iso(monday(new Date(v + 'T12:00:00'))), new Date());
+    var w = P.weeks.filter(function (x) { return x.week_number <= Math.max(n, 1); }).pop();
+    o.innerHTML = 'Hoje seria a <b>semana ' + Math.max(n, 1) + '</b>' + (w ? ' → ' + RB.esc(w.label) : '') + (P.weeks.length && n > P.weeks[P.weeks.length - 1].week_number ? '<br><span class="hint">Depois da última semana, o aluno fica na última até você criar mais.</span>' : '');
+  };
+  E.saveStart = async function () {
+    var v = RB.$('ps-date').value; if (!v) return;
+    if (await setStart(iso(monday(new Date(v + 'T12:00:00'))))) { RB.closeSheet(); RB.toast('Calendário salvo ✓'); reload(); }
+  };
+  E.clearStart = async function () {
+    if (!confirm('Desligar o avanço automático? A semana só muda quando você trocar manualmente.')) return;
+    if (await setStart(null)) { RB.closeSheet(); RB.toast('Avanço automático desligado'); reload(); }
   };
   E.delWeek = async function (id) {
     var w = findWeek(id);

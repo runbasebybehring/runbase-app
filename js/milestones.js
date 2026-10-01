@@ -70,7 +70,12 @@
     var fb = {}; (r[1].data || []).forEach(function (f) { fb[f.workout_id] = 1; });
     var byAth = {}; (r[0].data || []).forEach(function (w) { (byAth[w.athlete_id] = byAth[w.athlete_id] || []).push(w); });
     M.coach = { plan: {}, gym: {} };
-    Object.keys(byAth).forEach(function (id) { M.coach.plan[id] = M.completedWeeks(byAth[id], function (wid) { return !!fb[wid]; }); });
+    M.coach.cur = {};
+    Object.keys(byAth).forEach(function (id) {
+      M.coach.plan[id] = M.completedWeeks(byAth[id], function (wid) { return !!fb[wid]; });
+      var c = byAth[id].find(function (w) { return w.is_current; });
+      M.coach.cur[id] = { n: c ? c.week_number : null, last: Math.max.apply(null, byAth[id].map(function (w) { return w.week_number; })) };
+    });
     (r[2].data || []).forEach(function (p) { M.coach.gym[p.athlete_id] = { weeks: RB.weeksSince(p.strength_started_at), start: p.strength_started_at }; });
   };
   M.coachCards = function (athletes) {

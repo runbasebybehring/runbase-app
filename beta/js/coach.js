@@ -49,6 +49,7 @@
     var wait = C.awaiting().filter(function (f) { return f.athlete_id === a.id; }).length;
     return '<div class="ar" onclick="RB.coach.open(\'' + a.id + '\')">' + RB.av(a.img, size || 46) + '<div style="flex:1;min-width:0"><div class="ar-n">' + RB.esc(a.name) + '</div>' +
       '<div class="ar-s red">' + RB.esc(a.race || a.goal) + '</div><div class="tags">' +
+      (RB.ms.coach && RB.ms.coach.cur[a.id] && RB.ms.coach.cur[a.id].n ? RB.tag('semana ' + RB.ms.coach.cur[a.id].n + '/' + RB.ms.coach.cur[a.id].last, 'b') : '') +
       (wait ? RB.tag(wait + ' sem resposta', 'r') : '') +
       (gw >= RB.cfg.gymSwapWeeks ? RB.tag('⚠ força ' + gw + 'sem', 'r') : '') +
       RB.tag(last ? 'último feedback ' + RB.ago(last) : 'sem feedback recente', 'm') + '</div></div><div class="chev">›</div></div>';
