@@ -276,6 +276,7 @@
     if (key === 'forca') data = (clone(p.strength || [])).map(function (d) {
       // tudo vira grupos para editar; dias antigos em "blocos" viram um grupo sem nome
       if (!d.grupos) d.grupos = [{ nome: '', foco: '', rec: '', exercicios: d.blocos || [] }];
+      if (!d.aquec || !d.aquec.length) { var aq = RB.strength.aquec(d, p.strength || []); d.aquec = clone(aq.items || []); d.intro = aq.intro || ''; }
       delete d.blocos; return d;
     });
     X = { key: key, data: data };
@@ -338,7 +339,12 @@
         d.map(function (day, di) {
           return '<div class="card fd-ed"><div class="fd-h"><b>Dia ' + (di + 1) + '</b><div class="blk-a">' + (di > 0 ? '<button onclick="RB.edit.arr(\'\',' + di + ',-1)">▲</button>' : '') + (di < d.length - 1 ? '<button onclick="RB.edit.arr(\'\',' + di + ',1)">▼</button>' : '') + '<button class="danger" onclick="RB.edit.arrDel(\'\',' + di + ')">Remover dia</button></div></div>' +
             '<div class="z-row">' + I(di + '.dia', day.dia, 'TER / QUI') + I(di + '.tempo', day.tempo, '50–60min') + '</div>' + I(di + '.tipo', day.tipo, 'FULL BODY — Força para corrida', 'full') +
-            F('Introdução / aquecimento', T(di + '.intro', day.intro, 'Aquecimento, ativação, regras de progressão...', 3)) +
+            F('Aquecimento e ativação <span class="hint">mobilidade, ativação, educativos — cada item pode ter vídeo</span>', (day.aquec || []).map(function (it, ai) {
+              var ap = di + '.aquec.' + ai;
+              return '<div class="aq-ed">' + I(ap + '.g', it.g, 'Grupo (ex.: Ativação com mini band)', 'full') + '<div class="z-row">' + I(ap + '.b', it.b, 'Exercício') + I(ap + '.e', it.e, '10x cada lado') + '</div>' +
+                '<div class="blk-a">' + vidBtn(it.b, ap) + (ai > 0 ? '<button onclick="RB.edit.arr(\'' + di + '.aquec\',' + ai + ',-1)">▲</button>' : '') + (ai < day.aquec.length - 1 ? '<button onclick="RB.edit.arr(\'' + di + '.aquec\',' + ai + ',1)">▼</button>' : '') + '<button class="danger" onclick="RB.edit.arrDel(\'' + di + '.aquec\',' + ai + ')">Remover</button></div></div>';
+            }).join('') + '<button class="mini" onclick="RB.edit.aqAdd(' + di + ')">+ Item de aquecimento</button>') +
+            F('Observações / progressão', T(di + '.intro', day.intro, 'Regras de progressão, descanso, avisos...', 3)) +
             day.grupos.map(function (g, gi) {
               var gp = di + '.grupos.' + gi;
               return '<div class="gr-ed"><div class="z-row">' + I(gp + '.nome', g.nome, 'Bloco 1: Força (opcional)') + I(gp + '.rec', g.rec, 'Rec 90s') + '</div>' + I(gp + '.foco', g.foco, 'Foco: quadríceps, core', 'full') +
@@ -353,7 +359,7 @@
             }).join('') +
             '<button class="mini" onclick="RB.edit.arrAdd(\'' + di + '.grupos\',{nome:\'\',foco:\'\',rec:\'\',exercicios:[]})">+ Bloco de exercícios</button></div>';
         }).join('') +
-        '<button class="btn btn-o" onclick="RB.edit.arrAdd(\'\',{dia:\'\',tipo:\'\',tempo:\'\',intro:\'\',grupos:[{nome:\'\',foco:\'\',rec:\'\',exercicios:[]}]})">+ DIA DE TREINO</button>' +
+        '<button class="btn btn-o" onclick="RB.edit.arrAdd(\'\',{dia:\'\',tipo:\'\',tempo:\'\',intro:\'\',aquec:[],grupos:[{nome:\'\',foco:\'\',rec:\'\',exercicios:[]}]})">+ DIA DE TREINO</button>' +
         '<label class="ck-l big"><input type="checkbox" id="str-new"> <span><b>É um programa novo</b><br>Zera a contagem de 4 semanas. Deixe desmarcado para pequenos ajustes de carga ou texto.</span></label>';
     }
     h += '<button class="btn btn-r" onclick="RB.edit.saveX()">SALVAR</button>';
@@ -365,6 +371,7 @@
   E.arr = function (path, i, d) { var a = at(path), t = a[i]; a[i] = a[i + d]; a[i + d] = t; drawX(); };
   E.arrDel = function (path, i) { if (!confirm('Remover?')) return; at(path).splice(i, 1); drawX(); };
   E.arrAdd = function (path, item) { at(path).push(item); drawX(); };
+  E.aqAdd = function (di) { var a = X.data[di].aquec = X.data[di].aquec || [], last = a[a.length - 1]; a.push({ g: last ? last.g : 'Aquecimento', b: '', e: '' }); drawX(); };
   E.zColor = function (i, c) { X.data[i].color = c; drawX(); };
 
   E.saveX = async function () {
@@ -385,6 +392,8 @@
           var grupos = day.grupos.map(function (g) { g.exercicios = (g.exercicios || []).filter(function (e) { return e.b && e.b.trim(); }).map(function (e) { var o = { b: e.b.trim(), e: (e.e || '').trim(), c: !!e.c }; if (e.tec) o.tec = e.tec.trim(); if (e.warn) o.warn = e.warn.trim(); return o; }); return g; }).filter(function (g) { return g.exercicios.length; });
           var out = { dia: day.dia.trim(), tipo: day.tipo.trim(), tempo: (day.tempo || '').trim() };
           if (day.intro) out.intro = day.intro.trim();
+          var aq = (day.aquec || []).filter(function (it) { return it.b && it.b.trim(); }).map(function (it) { return { g: (it.g || '').trim(), b: it.b.trim(), e: (it.e || '').trim() }; });
+          if (aq.length) out.aquec = aq;
           // um único bloco sem nome volta a ser lista simples
           if (grupos.length === 1 && !grupos[0].nome && !grupos[0].foco && !grupos[0].rec) out.blocos = grupos[0].exercicios; else out.grupos = grupos;
           return out;
