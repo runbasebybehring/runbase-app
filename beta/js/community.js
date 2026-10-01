@@ -1,4 +1,4 @@
-// Run Base — galera: sequência de semanas, selos e mural da comunidade (+ eventos)
+// Run Base — sequência de semanas e selos do aluno (só os dados dele) + aba de eventos
 (function () {
   var sb = RB.sb;
   var G = RB.galera = { view: null };
@@ -49,7 +49,7 @@
     return '<div class="card gal-mini" onclick="RB.galera.view=\'selos\';RB.athlete.go(\'eventos\')">' + RB.ew('Constância', 'blue') +
       '<div class="gal-row"><div class="gal-n">' + s.streak + '<span>' + (s.streak === 1 ? 'semana seguida' : 'semanas seguidas') + '</span></div>' +
       '<div class="gal-b">' + got.slice(-4).map(function (b) { return '<span title="' + esc(b.t) + '">' + b.icon + '</span>'; }).join('') + '<i>' + got.length + ' selo' + (got.length === 1 ? '' : 's') + '</i></div></div>' +
-      '<div class="cm-a">Ver mural da galera ›</div></div>';
+      '<div class="cm-a">Ver seus selos ›</div></div>';
   };
 
   G.dago = function (iso) {
@@ -57,14 +57,13 @@
     var d = Math.round((t - new Date(iso + 'T00:00:00')) / DAY);
     return d <= 0 ? 'hoje' : d === 1 ? 'ontem' : d + ' dias';
   };
-  // aba Galera (aluno) — Mural · Eventos · Selos
+  // aba Eventos (aluno) — Eventos · Seus selos
   G.render = async function (el) {
-    if (!G.view) G.view = RB.events.pendingCount() ? 'eventos' : 'mural';
-    el.innerHTML = RB.tt('GALERA') + RB.seg([['mural', 'Mural'], ['eventos', 'Eventos' + (RB.events.pendingCount() ? ' •' : '')], ['selos', 'Selos']], G.view, 'RB.galera.go') + '<div id="galera-body"></div>';
+    if (!G.view) G.view = 'eventos';
+    el.innerHTML = RB.tt('EVENTOS') + RB.seg([['eventos', 'Eventos' + (RB.events.pendingCount() ? ' •' : '')], ['selos', 'Seus selos']], G.view, 'RB.galera.go') + '<div id="galera-body"></div>';
     var body = RB.$('galera-body');
-    if (G.view === 'eventos') return RB.events.render(body, { noTitle: true });
     if (G.view === 'selos') return selos(body);
-    return mural(body);
+    return RB.events.render(body, { noTitle: true });
   };
   G.go = function (v) { G.view = v; G.render(RB.$('athlete-content')); };
 
@@ -76,22 +75,4 @@
       }).join('') + '</div><div class="hint" style="text-align:center;margin-top:10px">Sequência = semanas (seg a dom) com pelo menos um treino registrado no app.</div>';
   }
 
-  async function mural(el) {
-    el.innerHTML = '<div class="ld"><div class="sp"></div></div>';
-    var r = await Promise.all([sb.rpc('community_board'), sb.rpc('community_feed')]);
-    var board = (r[0].data || []).filter(function (x) { return x.streak > 0 || +x.month_km > 0; }).slice(0, 10);
-    var feed = r[1].data || [];
-    var me = RB.athlete.me;
-    var html = me && me.mural === false ? '<div class="card"><div class="p">Você está fora do mural. Para aparecer, toque nas suas iniciais no topo e ative "Aparecer no mural".</div></div>' : '';
-    html += '<div class="card">' + RB.ew('🔥 Constância da galera', 'blue') + (board.length ? board.map(function (x, i) {
-      return '<div class="lb-r' + (x.is_me ? ' me' : '') + '"><span class="lb-p">' + (i + 1) + '</span>' + RB.av(x.img, 28) + '<span class="lb-n">' + esc(x.first_name) + (x.is_me ? ' (você)' : '') + '</span>' +
-        '<span class="lb-s">' + x.streak + ' sem</span><span class="lb-k">' + (+x.month_km ? RB.pace.fmtKm(+x.month_km) + ' km no mês' : '') + '</span></div>';
-    }).join('') : '<div class="muted-s">Ninguém registrou treino nas últimas semanas ainda.</div>') + '</div>';
-    html += RB.ew('Treinos recentes') + (feed.length ? feed.map(function (f) {
-      var met = f.distance_km ? RB.pace.fmtKm(+f.distance_km) + ' km' + (f.duration_sec ? ' · ' + RB.pace.fmtHMS(f.duration_sec) + ' · ' + RB.pace.fmtPace(f.duration_sec / f.distance_km) + '/km' : '') : '';
-      return '<div class="feed-r' + (f.is_me ? ' me' : '') + '">' + RB.av(f.img, 34) + '<div class="feed-t"><div><b>' + esc(f.first_name) + '</b> · ' + esc(f.kind === 'strength' ? 'treino de força' : String(f.label || 'corrida').toLowerCase()) + '</div>' +
-        (met ? '<div class="feed-m">' + met + '</div>' : '') + '</div><div class="feed-d">' + G.dago(f.performed_at) + '</div></div>';
-    }).join('') : RB.empty('Nenhum treino nas últimas 3 semanas.'));
-    el.innerHTML = html;
-  }
 })();

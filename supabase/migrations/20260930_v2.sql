@@ -250,3 +250,5 @@ grant execute on function public.community_feed() to authenticated;
 grant execute on function public.community_board() to authenticated;
 -- 17b) Resumo semanal: public.run_weekly_digest() chama a função weekly-digest (x-cron-secret);
 --      cron 'runbase-resumo-semanal' toda segunda 10:52 UTC (07:52 em São Paulo). Funções novas: admin, weekly-digest; notify ganhou type "nudge".
+-- 17c) Mural removido a pedido da coach: execução de community_feed() e community_board() revogada para todos
+--      (as funções ficam no banco, sem acesso; o app não as usa mais). A coluna athletes.mural ficou sem uso.

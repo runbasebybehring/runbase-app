@@ -341,7 +341,6 @@
       '<div class="fld"><div class="fld-l">Nova senha <span class="hint">mínimo 6 caracteres</span></div><input class="fi" type="password" id="my-pw" autocomplete="new-password"></div>' +
       '<div class="fld"><div class="fld-l">Repita a nova senha</div><input class="fi" type="password" id="my-pw2" autocomplete="new-password"></div>' +
       '<button class="btn btn-o" id="my-pw-go" onclick="RB.athlete.changePw()">TROCAR SENHA</button>' +
-      '<label class="ck-l big" style="margin-top:18px"><input type="checkbox" id="my-mural"' + (A.me.mural !== false ? ' checked' : '') + ' onchange="RB.athlete.setMural(this.checked)"> <span><b>Aparecer no mural da galera</b><br>Mostra seu primeiro nome, os treinos (tipo, km e tempo) e sua sequência de semanas para os outros alunos.</span></label>' +
       '<button class="btn-link danger" style="margin-top:14px" onclick="RB.closeSheet();RB.logout()">Sair do app</button>');
   };
   A.changePw = async function () {
@@ -353,11 +352,6 @@
     b.disabled = false;
     if (r.error) { RB.toast('Não deu para trocar a senha', false); return; }
     RB.closeSheet(); RB.toast('Senha trocada ✓');
-  };
-  A.setMural = async function (on) {
-    var r = await sb.from('athletes').update({ mural: on }).eq('id', A.me.id);
-    if (r.error) { RB.toast('Não deu para salvar', false); return; }
-    A.me.mural = on; RB.toast(on ? 'Você está no mural ✓' : 'Você saiu do mural');
   };
 
   // ---------- RELATÓRIO ----------
