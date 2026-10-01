@@ -51,13 +51,13 @@
     return html + '</div>';
   }
 
-  V.render = async function (el) {
-    V.el = el;
+  V.render = async function (el, opts) {
+    V.el = el; V.opts = opts || V.opts || {};
     RB.loading(el.id);
     await V.load();
     var coach = RB.state.isCoach;
     var up = V.upcoming(), past = V.list.filter(function (e) { return up.indexOf(e) < 0; }).reverse();
-    var html = RB.tt('EVENTOS') + '<div class="sub">Treinões, provas do grupo e encontros da Run Base.</div>' +
+    var html = (V.opts.noTitle && el.id === 'galera-body' ? '' : RB.tt('EVENTOS')) + '<div class="sub">Treinões, provas do grupo e encontros da Run Base.</div>' +
       (coach ? '<button class="btn btn-r" style="margin:0 0 16px" onclick="RB.events.form()">+ NOVO EVENTO</button>' : '') +
       (up.length ? up.map(function (e) { return card(e, coach); }).join('') : RB.empty('Nenhum evento marcado por enquanto.' + (coach ? '' : '<br>Quando o coach criar, aparece aqui.'))) +
       (past.length ? '<button class="btn-link" onclick="RB.events.togglePast()">' + (V.showPast ? 'Esconder' : 'Ver') + ' eventos anteriores (' + past.length + ')</button>' + (V.showPast ? past.map(function (e) { return card(e, coach); }).join('') : '') : '');
