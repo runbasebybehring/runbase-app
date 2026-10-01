@@ -82,89 +82,41 @@
     var ctx = cv.getContext('2d');
     var style = st.style === 'foto' && !st.photo ? 'creme' : st.style;
     var bg = { creme: C.cream, vermelho: C.red, azul: C.blue }[style];
-    var ink = style === 'creme' ? C.dark : C.cream;           // números
-    var accent = style === 'creme' ? C.red : C.cream;         // marca e destaques
-    var soft = style === 'creme' ? 'rgba(30,30,30,.55)' : 'rgba(247,241,234,.78)';
+    var ink = style === 'creme' ? C.dark : C.cream;
+    var soft = style === 'creme' ? 'rgba(30,30,30,.5)' : 'rgba(247,241,234,.72)';
+    var mark = style === 'creme' ? C.red : C.cream;
     ctx.clearRect(0, 0, W, H);
     if (bg) { ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); }
     if (style === 'foto') {
-      var im = st.photo, s = Math.max(W / im.width, H / im.height), iw = im.width * s, ih = im.height * s;
+      var im = st.photo, sc = Math.max(W / im.width, H / im.height), iw = im.width * sc, ih = im.height * sc;
       ctx.drawImage(im, (W - iw) / 2, (H - ih) / 2, iw, ih);
       if (st.bw) {
         var data = ctx.getImageData(0, 0, W, H), p = data.data;
         for (var i = 0; i < p.length; i += 4) { var g = p[i] * .3 + p[i + 1] * .59 + p[i + 2] * .11; g = (g - 128) * 1.12 + 128; p[i] = p[i + 1] = p[i + 2] = g; }
         ctx.putImageData(data, 0, 0);
       }
-      var gr = ctx.createLinearGradient(0, H * .35, 0, H);
-      gr.addColorStop(0, 'rgba(20,20,20,0)'); gr.addColorStop(1, 'rgba(20,20,20,.82)');
-      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
-      var gt = ctx.createLinearGradient(0, 0, 0, 320); gt.addColorStop(0, 'rgba(20,20,20,.45)'); gt.addColorStop(1, 'rgba(20,20,20,0)');
-      ctx.fillStyle = gt; ctx.fillRect(0, 0, W, 320);
+      ctx.fillStyle = 'rgba(15,15,15,.38)'; ctx.fillRect(0, 0, W, H);
     }
-    if (style === 'transparente') { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 2; }
-    var M = 84; // margem
-    ctx.textBaseline = 'alphabetic';
+    if (style === 'transparente') { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 2; }
 
-    // topo: marca + data
-    ctx.fillStyle = accent; ctx.font = 'italic 800 76px Aileron, "Barlow Condensed", sans-serif';
-    ctx.textAlign = 'left'; ctx.fillText('RUNBASE', M, M + 60);
-    ctx.fillStyle = soft; ctx.font = '700 30px Aileron, sans-serif';
-    track(ctx, dateStr(f), W - M, M + 50, 4, 'right');
-
-    // bloco de números, ancorado embaixo
-    var km = f.distance_km ? RB.pace.fmtKm(+f.distance_km) : null;
-    // fundo liso em stories: bloco no meio + frase da marca; foto/sem fundo: bloco embaixo
-    var center = !!bg && st.format === 'story';
-    var bottom = center ? Math.round(H * 0.64) : H - M - 96;
-    var rowY = bottom - 40;                       // linha tempo / pace / rpe
-    var bigY = rowY - 190;                         // distância
-    // linhas finas estilo etiqueta vintage
-    ctx.fillStyle = accent; ctx.fillRect(M, rowY - 112, W - 2 * M, 4);
-    ctx.fillRect(M, bottom + 4, W - 2 * M, 4);
-
-    // tipo do treino
-    ctx.fillStyle = accent; ctx.font = '800 34px Aileron, sans-serif';
-    var tY = bigY - (km ? 250 : 40);
-    track(ctx, title(f), M, tY, 6);
-
-    if (km) {
-      ctx.fillStyle = ink;
-      var size = fit(ctx, km, 'italic 800 {s}px Aileron, sans-serif', W - 2 * M - 170, 300);
-      ctx.font = 'italic 800 ' + size + 'px Aileron, sans-serif';
-      ctx.fillText(km, M - 6, bigY);
-      var kw = ctx.measureText(km).width;
-      ctx.fillStyle = accent; ctx.font = 'italic 800 80px Aileron, sans-serif';
-      ctx.fillText('KM', M + kw + 14, bigY);
-    } else {
-      ctx.fillStyle = ink; ctx.font = 'italic 800 120px Aileron, sans-serif';
-      ctx.fillText(f.kind === 'strength' ? 'FEITO.' : 'TREINO FEITO.', M - 4, bigY);
-    }
-
-    // tempo · pace · rpe
-    var cols = [];
-    if (f.duration_sec) cols.push(['TEMPO', RB.pace.fmtHMS(f.duration_sec)]);
-    if (f.duration_sec && f.distance_km) cols.push(['PACE', RB.pace.fmtPace(f.duration_sec / f.distance_km) + '/km']);
-    if (f.rpe) cols.push(['ESFORÇO', f.rpe + '/10']);
-    var cw = (W - 2 * M) / Math.max(cols.length, 1);
-    cols.forEach(function (c, i) {
-      var x = M + i * cw;
-      ctx.fillStyle = soft; ctx.font = '700 26px Aileron, sans-serif'; track(ctx, c[0], x, rowY - 56, 5);
-      ctx.fillStyle = ink; ctx.font = 'italic 800 64px Aileron, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText(c[1], x - 2, rowY + 14);
+    // só distância, tempo e pace — empilhados no centro
+    var items = [];
+    if (f.distance_km) items.push(['DISTÂNCIA', RB.pace.fmtKm(+f.distance_km) + ' km']);
+    if (f.duration_sec) items.push(['TEMPO', RB.pace.fmtHMS(f.duration_sec)]);
+    if (f.duration_sec && f.distance_km) items.push(['PACE', RB.pace.fmtPace(f.duration_sec / f.distance_km) + ' /km']);
+    var gap = st.format === 'story' ? 250 : 220;
+    var top = H / 2 - (items.length - 1) * gap / 2;
+    items.forEach(function (it, k) {
+      var y = top + k * gap;
+      ctx.fillStyle = soft; ctx.font = '700 30px Aileron, sans-serif';
+      track(ctx, it[0], W / 2, y - 62, 8, 'center');
+      ctx.fillStyle = ink; ctx.font = 'italic 800 116px Aileron, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(it[1], W / 2, y + 62);
     });
 
-    // rodapé
-    if (center) {
-      ctx.fillStyle = accent; ctx.font = 'italic 800 64px Aileron, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText("It's not about the pace.", M, bottom + 170);
-      ctx.fillText("It's about the base.", M, bottom + 250);
-    } else {
-      ctx.fillStyle = soft; ctx.font = '400 28px Aileron, sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText("It's not about the pace. It's about the base.", M, H - M + 6);
-    }
-    ctx.fillStyle = soft;
-    ctx.font = '700 28px Aileron, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('@runbase__', W - M, H - M + 6);
+    // marca pequena no canto inferior direito
+    ctx.fillStyle = mark; ctx.font = 'italic 800 40px Aileron, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('RUNBASE', W - 72, H - 72);
     ctx.shadowColor = 'transparent';
     return cv;
   };
