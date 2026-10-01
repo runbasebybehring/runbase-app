@@ -121,7 +121,7 @@
       (hl.length ? RB.ew('Destaques') + '<div class="rig">' + hl.map(function (i) {
         return '<div class="ri ' + RB.esc(i.cls || 'note') + '"><div class="ri-t">' + RB.esc(i.t) + '</div><p>' + RB.md(i.x) + '</p></div>';
       }).join('') + '</div>' : '') +
-      (r.coach_note ? RB.ew('Nota do coach') + '<div class="rcn"><p>' + RB.md(r.coach_note) + '</p><div class="rcn-s">— Run Base by Behring · ' + RB.esc(R.periodLabel(r.period)) + '</div></div>' : '') +
+      (r.coach_note ? RB.ew('Nota do coach') + '<div class="rcn"><p>' + RB.md(r.coach_note) + '</p><div class="rcn-s">— RUNBASE · ' + RB.esc(R.periodLabel(r.period)) + '</div></div>' : '') +
       '</div>';
     if (!opts.noPdf) html += '<button class="btn btn-o no-print" onclick="RB.reports.print()">⤓ BAIXAR PDF</button>';
     return html;
@@ -129,7 +129,7 @@
   R.print = function () {
     var src = RB.$('report-view'); if (!src) return;
     var root = RB.$('print-root');
-    root.innerHTML = '<div class="print-brand">RUN<span>BASE</span> <span style="font-size:14px;color:var(--mid);font-style:normal;font-weight:400;font-family:Space Mono,monospace">by behring</span></div>' + src.innerHTML;
+    root.innerHTML = '<div class="print-brand">RUN<span>BASE</span></div>' + src.innerHTML;
     root.querySelectorAll('.rpf[data-w]').forEach(function (b) { b.style.width = b.dataset.w + '%'; });
     document.body.classList.add('print-report');
     setTimeout(function () {
