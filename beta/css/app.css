@@ -556,3 +556,11 @@ body:has(.preview-overlay) .sheet{z-index:350}
 .vs.def{color:var(--blue)}
 .vid-def{font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.4}
 .blk-a .vid-e.def{color:var(--blue);border-color:var(--blue)}
+.aq{background:var(--cream2);border-left:3px solid var(--blue);padding:10px 12px;margin:14px 0}
+.aq-t{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:4px}
+.aq-g{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--dark);margin-top:8px}
+.aq-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.aq-r:last-child{border-bottom:0}
+.aq-n{font-size:13px;color:var(--dark);line-height:1.35}
+.aq-n span{color:var(--mid);font-size:12px}
+.aq-ed{background:var(--cream2);padding:8px;margin-bottom:6px}

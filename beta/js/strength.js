@@ -59,7 +59,8 @@
       html += '<div class="gday-f">' + (last ? '<span class="gday-ok">✓ Feito em ' + RB.fmtDate(last.performed_at + 'T12:00:00') + ' · RPE ' + last.rpe + '</span>' : '<span class="gday-no">Ainda sem registro</span>') +
         '<button class="mini" onclick="RB.athlete.strengthForm({day:' + di + '})">Concluir treino</button></div>';
       if (open) {
-        html += '<div class="gday-b">' + (d.intro ? '<div class="intro">' + RB.md(d.intro) + '</div>' : '');
+        var aq = G.aquec(d, c.gym);
+        html += '<div class="gday-b">' + aqBox(aq.items, di) + (aq.intro ? '<div class="intro">' + RB.md(aq.intro) + '</div>' : '');
         if (d.grupos) {
           var bi = 0;
           d.grupos.forEach(function (g) {
@@ -89,6 +90,56 @@
     c.el.innerHTML = html;
   }
 
+  // ---- aquecimento e ativação: lista estruturada (d.aquec) ou lida do texto antigo da introdução ----
+  function cap(t) { t = String(t || '').trim(); return t.charAt(0).toUpperCase() + t.slice(1); }
+  G.parseAquec = function (text) {
+    var paras = String(text || '').split(/\n\s*\n/), first = paras[0] || '';
+    if (!/^\s*aquecimento/i.test(first)) return null;
+    var rest = paras.slice(1).join('\n\n').trim();
+    var ref = /igua(?:l|is)\s+(?:ao|aos|à|a|em)\s+(.+?)\.?\s*$/i.exec(first);
+    if (first.indexOf(':') < 0 && ref) return { items: null, ref: ref[1].trim(), intro: rest };
+    var body = first.replace(/^\s*aquecimento[^:]*:\s*/i, '').trim().replace(/\.\s*$/, '');
+    var group = 'Aquecimento', items = [];
+    body.split(/\.\s+/).forEach(function (sent) {
+      sent.split(/\s+·\s+/).forEach(function (part) {
+        part = part.trim(); if (!part) return;
+        var lab = /^([^:\d]{3,40}):\s*(.+)$/.exec(part);
+        if (lab) { group = cap(lab[1]); part = lab[2]; }
+        var edu = /^(.+?)\s+[—–-]\s+(.+)$/.exec(part);
+        if (edu && edu[1].indexOf(',') >= 0) { edu[1].split(/,\s*/).forEach(function (n) { if (n.trim()) items.push({ g: group, b: cap(n), e: edu[2].trim() }); }); return; }
+        var m = /^(.*?)\s+(\d.*)$/.exec(part);
+        items.push(m ? { g: group, b: cap(m[1]), e: m[2].trim() } : { g: group, b: cap(part), e: '' });
+      });
+    });
+    return items.length ? { items: items, intro: rest } : null;
+  };
+  G.aquec = function (d, days) {
+    if (d.aquec && d.aquec.length) return { items: d.aquec, intro: d.intro || '' };
+    var p = G.parseAquec(d.intro);
+    if (!p) return { items: [], intro: d.intro || '' };
+    if (!p.items && p.ref) {
+      var src = (days || []).find(function (x) { return x !== d && x.dia && x.dia.toLowerCase().indexOf(p.ref.toLowerCase()) >= 0; });
+      var sp = src ? (src.aquec && src.aquec.length ? { items: src.aquec } : G.parseAquec(src.intro)) : null;
+      return sp && sp.items ? { items: sp.items, intro: p.intro } : { items: [], intro: d.intro || '' };
+    }
+    return p;
+  };
+  function aqBox(items, di) {
+    if (!items || !items.length) return '';
+    var h = '<div class="aq"><div class="aq-t">Aquecimento e ativação</div>', lastG = null;
+    items.forEach(function (it, ai) {
+      if (it.g && it.g !== lastG) { h += '<div class="aq-g">' + RB.esc(it.g) + '</div>'; lastG = it.g; }
+      var v = RB.media.get(it.b);
+      h += '<div class="aq-r"><div class="aq-n">' + RB.esc(it.b) + (it.e ? ' <span>' + RB.esc(it.e) + '</span>' : '') + '</div>' +
+        (v ? '<button class="vid-b" onclick="RB.strength.aqv(' + di + ',' + ai + ')">▶ Vídeo</button>' : '') + '</div>';
+    });
+    return h + '</div>';
+  }
+  G.aqv = function (di, ai) {
+    var it = G.aquec(c.gym[di], c.gym).items[ai];
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew(it.g || 'Aquecimento e ativação') + '<div class="sh-t">' + RB.esc(it.b) + '</div>' + (it.e ? '<div class="sh-s">' + RB.esc(it.e) + '</div>' : '') + '</div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      RB.media.player(RB.media.get(it.b)) + '<button class="btn btn-r" onclick="RB.closeSheet()">FECHAR</button>');
+  };
   G.dayLabel = function (d) { return d.dia + ' — ' + d.tipo; };
   G.lastDone = function (d) {
     var lbl = G.dayLabel(d);
