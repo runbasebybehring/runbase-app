@@ -1,11 +1,11 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
-var VERSION = 'rb-v2.4.3';
+var VERSION = 'rb-v2.4.4';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.4.3',
-  'js/config.js?v=2.4.3', 'js/core.js?v=2.4.3', 'js/charts.js?v=2.4.3', 'js/threads.js?v=2.4.3',
-  'js/reports.js?v=2.4.3', 'js/strength.js?v=2.4.3', 'js/pace.js?v=2.4.3', 'js/push.js?v=2.4.3', 'js/events.js?v=2.4.3', 'js/editor.js?v=2.4.3', 'js/share.js?v=2.4.3', 'js/milestones.js?v=2.4.3', 'js/athlete.js?v=2.4.3', 'js/coach.js?v=2.4.3',
+  'css/app.css?v=2.4.4',
+  'js/config.js?v=2.4.4', 'js/core.js?v=2.4.4', 'js/charts.js?v=2.4.4', 'js/threads.js?v=2.4.4',
+  'js/reports.js?v=2.4.4', 'js/strength.js?v=2.4.4', 'js/pace.js?v=2.4.4', 'js/push.js?v=2.4.4', 'js/events.js?v=2.4.4', 'js/editor.js?v=2.4.4', 'js/share.js?v=2.4.4', 'js/milestones.js?v=2.4.4', 'js/athlete.js?v=2.4.4', 'js/coach.js?v=2.4.4',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/aileron-latin-800-italic.woff2', 'fonts/aileron-latin-800-normal.woff2', 'fonts/aileron-latin-700-normal.woff2', 'fonts/aileron-latin-400-normal.woff2'
 ];
 self.addEventListener('install', function (e) {
@@ -26,7 +26,8 @@ self.addEventListener('fetch', function (e) {
   if (!sameOrigin && !isFont && !isLib) return; // Supabase e o resto: sempre rede
   if (req.mode === 'navigate') {
     // página: tenta a rede primeiro (pega atualizações), cai para o cache se estiver offline
-    e.respondWith(fetch(req).then(function (res) {
+    // no-cache: sempre confere com o servidor se há versão nova (o GitHub Pages guarda a página por 10 min)
+    e.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(function (res) {
       var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put('index.html', copy); });
       return res;
     }).catch(function () { return caches.match('index.html'); }));
