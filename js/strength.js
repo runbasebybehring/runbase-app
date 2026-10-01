@@ -17,7 +17,8 @@
     var gym = plan && plan.strength;
     if (!gym || !gym.length) { el.innerHTML = RB.tt('FORÇA') + RB.empty('Treino de força ainda<br>não disponível.'); return; }
     var id = RB.state.user.id;
-    var logs = (await sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300)).data || [];
+    var rr = await Promise.all([sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300), RB.media.load(id)]);
+    var logs = rr[0].data || [];
     var hist = {};
     logs.forEach(function (l) { var k = hkey(l.exercise_name); (hist[k] = hist[k] || []); if (hist[k].length < 6) hist[k].push({ carga: l.carga, date: l.created_at }); });
     var first = logs.length ? logs[logs.length - 1].created_at : null;
@@ -28,7 +29,9 @@
 
   function exRow(bl, di, bi) {
     var h = c.hist[hkey(bl.b)] || [];
-    var icon = (bl.tec || bl.warn) ? '<button class="info-i" onclick="RB.strength.tech(' + di + ',' + bi + ')" aria-label="Ver técnica">i</button>' : '';
+    var vid = RB.media.get(bl.b);
+    var icon = (vid ? '<button class="vid-b" onclick="RB.strength.tech(' + di + ',' + bi + ')" aria-label="Ver vídeo">▶ Vídeo</button>' : '') +
+      ((bl.tec || bl.warn) && !vid ? '<button class="info-i" onclick="RB.strength.tech(' + di + ',' + bi + ')" aria-label="Ver técnica">i</button>' : '');
     var body = '';
     if (bl.c) {
       var rows = h.length ? h.map(function (x) { return '<div>' + RB.fmtDate(x.date) + '</div><div class="r">' + RB.esc(x.carga) + '</div>'; }).join('')
@@ -46,7 +49,7 @@
   }
 
   function draw() {
-    var html = RB.tt('FORÇA') + '<div class="hint-row">Toque no <span class="info-i sm">i</span> para ver a técnica. Registre a carga de cada série.</div>';
+    var html = RB.tt('FORÇA') + '<div class="hint-row">Toque no <span class="info-i sm">i</span> ou em <b>▶ Vídeo</b> para ver a técnica. Registre a carga de cada série.</div>';
     if (c.weeks >= RB.cfg.gymSwapWeeks) html += '<div class="card rl">' + RB.ew('⚠ Hora de evoluir') + '<div class="p">Você está no mesmo treino de força há ' + c.weeks + ' semanas. Fale com seu coach sobre progredir a carga ou trocar os exercícios.</div></div>';
     c.gym.forEach(function (d, di) {
       var open = !!G.open[di];
@@ -97,8 +100,10 @@
   G.toggle = function (di) { G.open[di] = !G.open[di]; draw(); };
   G.tech = function (di, bi) {
     var bl = flat(c.gym[di])[bi];
+    var vid = RB.media.get(bl.b);
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Técnica do exercício') + '<div class="sh-t">' + RB.esc(bl.b) + '</div><div class="sh-s">' + RB.esc(bl.e) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
-      '<div class="p" style="margin-bottom:16px">' + (bl.tec ? RB.md(bl.tec) : 'Técnica ainda não cadastrada para este exercício.') + '</div>' +
+      RB.media.player(vid) +
+      (bl.tec || !vid ? '<div class="p" style="margin-bottom:16px">' + (bl.tec ? RB.md(bl.tec) : 'Técnica ainda não cadastrada para este exercício.') + '</div>' : '') +
       (bl.warn ? '<div class="warnbox"><div class="warnbox-t">⚠ Atenção</div><div class="p">' + RB.md(bl.warn) + '</div></div>' : '') +
       '<button class="btn btn-r" onclick="RB.closeSheet()">FECHAR</button>');
   };
