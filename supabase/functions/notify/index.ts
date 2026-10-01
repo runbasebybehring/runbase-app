@@ -68,6 +68,68 @@ Deno.serve(async (req) => {
       return json({ ok: true, sent });
     }
 
+    // ---- avisos diários para a coach (agendamento do banco, 08h07 em São Paulo) ----
+    if (body.type === "coach_cron") {
+      if (req.headers.get("x-cron-secret") !== sec.cron_secret) return json({ error: "forbidden" }, 403);
+      const sp = new Date(Date.now() - 3 * 3600 * 1000);
+      const today = new Date(Date.UTC(sp.getUTCFullYear(), sp.getUTCMonth(), sp.getUTCDate()));
+      const iso = (d: Date) => d.toISOString().slice(0, 10);
+      const plus = (n: number) => new Date(today.getTime() + n * 864e5);
+      const names = (l: string[]) => l.length <= 1 ? l.join("") : l.slice(0, -1).join(", ") + " e " + l[l.length - 1];
+      const out: string[] = [];
+      let sent = 0;
+
+      // segunda: resumo da semana pronto
+      if (today.getUTCDay() === 1) {
+        const dow = (today.getUTCDay() + 6) % 7;
+        const { data: d } = await db.from("digests").select("content").eq("week_start", iso(plus(-dow))).maybeSingle();
+        if (d) { sent += await send([COACH_ID], { title: "✦ Resumo da semana pronto", body: (d.content as { headline?: string })?.headline ?? "Veja quem precisa de atenção esta semana.", tab: "dashboard", tag: "digest" }); out.push("digest"); }
+      }
+
+      const { data: aths } = await db.from("athletes").select("id,name,race,goal");
+      const all = aths ?? [];
+      const fullName = (id: string) => all.find((a) => a.id === id)?.name ?? "";
+      const short = (id: string) => {
+        const n = fullName(id), f = first(n);
+        return all.filter((a) => first(a.name) === f).length > 1 ? `${f} ${(n.split(" ")[1] ?? "").slice(0, 1)}.` : f;
+      };
+
+      // aluno que completou 7 dias sem registrar (avisa uma vez por sumiço)
+      const { data: lastFbs } = await db.from("feedbacks").select("athlete_id,performed_at").gte("performed_at", iso(plus(-60))).order("performed_at", { ascending: false });
+      const last: Record<string, string> = {};
+      for (const f of lastFbs ?? []) if (!last[f.athlete_id] && f.performed_at) last[f.athlete_id] = f.performed_at;
+      const gone = Object.keys(last).filter((id) => last[id] === iso(plus(-7)) && all.some((a) => a.id === id));
+      if (gone.length) {
+        const l = gone.map(short);
+        sent += await send([COACH_ID], { title: `${gone.length === 1 ? l[0] + " está" : names(l) + " estão"} há 7 dias sem registrar`, body: "Vale um recado: use o Cutucar no radar da Home.", tab: "dashboard", tag: "sumido" });
+        out.push("sumido");
+      }
+
+      // prova em 7 dias
+      const raceIn7 = all.filter((a) => {
+        const m = /(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/.exec(`${a.race ?? ""} ${a.goal ?? ""}`);
+        if (!m) return false;
+        let y = m[3] ? +m[3] : today.getUTCFullYear(); if (y < 100) y += 2000;
+        const d = new Date(Date.UTC(y, +m[2] - 1, +m[1]));
+        if (!m[3] && d < today) d.setUTCFullYear(y + 1);
+        return iso(d) === iso(plus(7));
+      });
+      if (raceIn7.length) {
+        const l = raceIn7.map((a) => short(a.id));
+        sent += await send([COACH_ID], { title: `🏁 Prova em 7 dias: ${names(l)}`, body: "Hora de revisar o polimento e o plano de prova.", tab: "athletes", tag: "prova" });
+        out.push("prova");
+      }
+
+      // dia 1º: relatórios do mês anterior
+      if (today.getUTCDate() === 1) {
+        const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+        const prev = meses[(today.getUTCMonth() + 11) % 12];
+        sent += await send([COACH_ID], { title: "📊 Hora dos relatórios", body: `Fechou ${prev}: dá pra gerar os relatórios com a IA e publicar pros alunos.`, tab: "athletes", tag: "relatorios" });
+        out.push("relatorios");
+      }
+      return json({ ok: true, sent, out });
+    }
+
     // ---- ações do app: precisa estar logado ----
     const anon = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } });
     const me = (await anon.auth.getUser()).data.user;
