@@ -244,6 +244,11 @@
     if (A.isStrengthWorkout(w)) return A.strengthForm({ workout: w });
     F = { w: w, kind: 'run' };
     var html = '<div class="sh-top"><div>' + RB.ew('Feedback do treino') + '<div class="sh-t">' + RB.esc(w.day_label + ' — ' + w.type) + '</div><div class="sh-s">' + RB.esc(w.description) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="fq">' + RB.ew('Dados do treino <span class="hint">opcional · viram imagem para compartilhar</span>', 'mid') +
+      '<div class="calc-r"><div><div class="fld-l">Distância (km)</div><input class="fi" id="fb-km" inputmode="decimal" placeholder="10,0" oninput="RB.athlete.metrics()"></div>' +
+      '<div><div class="fld-l">Tempo (h:mm:ss)</div><input class="fi" id="fb-time" inputmode="numeric" placeholder="52:30" oninput="RB.athlete.metrics()"></div></div>' +
+      '<div class="calc-out" id="fb-pace"></div>' +
+      '<div class="fld-l" style="margin-top:10px">Link do Strava <span class="hint">opcional</span></div><input class="fi" id="fb-strava" inputmode="url" placeholder="https://strava.app.link/..."></div>' +
       rpeBlock() + Object.keys(OPTS).map(function (k) { return optBlock(k, OPTS[k], LABELS[k]); }).join('') + tail();
     RB.openSheet(html);
   };
@@ -265,6 +270,10 @@
     F.exs = exs;
     RB.openSheet(html);
   };
+  A.metrics = function () {
+    var km = RB.pace.km(RB.$('fb-km').value), t = RB.pace.parseHMS(RB.$('fb-time').value), o = RB.$('fb-pace');
+    o.innerHTML = km && t ? 'Pace <b>' + RB.pace.fmtPace(t / km) + ' /km</b> · ' + RB.pace.kmh(t / km) + ' km/h' : '';
+  };
   A.pickPain = function (b) {
     var name = F.exs[+b.dataset.i].b, i = F.pain.indexOf(name);
     if (i >= 0) F.pain.splice(i, 1); else F.pain.push(name);
@@ -283,13 +292,19 @@
     var btn = RB.$('submit-fb');
     btn.classList.toggle('ready', ready()); btn.textContent = ready() ? 'ENVIAR FEEDBACK' : needText();
   };
+  function runMetrics() {
+    var km = RB.pace.km(RB.$('fb-km') && RB.$('fb-km').value), t = RB.pace.parseHMS(RB.$('fb-time') && RB.$('fb-time').value);
+    var link = (RB.$('fb-strava') && RB.$('fb-strava').value.trim()) || '';
+    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+    return { distance_km: km || null, duration_sec: t && t > 0 ? t : null, strava_url: link || null };
+  }
   A.submit = async function () {
     if (!ready()) return;
     var btn = RB.$('submit-fb'); btn.textContent = 'SALVANDO...'; btn.disabled = true;
     var base = { athlete_id: RB.state.user.id, rpe: F.rpe, energia: F.energia || null, dor: F.dor === 'sim', comment: RB.$('fb-comment').value.trim() || null, performed_at: RB.$('fb-date').value || undefined };
     var payload = F.kind === 'strength'
       ? Object.assign(base, { kind: 'strength', workout_id: F.w ? F.w.id : null, strength_day: F.label, completion: F.completion, load_trend: F.load_trend || null, pain_exercises: F.dor === 'sim' ? F.pain : [] })
-      : Object.assign(base, { workout_id: F.w.id, fadiga: F.fadiga || null, sono: F.sono || null, hidratacao: F.hidratacao || null, gel: F.gel || null, frequencia_cardiaca: F.frequencia_cardiaca || null });
+      : Object.assign(base, runMetrics(), { workout_id: F.w.id, fadiga: F.fadiga || null, sono: F.sono || null, hidratacao: F.hidratacao || null, gel: F.gel || null, frequencia_cardiaca: F.frequencia_cardiaca || null });
     var res = await sb.from('feedbacks').insert(payload).select('*,workouts(day_label,type,description,week_id)').single();
     btn.disabled = false;
     if (res.error) { btn.textContent = 'ENVIAR FEEDBACK'; RB.toast('Erro ao salvar', false); return; }
@@ -299,6 +314,8 @@
     RB.closeSheet();
     RB.toast(F.dor === 'sim' ? 'Enviado ✓ — o coach vai ver o alerta de dor' : (F.kind === 'strength' ? 'Treino de força registrado ✓' : 'Feedback enviado ✓'));
     A.go(A.tab);
+    // treino com distância e tempo: oferece a imagem para compartilhar
+    if (res.data.distance_km && res.data.duration_sec) setTimeout(function () { RB.share.open(res.data); }, 500);
   };
 
   // lembrete de treinos sem feedback (uma vez por semana)

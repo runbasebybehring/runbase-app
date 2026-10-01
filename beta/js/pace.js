@@ -85,6 +85,17 @@
     sec = Math.round(sec); var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
     return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
   };
+  P.parseHMS = parseHMS; P.fmtHMS = fmtHMS; P.fmtPace = fmtPace; P.kmh = kmh;
+  // "10,5" → 10.5
+  P.km = function (s) { var v = parseFloat(String(s || '').replace(',', '.')); return v > 0 ? v : null; };
+  P.fmtKm = function (v) { return (Math.round(v * 100) / 100).toFixed(v < 10 ? 2 : 1).replace(/\.?0+$/, '').replace('.', ','); };
+  // resumo de um feedback com distância/tempo
+  P.summary = function (f) {
+    if (!f || !f.distance_km) return '';
+    var out = [P.fmtKm(+f.distance_km) + ' km'];
+    if (f.duration_sec) { out.push(fmtHMS(f.duration_sec)); out.push(fmtPace(f.duration_sec / f.distance_km) + ' /km'); }
+    return out.join(' · ');
+  };
   P.calc = function (from) {
     var km = parseFloat((RB.$('calc-km').value || '').replace(',', '.')), out = RB.$('calc-out');
     if (!km) { out.textContent = 'Informe a distância.'; return; }

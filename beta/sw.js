@@ -1,12 +1,12 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
-var VERSION = 'rb-v2.3.0';
+var VERSION = 'rb-v2.4.0';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.3.0',
-  'js/config.js?v=2.3.0', 'js/core.js?v=2.3.0', 'js/charts.js?v=2.3.0', 'js/threads.js?v=2.3.0',
-  'js/reports.js?v=2.3.0', 'js/strength.js?v=2.3.0', 'js/pace.js?v=2.3.0', 'js/push.js?v=2.3.0', 'js/events.js?v=2.3.0', 'js/editor.js?v=2.3.0', 'js/milestones.js?v=2.3.0', 'js/athlete.js?v=2.3.0', 'js/coach.js?v=2.3.0',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png'
+  'css/app.css?v=2.4.0',
+  'js/config.js?v=2.4.0', 'js/core.js?v=2.4.0', 'js/charts.js?v=2.4.0', 'js/threads.js?v=2.4.0',
+  'js/reports.js?v=2.4.0', 'js/strength.js?v=2.4.0', 'js/pace.js?v=2.4.0', 'js/push.js?v=2.4.0', 'js/events.js?v=2.4.0', 'js/editor.js?v=2.4.0', 'js/share.js?v=2.4.0', 'js/milestones.js?v=2.4.0', 'js/athlete.js?v=2.4.0', 'js/coach.js?v=2.4.0',
+  'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/aileron-latin-800-italic.woff2', 'fonts/aileron-latin-800-normal.woff2', 'fonts/aileron-latin-700-normal.woff2', 'fonts/aileron-latin-400-normal.woff2'
 ];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(VERSION).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));

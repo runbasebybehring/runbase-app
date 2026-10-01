@@ -133,3 +133,9 @@ create table public.event_rsvps (event_id uuid not null references public.events
 
 -- 12) Notificações (web push): push_subscriptions, app_secrets (chaves VAPID e segredo do agendamento,
 --     sem políticas = só o servidor lê), função "notify" e lembrete diário às 19h30 via pg_cron + pg_net.
+
+-- 13) Distância, tempo e link do Strava no feedback de corrida (para a imagem de compartilhar)
+alter table public.feedbacks
+  add column distance_km numeric(6,2) check (distance_km is null or (distance_km > 0 and distance_km < 1000)),
+  add column duration_sec integer check (duration_sec is null or (duration_sec > 0 and duration_sec < 172800)),
+  add column strava_url text check (strava_url is null or strava_url ~* '^https?://');

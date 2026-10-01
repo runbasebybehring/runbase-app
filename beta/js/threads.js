@@ -39,6 +39,9 @@
       : '<div class="fbc-tags">' + (f.energia ? RB.tag('energia ' + f.energia, 'g') : '') + (f.dor ? RB.tag('dor', 'r') : '') +
       RB.fbExtras(f).map(function (e) { return RB.tag(e, 'm'); }).join('') + '</div>';
     var desc = o.showDesc && w.description ? '<div class="fbc-d">' + RB.esc(w.description) + '</div>' : '';
+    var met = RB.pace.summary(f);
+    if (met || f.strava_url) desc += '<div class="fbc-met">' + (met ? '<b>' + met + '</b>' : '') + (f.strava_url ? ' <a href="' + RB.esc(f.strava_url) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Strava ↗</a>' : '') + '</div>';
+    if (!RB.state.isCoach && f.distance_km && f.duration_sec && !o.static) desc += '<button class="mini share-b" onclick="event.stopPropagation();RB.share.openId(' + f.id + ')">↗ Compartilhar imagem</button>';
     var com = f.comment ? '<div class="fbc-c">“' + RB.esc(f.comment) + '”</div>' : '';
     var last = reps[reps.length - 1];
     var foot = '';
