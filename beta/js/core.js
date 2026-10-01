@@ -126,17 +126,28 @@
     start(res.data.user);
   };
   RB.logout = async function () {
+    if (RB.push) await RB.push.unlink();
     await sb.auth.signOut();
     S.user = null;
     RB.onSheetClose = null; RB.closeSheet();
     RB.$('login-email').value = ''; RB.$('login-password').value = '';
     RB.show('login');
   };
-  function start(user) {
+  async function start(user) {
     S.user = user;
     S.isCoach = user.id === RB.cfg.coachId;
-    if (S.isCoach) RB.coach.load(); else RB.athlete.load();
+    if (S.isCoach) await RB.coach.load(); else await RB.athlete.load();
+    if (RB.push) RB.push.sync();
+    // aberto por uma notificação (#aba)
+    var h = (location.hash || '').slice(1);
+    if (h) { history.replaceState(null, '', location.pathname); RB.openTab(h); }
   }
+  RB.openTab = function (tab) {
+    if (!S.user) return;
+    if (S.isCoach) { RB.coach.go(['feedbacks', 'eventos', 'calendar', 'athletes'].indexOf(tab) >= 0 ? tab : (tab === 'feedback' ? 'feedbacks' : 'dashboard')); return; }
+    if (tab === 'feedback') RB.athlete.fbView = 'conversas';
+    RB.athlete.go(['home', 'planilha', 'forca', 'eventos', 'feedback', 'relatorio'].indexOf(tab) >= 0 ? tab : 'home');
+  };
 
   document.addEventListener('DOMContentLoaded', async function () {
     RB.$('login-password').addEventListener('keydown', function (e) { if (e.key === 'Enter') RB.login(); });

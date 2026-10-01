@@ -259,12 +259,14 @@
     var data = collect();
     data.status = status;
     data.updated_at = new Date().toISOString();
-    if (status === 'published' && ed.report.status !== 'published') data.published_at = data.updated_at;
+    var firstPublish = status === 'published' && ed.report.status !== 'published';
+    if (firstPublish) data.published_at = data.updated_at;
     var res = ed.report.id
       ? await sb.from('reports').update(data).eq('id', ed.report.id).select().single()
       : await sb.from('reports').insert(data).select().single();
     if (res.error) { RB.toast('Erro ao salvar', false); return; }
     ed.report = res.data;
+    if (firstPublish) RB.push.notify({ type: 'report', report_id: res.data.id });
     RB.toast(status === 'published' ? 'Publicado para o aluno ✓' : 'Rascunho salvo ✓');
     RB.closeSheet();
     if (ed.listEl && document.body.contains(ed.listEl)) R.list(ed.athlete, ed.listEl);

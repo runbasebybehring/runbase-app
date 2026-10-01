@@ -1,11 +1,11 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
-var VERSION = 'rb-v2.2.0';
+var VERSION = 'rb-v2.3.0';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.2.0',
-  'js/config.js?v=2.2.0', 'js/core.js?v=2.2.0', 'js/charts.js?v=2.2.0', 'js/threads.js?v=2.2.0',
-  'js/reports.js?v=2.2.0', 'js/strength.js?v=2.2.0', 'js/milestones.js?v=2.2.0', 'js/athlete.js?v=2.2.0', 'js/coach.js?v=2.2.0',
+  'css/app.css?v=2.3.0',
+  'js/config.js?v=2.3.0', 'js/core.js?v=2.3.0', 'js/charts.js?v=2.3.0', 'js/threads.js?v=2.3.0',
+  'js/reports.js?v=2.3.0', 'js/strength.js?v=2.3.0', 'js/pace.js?v=2.3.0', 'js/push.js?v=2.3.0', 'js/events.js?v=2.3.0', 'js/editor.js?v=2.3.0', 'js/milestones.js?v=2.3.0', 'js/athlete.js?v=2.3.0', 'js/coach.js?v=2.3.0',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png'
 ];
 self.addEventListener('install', function (e) {
@@ -39,5 +39,26 @@ self.addEventListener('fetch', function (e) {
       return res;
     }).catch(function () { return hit; });
     return hit || net;
+  }));
+});
+
+// ---- notificações ----
+self.addEventListener('push', function (e) {
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: 'Run Base', body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Run Base', {
+    body: d.body || '', tag: d.tag || undefined, renotify: !!d.tag,
+    icon: 'icons/icon-192.png', badge: 'icons/favicon.png', data: { tab: d.tab || '' }
+  }));
+});
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  var tab = (e.notification.data && e.notification.data.tab) || '';
+  var url = self.registration.scope + (tab ? '#' + tab : '');
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].url.indexOf(self.registration.scope) === 0) { list[i].postMessage({ tab: tab }); return list[i].focus(); }
+    }
+    return self.clients.openWindow(url);
   }));
 });

@@ -8,6 +8,8 @@
     if (d.grupos) { var out = []; d.grupos.forEach(function (g) { g.exercicios.forEach(function (e) { out.push(e); }); }); return out; }
     return d.blocos || [];
   }
+  // o histórico de cargas segue o nome do exercício (sobrevive a reordenação e edição do programa)
+  function hkey(n) { return String(n || '').trim().toLowerCase(); }
   function sets(e) { var m = /^\s*(\d+)\s*x/i.exec(e || ''); var n = m ? parseInt(m[1], 10) : 1; return (n >= 2 && n <= 6) ? n : 1; }
 
   G.render = async function (el) {
@@ -17,7 +19,7 @@
     var id = RB.state.user.id;
     var logs = (await sb.from('gym_logs').select('*').eq('athlete_id', id).order('created_at', { ascending: false }).limit(300)).data || [];
     var hist = {};
-    logs.forEach(function (l) { (hist[l.exercise_key] = hist[l.exercise_key] || []); if (hist[l.exercise_key].length < 6) hist[l.exercise_key].push({ carga: l.carga, date: l.created_at }); });
+    logs.forEach(function (l) { var k = hkey(l.exercise_name); (hist[k] = hist[k] || []); if (hist[k].length < 6) hist[k].push({ carga: l.carga, date: l.created_at }); });
     var first = logs.length ? logs[logs.length - 1].created_at : null;
     c = { gym: gym, hist: hist, weeks: plan.strength_started_at ? RB.ms.strengthWeeks(plan) : RB.weeksSince(first), el: el };
     if (G.open[0] === undefined) G.open[0] = true;
@@ -25,7 +27,7 @@
   };
 
   function exRow(bl, di, bi) {
-    var h = c.hist[di + '_' + bi] || [];
+    var h = c.hist[hkey(bl.b)] || [];
     var icon = (bl.tec || bl.warn) ? '<button class="info-i" onclick="RB.strength.tech(' + di + ',' + bi + ')" aria-label="Ver técnica">i</button>' : '';
     var body = '';
     if (bl.c) {
@@ -58,7 +60,7 @@
         if (d.grupos) {
           var bi = 0;
           d.grupos.forEach(function (g) {
-            html += '<div class="grp"><div class="grp-n">' + RB.esc(g.nome) + '</div><div class="grp-m">' + (g.foco ? 'Foco: ' + RB.esc(g.foco) : '') + (g.rec ? ' · Rec: ' + RB.esc(g.rec) : '') + '</div></div>';
+            if (g.nome || g.foco || g.rec) html += '<div class="grp"><div class="grp-n">' + RB.esc(g.nome) + '</div><div class="grp-m">' + (g.foco ? 'Foco: ' + RB.esc(g.foco) : '') + (g.rec ? ' · Rec: ' + RB.esc(g.rec) : '') + '</div></div>';
             g.exercicios.forEach(function (bl) { html += exRow(bl, di, bi); bi++; });
           });
         } else {
@@ -73,7 +75,7 @@
     c.gym.forEach(function (d, di) {
       var part = '';
       flat(d).forEach(function (bl, bi) {
-        var h = c.hist[di + '_' + bi]; if (!h || !h.length) return;
+        var h = c.hist[hkey(bl.b)]; if (!h || !h.length) return;
         part += '<div class="evo"><div class="evo-n">' + RB.esc(bl.b) + '</div><div class="evo-c">' + h.map(function (x, i) {
           return '<span class="chip' + (i === 0 ? ' last' : '') + '">' + RB.fmtDate(x.date) + ': ' + RB.esc(x.carga) + '</span>';
         }).join('') + '</div></div>';

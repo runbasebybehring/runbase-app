@@ -113,3 +113,23 @@ begin
   return new;
 end $$;
 create trigger trg_strength_start before insert or update on public.athlete_plans for each row execute function public.touch_strength_start();
+
+-- ===== v2.3 (01/10/2026) =====
+-- 10) Coach edita planilha, zonas e perfil pelo app
+create policy weeks_coach_write on public.weeks for all to authenticated using (public.is_coach()) with check (public.is_coach());
+create policy workouts_coach_write on public.workouts for all to authenticated using (public.is_coach()) with check (public.is_coach());
+create policy zones_coach_write on public.zones for all to authenticated using (public.is_coach()) with check (public.is_coach());
+create policy athletes_coach_update on public.athletes for update to authenticated using (public.is_coach()) with check (public.is_coach());
+alter table public.workouts add column structure jsonb; -- blocos: [{fase, reps, vol, zona, obs}]
+-- strength_started_at agora só é definido pelo app ("programa novo") ou na primeira vez que há treino de força
+
+-- 11) Eventos + presença (event_attendees mostra só primeiro nome e iniciais)
+create table public.events (id uuid primary key default gen_random_uuid(), title text not null,
+  kind text not null default 'treino' check (kind in ('treino','prova','evento')), starts_at timestamptz not null,
+  location text, description text, link text, created_at timestamptz not null default now());
+create table public.event_rsvps (event_id uuid not null references public.events(id) on delete cascade,
+  user_id uuid not null default auth.uid(), status text not null check (status in ('vou','talvez','nao')),
+  updated_at timestamptz not null default now(), primary key (event_id, user_id));
+
+-- 12) Notificações (web push): push_subscriptions, app_secrets (chaves VAPID e segredo do agendamento,
+--     sem políticas = só o servidor lê), função "notify" e lembrete diário às 19h30 via pg_cron + pg_net.

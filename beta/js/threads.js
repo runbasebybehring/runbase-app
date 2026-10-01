@@ -92,7 +92,8 @@
     var t = RB.$('reply-text'), body = t.value.trim();
     if (!body) return;
     var btn = document.querySelector('#sheet-body .send'); btn.disabled = true; btn.textContent = '...';
-    var res = await sb.from('feedback_replies').insert({ feedback_id: current.f.id, body: body, author_id: RB.state.user.id });
+    var res = await sb.from('feedback_replies').insert({ feedback_id: current.f.id, body: body, author_id: RB.state.user.id }).select('id').single();
+    if (!res.error) RB.push.notify({ type: 'reply', reply_id: res.data.id });
     btn.disabled = false; btn.textContent = 'ENVIAR';
     if (res.error) { RB.toast('Erro ao enviar', false); return; }
     t.value = '';

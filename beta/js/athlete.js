@@ -27,7 +27,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await RB.ms.loadAcks();
+    await Promise.all([RB.ms.loadAcks(), RB.events.load()]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -66,8 +66,9 @@
     document.querySelectorAll('#screen-athlete .nav-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
     RB.setBadge('pendBadge', A.pending().filter(function (w) { return w.isCur; }).length + A.unreadTotal());
     RB.setBadge('relBadge', A.reports.filter(function (r) { return !r.seen_at; }).length);
+    RB.setBadge('evBadge', RB.events.pendingCount());
     var el = RB.$('athlete-content');
-    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: zonas, feedback: feedback, relatorio: relatorio })[tab](el);
+    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.events.render(el); }, feedback: feedback, relatorio: relatorio })[tab](el);
     window.scrollTo(0, 0);
   };
 
@@ -87,13 +88,13 @@
         return '<div class="cm" onclick="RB.threads.open(' + f.id + ')"><div class="cm-w">' + RB.esc(f.workouts ? f.workouts.day_label + ' — ' + f.workouts.type : 'Treino') + '</div><div class="cm-b">' + RB.esc(last.body.length > 120 ? last.body.slice(0, 120) + '…' : last.body) + '</div><div class="cm-a">Responder ›</div></div>';
       }).join('') + '</div>';
     }
-    html += RB.ms.athleteCards(A);
+    html += RB.ms.athleteCards(A) + RB.push.card();
     // relatório novo
     var newRep = A.reports.find(function (r) { return !r.seen_at; });
     if (newRep) html += '<div class="card newrep" onclick="RB.athlete.go(\'relatorio\')">' + RB.ew('Novo relatório', 'blue') + '<div class="newrep-t">' + RB.esc(newRep.title) + ' está disponível</div><div class="cm-a">Ver relatório ›</div></div>';
 
     html += next
-      ? '<div class="card rl">' + RB.ew('Próximo treino') + '<div class="tags">' + RB.tag(next.day_label, 'm') + ' ' + RB.tag(next.type, 'r') + '</div><div class="next-d">' + RB.esc(next.description) + '</div><button class="btn btn-r" onclick="RB.athlete.feedbackForm(' + next.id + ')">CONCLUIR + FEEDBACK</button></div>'
+      ? '<div class="card rl">' + RB.ew('Próximo treino') + '<div class="tags">' + RB.tag(next.day_label, 'm') + ' ' + RB.tag(next.type, 'r') + '</div><div class="next-d">' + RB.esc(next.description) + '</div>' + RB.pace.blocks(next.structure, A.zones) + (next.structure && next.structure.length ? '' : RB.pace.chips(next.description, A.zones)) + '<button class="btn btn-r" onclick="RB.athlete.feedbackForm(' + next.id + ')">CONCLUIR + FEEDBACK</button></div>'
       : '<div class="card gl">' + RB.ew('Semana concluída', 'green') + '<div class="p">Todos os treinos desta semana foram realizados!</div></div>';
 
     var streak = A.streak();
@@ -102,6 +103,13 @@
       '<div class="pb"><div class="pf" style="width:' + pct + '%"></div></div>' +
       (streak >= 3 ? '<div class="streak-t">🔥 ' + streak + ' semanas seguidas treinando. Constância é o que constrói a base.</div>' : '') + '</div>';
 
+    var ev = RB.events.upcoming()[0];
+    if (ev) {
+      var evd = new Date(ev.starts_at), mine = RB.events.mine[ev.id];
+      html += '<div class="card ev-mini" onclick="RB.athlete.go(\'eventos\')">' + RB.ew('Próximo evento', 'blue') + '<div class="ev-t">' + RB.esc(ev.title) + '</div><div class="ev-meta">' +
+        RB.fmtDate(ev.starts_at) + ' · ' + String(evd.getHours()).padStart(2, '0') + 'h' + (evd.getMinutes() ? String(evd.getMinutes()).padStart(2, '0') : '') + (ev.location ? ' · ' + RB.esc(ev.location) : '') + '</div>' +
+        '<div class="cm-a">' + (mine === 'vou' ? '✓ Você vai' : mine === 'talvez' ? 'Talvez · mudar' : 'Confirmar presença ›') + '</div></div>';
+    }
     var rd = RB.raceDate(a), days = rd ? RB.daysTo(rd) : null;
     html += '<div class="card">' + RB.ew('Objetivo') + '<div class="goal">' + RB.esc(a.goal) + '</div><div class="goal-s">' + RB.esc(a.pace) + ' · ' + RB.esc(a.vol) + '</div>' +
       (days != null && days >= 0 && days <= 365 ? '<div class="countdown"><div class="cd-n">' + days + '</div><div class="cd-l">' + (days === 1 ? 'dia para a prova' : days === 0 ? 'é hoje! Boa prova 🏁' : 'dias para a prova') + '<br><span>' + RB.esc(a.race) + '</span></div></div>' : '') + '</div>';
@@ -128,8 +136,8 @@
 
   // ---------- PLANILHA ----------
   function planilha(el) {
-    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>';
-    if (!A.weeks.length) { el.innerHTML = html + RB.empty('Planilha ainda não publicada.'); return; }
+    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard();
+    if (!A.weeks.length) { el.innerHTML = html + RB.empty('Planilha ainda não publicada.') + RB.pace.calcCard(); return; }
     A.weeks.forEach(function (wk) {
       var ic = A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
       var dn = wk.workouts.filter(function (w) { return A.byWorkout[w.id]; }).length;
@@ -137,24 +145,23 @@
         '<div class="wk-r"><span class="wk-done">' + dn + '/' + wk.workouts.length + '</span><span class="wk-v">' + RB.esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>' +
         '<div class="wbd' + (io ? ' open' : '') + '">' + wk.workouts.map(function (d) {
           var f = A.byWorkout[d.id];
-          return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div><div class="dr-t">' + RB.esc(d.description) + '</div>' +
+          return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div><div class="dr-t">' + RB.esc(d.description) + '</div>' + RB.pace.blocks(d.structure, A.zones) + (d.structure && d.structure.length ? '' : RB.pace.chips(d.description, A.zones)) +
             (!f && (ic || (A.cur && wk.week_number === A.cur.week_number - 1)) ? '<button class="mini" onclick="RB.athlete.feedbackForm(' + d.id + ')">Dar feedback</button>' : '') + '</div>';
         }).join('') + '</div></div>';
     });
-    el.innerHTML = html;
+    el.innerHTML = html + RB.pace.calcCard();
+  }
+  A.zonesOpen = false;
+  A.toggleZones = function () { A.zonesOpen = !A.zonesOpen; A.go('planilha'); };
+  function zonesCard() {
+    if (!A.zones.length) return '';
+    return '<div class="card zcard"><div class="zcard-h" onclick="RB.athlete.toggleZones()">' + RB.ew('Suas zonas de treino', 'blue') + '<span class="arrow">' + (A.zonesOpen ? '▲' : '▼') + '</span></div>' +
+      (A.zonesOpen ? RB.pace.toggle() + A.zones.map(function (z) {
+        return '<div class="zone sm"><div class="zone-dot" style="background:' + RB.esc(z.color) + '"></div><div style="flex:1"><div class="zone-h"><span class="zone-n">' + RB.esc(z.zone) + '</span><span class="zone-p">' + RB.esc(RB.pace.show(z.pace)) + '</span></div><div class="zone-d">' + RB.esc(z.description || '') + '</div></div></div>';
+      }).join('') + '<div class="hint" style="margin-top:6px">Use como guia: o corpo é o melhor monitor.</div>' :
+        '<div class="zchips">' + A.zones.slice(0, 5).map(function (z) { return '<span class="zchip" style="--zc:' + RB.esc(z.color) + '"><b>' + RB.esc(z.zone.split('·')[0].trim()) + '</b> ' + RB.esc(RB.pace.show(z.pace)) + '</span>'; }).join('') + '</div>') + '</div>';
   }
   A.toggleWeek = function (id) { A.openWeek = A.openWeek === id ? null : id; A.go('planilha'); };
-
-  // ---------- ZONAS ----------
-  function zonas(el) {
-    var html = RB.tt('ZONAS DE TREINO');
-    if (!A.zones.length) { el.innerHTML = html + RB.empty('Zonas ainda não disponíveis.<br>Seu coach irá publicar em breve.'); return; }
-    html += '<div class="sub">Use estas zonas como guia — o corpo é o melhor monitor. Ajuste conforme sua resposta nas primeiras semanas.</div>';
-    html += A.zones.map(function (z) {
-      return '<div class="zone"><div class="zone-dot" style="background:' + RB.esc(z.color) + '"></div><div style="flex:1"><div class="zone-h"><span class="zone-n">' + RB.esc(z.zone) + '</span><span class="zone-p">' + RB.esc(z.pace) + '</span></div><div class="zone-d">' + RB.esc(z.description || '') + '</div></div></div>';
-    }).join('');
-    el.innerHTML = html;
-  }
 
   // ---------- FEEDBACK ----------
   A.fbTab = function (v) { A.fbView = v; A.go('feedback'); };
@@ -287,6 +294,7 @@
     btn.disabled = false;
     if (res.error) { btn.textContent = 'ENVIAR FEEDBACK'; RB.toast('Erro ao salvar', false); return; }
     A.feedbacks.unshift(res.data);
+    RB.push.notify({ type: 'feedback', feedback_id: res.data.id });
     if (F.w) A.byWorkout[F.w.id] = res.data;
     RB.closeSheet();
     RB.toast(F.dor === 'sim' ? 'Enviado ✓ — o coach vai ver o alerta de dor' : (F.kind === 'strength' ? 'Treino de força registrado ✓' : 'Feedback enviado ✓'));

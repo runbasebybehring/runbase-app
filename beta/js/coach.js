@@ -40,6 +40,7 @@
     else if (C.tab === 'athletes') { if (C.athlete) detail(el); else list(el); }
     else if (C.tab === 'feedbacks') inbox(el);
     else if (C.tab === 'calendar') agenda(el);
+    else if (C.tab === 'eventos') RB.events.render(el);
     window.scrollTo(0, 0);
   };
 
@@ -62,7 +63,7 @@
     var pain = C.fbs.filter(function (f) { return f.dor && new Date(f.created_at) > weekAgo; });
     var wk = C.fbs.filter(function (f) { return new Date(f.created_at) > weekAgo; });
     var html = '<div class="hello"><div class="hello-s">' + hi + '</div><div class="hello-n">' + RB.esc(RB.cfg.coachName.toUpperCase()) + '.</div></div>' +
-      '<div class="card">' + RB.ew('Visão geral') + RB.statGrid([{ v: String(C.athletes.length), l: 'Alunos', a: true }, { v: String(wk.length), l: 'Feedbacks 7d' }, { v: String(wait.length), l: 'Sem resposta' }]) + '</div>';
+      RB.push.card() + '<div class="card">' + RB.ew('Visão geral') + RB.statGrid([{ v: String(C.athletes.length), l: 'Alunos', a: true }, { v: String(wk.length), l: 'Feedbacks 7d' }, { v: String(wait.length), l: 'Sem resposta' }]) + '</div>';
     html += RB.ms.coachCards(C.athletes);
     if (pain.length) {
       html += '<div class="card rl">' + RB.ew('⚠ Dor relatada nos últimos 7 dias') + pain.map(function (f) {
@@ -86,7 +87,7 @@
   // ---------- DETALHE DO ALUNO ----------
   C.open = function (id) {
     C.athlete = C.athletes.find(function (a) { return a.id === id; });
-    C.dtab = 'semana'; C.tab = 'athletes';
+    C.dtab = 'planilha'; C.tab = 'athletes';
     C.render();
   };
   C.newReport = async function (id) {
@@ -101,21 +102,11 @@
       '<div class="ath-h">' + RB.av(a.img, 60) + '<div><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div></div>';
     var gw = C.gymWeeks[a.id] || 0;
     if (gw >= RB.cfg.gymSwapWeeks) head += '<div class="card rl">' + RB.ew('⚠ Treino de força há ' + gw + ' semanas') + '<div class="p">Está na hora de considerar trocar os exercícios ou progredir a carga/estrutura.</div></div>';
-    head += RB.seg([['semana', 'Semana'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios'], ['zonas', 'Zonas']], C.dtab, 'RB.coach.dt');
+    head += RB.seg([['planilha', 'Planilha'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios'], ['plano', 'Plano']], C.dtab, 'RB.coach.dt');
     el.innerHTML = head + '<div id="dt-body"><div class="ld"><div class="sp"></div></div></div>';
     var body = RB.$('dt-body');
-    if (C.dtab === 'semana') {
-      var wr = await sb.from('weeks').select('*,workouts(*)').eq('athlete_id', a.id).order('week_number');
-      var weeks = wr.data || [];
-      var cw = weeks.find(function (w) { return w.is_current; }) || weeks[weeks.length - 1];
-      if (!cw) { body.innerHTML = RB.empty('Sem planilha publicada.'); return; }
-      var ids = cw.workouts.map(function (w) { return w.id; });
-      var fr = await sb.from('feedbacks').select('workout_id,rpe').in('workout_id', ids.length ? ids : [-1]);
-      var done = {}; (fr.data || []).forEach(function (f) { done[f.workout_id] = f; });
-      body.innerHTML = RB.ew(RB.esc(cw.label) + ' · ' + RB.esc(cw.volume), 'blue') + cw.workouts.sort(function (x, y) { return x.sort_order - y.sort_order; }).map(function (d) {
-        var f = done[d.id];
-        return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div><div class="dr-t">' + RB.esc(d.description) + '</div></div>';
-      }).join('');
+    if (C.dtab === 'planilha') {
+      await RB.edit.planilha(a, body);
     } else if (C.dtab === 'feedbacks') {
       var fr2 = await sb.from('feedbacks').select('*,workouts(day_label,type,description)').eq('athlete_id', a.id).order('created_at', { ascending: false }).limit(40);
       var fbs = fr2.data || [];
@@ -125,12 +116,8 @@
         (fbs.length ? fbs.map(function (f) { return RB.fbCard(f, { athlete: a, replies: reps[f.id] }); }).join('') : RB.empty('Nenhum feedback ainda'));
     } else if (C.dtab === 'relatorios') {
       await RB.reports.list(a, body);
-    } else if (C.dtab === 'zonas') {
-      var zr = await sb.from('zones').select('*').eq('athlete_id', a.id).order('sort_order');
-      var zones = zr.data || [];
-      body.innerHTML = zones.length ? zones.map(function (z) {
-        return '<div class="zone"><div class="zone-dot" style="background:' + RB.esc(z.color) + '"></div><div style="flex:1"><div class="zone-h"><span class="zone-n">' + RB.esc(z.zone) + '</span><span class="zone-p">' + RB.esc(z.pace) + '</span></div><div class="zone-d">' + RB.esc(z.description || '') + '</div></div></div>';
-      }).join('') : RB.empty('Zonas não cadastradas');
+    } else if (C.dtab === 'plano') {
+      await RB.edit.plano(a, body);
     }
   }
 
