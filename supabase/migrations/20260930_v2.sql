@@ -169,4 +169,4 @@ create index exercise_media_athlete_idx on public.exercise_media (athlete_id);
 drop policy media_read on public.exercise_media;
 create policy media_read on public.exercise_media for select to authenticated
   using (athlete_id is null or athlete_id = (select auth.uid()) or public.is_coach());
--- + vídeo do agachamento sumô passa a ser da Krishna; + 18 vídeos padrão de máquinas (YouTube, Treino Mestre / FisioPrev / João Martins)
+-- + vídeo do agachamento sumô passa a ser da Krishna; + 18 vídeos padrão de máquinas (aplicado pelo SQL Editor em 01/10/2026)
