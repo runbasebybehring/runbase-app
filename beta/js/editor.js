@@ -249,7 +249,8 @@
       section('Bloco atual', b.mes ? '<b>' + esc(b.mes) + '</b>' + (b.obj ? ' · ' + esc(b.obj) : '') + '<br><span class="muted-s">' + esc((b.resumo || '').slice(0, 120)) + (b.resumo && b.resumo.length > 120 ? '…' : '') + '</span>' : 'não cadastrado', 'bloco') +
       section('Organização da semana', plan.week_layout && plan.week_layout.length ? '<div class="wkgrid">' + plan.week_layout.map(wkCell).join('') + '</div>' : 'não cadastrada', 'semana') +
       section('Zonas de treino', S.zones.length ? S.zones.map(function (z) { return '<span class="zchip" style="--zc:' + esc(z.color) + '"><b>' + esc(z.zone.split('·')[0].trim()) + '</b> ' + esc(z.pace) + '</span>'; }).join(' ') : 'não cadastradas', 'zonas') +
-      section('Treino de força', sumStr + (s.length ? '<br><span class="muted-s">Programa atual há ' + sw + ' semana(s)</span>' : ''), 'forca');
+      section('Treino de força', sumStr + (s.length ? '<br><span class="muted-s">Programa atual há ' + sw + ' semana(s)</span>' : ''), 'forca') +
+      '<button class="btn btn-o" onclick="RB.media.library()">▶ VÍDEOS DOS EXERCÍCIOS</button>';
   };
   function section(t, body, key) {
     return '<div class="card pl-sec"><div class="pl-h">' + RB.ew(t, 'blue') + '<button class="mini" onclick="RB.edit.open(\'' + key + '\')">Editar</button></div><div class="pl-b">' + body + '</div></div>';
@@ -281,6 +282,11 @@
     ov.innerHTML = '<div class="preview-bar"><span>' + { perfil: 'Perfil e objetivo', bloco: 'Bloco atual', semana: 'Organização da semana', zonas: 'Zonas de treino', forca: 'Treino de força' }[key] + ' · ' + esc(a.name.split(' ')[0]) + '</span><span class="ed-btns"><button onclick="RB.edit.close()">Cancelar</button><button class="save" onclick="RB.edit.saveX()">Salvar</button></span></div><div class="preview-body" id="ed-body"></div>';
     document.body.appendChild(ov); document.body.classList.add('locked');
     drawX();
+    if (key === 'forca') RB.media.load(true).then(function () { if (X && X.key === 'forca') drawX(); });
+  };
+  E.video = function (path) {
+    var e = at(path);
+    RB.media.manage(e.b, function () { RB.closeSheet(); if (X) drawX(); });
   };
   E.close = function () { var o = RB.$('ed-ov'); if (o) o.remove(); document.body.classList.remove('locked'); X = null; };
 
@@ -334,7 +340,7 @@
                   var ep = gp + '.exercicios.' + ei;
                   return '<div class="ex-ed"><div class="z-row">' + I(ep + '.b', e.b, 'Nome do exercício') + '<label class="ck-l"><input type="checkbox" data-p="' + ep + '.c"' + (e.c ? ' checked' : '') + ' onchange="RB.edit.set(this)"> registra carga</label></div>' +
                     I(ep + '.e', e.e, '3x10 · 20kg · 60s', 'full') + T(ep + '.tec', e.tec, 'Técnica (opcional)', 2) + I(ep + '.warn', e.warn, '⚠ Atenção (opcional)', 'full') +
-                    '<div class="blk-a">' + (ei > 0 ? '<button onclick="RB.edit.arr(\'' + gp + '.exercicios\',' + ei + ',-1)">▲</button>' : '') + (ei < g.exercicios.length - 1 ? '<button onclick="RB.edit.arr(\'' + gp + '.exercicios\',' + ei + ',1)">▼</button>' : '') + '<button class="danger" onclick="RB.edit.arrDel(\'' + gp + '.exercicios\',' + ei + ')">Remover</button></div></div>';
+                    '<div class="blk-a">' + '<button class="vid-e' + (RB.media.get(e.b) ? ' on' : '') + '" onclick="RB.edit.video(\'' + ep + '\')">' + (RB.media.get(e.b) ? '▶ Vídeo ✓' : '+ Vídeo') + '</button>' + (ei > 0 ? '<button onclick="RB.edit.arr(\'' + gp + '.exercicios\',' + ei + ',-1)">▲</button>' : '') + (ei < g.exercicios.length - 1 ? '<button onclick="RB.edit.arr(\'' + gp + '.exercicios\',' + ei + ',1)">▼</button>' : '') + '<button class="danger" onclick="RB.edit.arrDel(\'' + gp + '.exercicios\',' + ei + ')">Remover</button></div></div>';
                 }).join('') +
                 '<div class="blk-add"><button class="mini" onclick="RB.edit.arrAdd(\'' + gp + '.exercicios\',{b:\'\',e:\'\',c:true,tec:\'\',warn:\'\'})">+ Exercício</button>' +
                 (day.grupos.length > 1 ? '<button class="mini ghost" onclick="RB.edit.arrDel(\'' + di + '.grupos\',' + gi + ')">Remover bloco</button>' : '') + '</div></div>';

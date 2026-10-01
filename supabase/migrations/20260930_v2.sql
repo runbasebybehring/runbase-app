@@ -144,3 +144,18 @@ alter table public.feedbacks
 --     sync_athlete_week / sync_all_weeks, cron diário 00h05 SP, trigger ao mudar plan_start.
 --     A regra antiga (avança só com 100% de feedback) vale só para quem não tem plan_start.
 --     Ponto de partida: plan_start calculado a partir da semana atual de cada aluno em 01/10/2026.
+
+-- 15) Vídeos dos exercícios de força (biblioteca única, ligada pelo nome normalizado do exercício)
+create table public.exercise_media (
+  key text primary key, name text not null,
+  kind text not null check (kind in ('upload','youtube','link')),
+  url text not null, storage_path text, updated_at timestamptz not null default now());
+alter table public.exercise_media enable row level security;
+create policy media_read on public.exercise_media for select to authenticated using (true);
+create policy media_coach_write on public.exercise_media for all to authenticated using (public.is_coach()) with check (public.is_coach());
+insert into storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
+  values ('exercise-videos','exercise-videos',true,52428800,array['video/mp4','video/quicktime','video/webm','video/x-m4v','video/3gpp']);
+create policy "coach envia videos" on storage.objects for insert to authenticated with check (bucket_id='exercise-videos' and public.is_coach());
+create policy "coach atualiza videos" on storage.objects for update to authenticated using (bucket_id='exercise-videos' and public.is_coach());
+create policy "coach apaga videos" on storage.objects for delete to authenticated using (bucket_id='exercise-videos' and public.is_coach());
+create policy "coach le videos" on storage.objects for select to authenticated using (bucket_id='exercise-videos' and public.is_coach());
