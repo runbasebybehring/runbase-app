@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     const from14 = new Date(today.getTime() - 14 * 864e5).toISOString().slice(0, 10);
 
     const [aths, fbs, gym, lastAll, cks] = await Promise.all([
-      db.from("athletes").select("id,name,goal,race,pace,vol"),
+      db.from("athletes").select("id,name,goal,race,pace,vol").eq("active", true),
       db.from("feedbacks").select("athlete_id,kind,strength_day,rpe,dor,pain_exercises,comment,distance_km,duration_sec,completion,performed_at,workouts(type)").gte("performed_at", from14),
       db.from("gym_logs").select("athlete_id,exercise_name,carga,created_at").gte("created_at", from),
       db.from("feedbacks").select("athlete_id,performed_at").order("performed_at", { ascending: false }).limit(2000),

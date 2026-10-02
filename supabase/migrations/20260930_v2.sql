@@ -280,3 +280,7 @@ create policy checkins_update on public.checkins for update to authenticated usi
 -- 20. Agenda por assinatura (v2.9.2): link secreto por aluno lido pela função calendar (verify_jwt false; o token é a autenticação)
 alter table athletes add column if not exists cal_token uuid default gen_random_uuid();
 create unique index if not exists athletes_cal_token_idx on athletes(cal_token);
+
+-- 21. Alunos inativos (v2.9.4): saem do radar, resumo, mensalidades, avisos e notificações (notify v7, weekly-digest v3)
+alter table athletes add column if not exists active boolean not null default true;
+alter table athletes add column if not exists inactive_since date;

@@ -50,8 +50,8 @@ Deno.serve(async (req) => {
       const now = new Date(Date.now() - 3 * 3600 * 1000); // horário de São Paulo
       const today = DAYS[now.getUTCDay()];
       const dayStart = now.toISOString().slice(0, 10);
-      const { data: wos } = await db.from("workouts").select("id,athlete_id,type,day_label,weeks!inner(is_current)")
-        .eq("weeks.is_current", true);
+      const { data: wos } = await db.from("workouts").select("id,athlete_id,type,day_label,weeks!inner(is_current),athletes!inner(active)")
+        .eq("weeks.is_current", true).eq("athletes.active", true);
       const todays = (wos ?? []).filter((w) => (w.day_label ?? "").toUpperCase().trim() === today && !/DESCANSO|OFF/i.test(w.type ?? ""));
       if (!todays.length) return json({ ok: true, sent: 0 });
       const { data: fbs } = await db.from("feedbacks").select("workout_id,athlete_id,created_at")
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         if (d) { sent += await send([COACH_ID], { title: "✦ Resumo da semana pronto", body: (d.content as { headline?: string })?.headline ?? "Veja quem precisa de atenção esta semana.", tab: "dashboard", tag: "digest" }); out.push("digest"); }
       }
 
-      const { data: aths } = await db.from("athletes").select("id,name,race,goal");
+      const { data: aths } = await db.from("athletes").select("id,name,race,goal").eq("active", true);
       const all = aths ?? [];
       const fullName = (id: string) => all.find((a) => a.id === id)?.name ?? "";
       const short = (id: string) => {
@@ -122,15 +122,17 @@ Deno.serve(async (req) => {
 
       // mensalidades: vence hoje e 3 dias de atraso (sem pagamento registrado no mês)
       const { data: bills } = await db.from("billing").select("athlete_id,amount,due_day,active").eq("active", true).not("due_day", "is", null);
-      if ((bills ?? []).length) {
+      const activeIds = new Set(all.map((a) => a.id));
+      const billsA = (bills ?? []).filter((b) => activeIds.has(b.athlete_id));
+      if (billsA.length) {
         const lastDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate();
         const ref = iso(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
         const { data: pays } = await db.from("payments").select("athlete_id").eq("ref_month", ref);
         const paid = new Set((pays ?? []).map((p) => p.athlete_id));
         const dueDay = (b: { due_day: number }) => Math.min(b.due_day, lastDay);
         const brl = (v: number) => "R$ " + (Math.round(v * 100) / 100).toFixed(2).replace(".", ",").replace(",00", "");
-        const dueToday = (bills ?? []).filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate());
-        const late3 = (bills ?? []).filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate() - 3);
+        const dueToday = billsA.filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate());
+        const late3 = billsA.filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate() - 3);
         if (dueToday.length) {
           const tot = dueToday.reduce((s2, b) => s2 + (+b.amount || 0), 0);
           sent += await send([COACH_ID], { title: `💰 Vence hoje: ${names(dueToday.map((b) => short(b.athlete_id)))}`, body: tot ? `Total ${brl(tot)}. Marque como pago na aba Mensal.` : "Marque como pago na aba Mensal.", tab: "financeiro", tag: "mensal" });
@@ -207,12 +209,14 @@ Deno.serve(async (req) => {
       if (!e) return json({ error: "not_found" }, 404);
       const d = new Date(new Date(e.starts_at).getTime() - 3 * 3600 * 1000);
       const when = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")} ${String(d.getUTCHours()).padStart(2, "0")}h${String(d.getUTCMinutes()).padStart(2, "0")}`;
-      const { data: aths } = await db.from("athletes").select("id");
+      const { data: aths } = await db.from("athletes").select("id").eq("active", true);
       return json({ sent: await send((aths ?? []).map((a) => a.id), { title: `Novo evento: ${e.title}`, body: `${when}${e.location ? " · " + e.location : ""} — confirme sua presença.`, tab: "eventos", tag: "event" }) });
     }
 
     if (body.type === "nudge") {
       if (!isCoach) return json({ error: "forbidden" }, 403);
+      const { data: na } = await db.from("athletes").select("active").eq("id", String(body.athlete_id)).maybeSingle();
+      if (na && na.active === false) return json({ sent: 0, inactive: true });
       const text = String(body.text ?? "").trim().slice(0, 180) || "Como estão os treinos? Registra no app pra eu acompanhar.";
       const tab = ["home", "feedback", "forca", "planilha"].includes(body.tab) ? body.tab : "home";
       return json({ sent: await send([String(body.athlete_id)], { title: "Recado da treinadora 👋", body: text, tab, tag: "nudge" }) });
