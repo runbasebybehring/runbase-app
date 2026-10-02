@@ -61,7 +61,7 @@
     var needInstall = ios && !RB.isStandalone();
     if (!N.supported() && !needInstall) return '';
     var coach = RB.state.isCoach;
-    var why = coach ? 'Saiba na hora quando um aluno der feedback ou relatar dor.' : 'Receba as respostas do coach, relatórios e lembretes do treino do dia.';
+    var why = coach ? 'Saiba na hora quando um aluno der feedback ou relatar dor.' : 'Receba as respostas da treinadora, relatórios e lembretes do treino do dia.';
     return '<div class="card install" id="push-card">' + RB.ew('🔔 Notificações', 'blue') + '<div class="install-t">' + why +
       (needInstall ? '<br><br>No iPhone: primeiro toque em <strong>Compartilhar → Adicionar à Tela de Início</strong> e abra o app por lá.' : '') + '</div>' +
       '<div class="install-a">' + (needInstall ? '' : '<button class="btn btn-r sm" onclick="RB.push.enable(this)">ATIVAR</button>') +

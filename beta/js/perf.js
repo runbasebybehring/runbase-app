@@ -110,7 +110,7 @@
   X.plan = function (athlete, rp, tests) {
     var km = X.raceKm(athlete.race) || X.raceKm(athlete.goal);
     if (!km) return null;
-    var tgt = rp && P().parseHMS(rp.target), from = 'meta definida pelo coach';
+    var tgt = rp && P().parseHMS(rp.target), from = 'meta definida pela treinadora';
     if (!tgt && tests && tests.length) { tgt = X.riegel(tests[0].duration_sec, +tests[0].distance_km, km); from = 'estimativa pelo seu último teste'; }
     if (!tgt) return { km: km, missing: true };
     var D = km, segs;
@@ -132,7 +132,7 @@
   X.raceHtml = function (athlete, rp, tests) {
     var pl = X.plan(athlete, rp, tests);
     if (!pl) return RB.empty('Coloque a distância da prova no perfil (ex.: "21K — 18/10/2026").');
-    if (pl.missing) return '<div class="p">Falta a meta de tempo. ' + (RB.state.isCoach ? 'Defina a meta abaixo ou registre um teste.' : 'Seu coach vai definir a meta da prova.') + '</div>';
+    if (pl.missing) return '<div class="p">Falta a meta de tempo. ' + (RB.state.isCoach ? 'Defina a meta abaixo ou registre um teste.' : 'Sua treinadora vai definir a meta da prova.') + '</div>';
     var f = P().fmtPace, hms = P().fmtHMS, k = P().fmtKm;
     return '<div class="rp-top"><div><span>Meta</span><b>' + hms(pl.target) + '</b><i>' + esc(pl.from) + '</i></div><div><span>Pace médio</span><b>' + f(pl.target / pl.km) + '</b><i>/km · ' + k(pl.km) + ' km</i></div></div>' +
       '<div class="fld-l">Estratégia</div>' + pl.segs.map(function (s) {
@@ -141,12 +141,12 @@
       '<div class="fld-l" style="margin-top:12px">Passagens</div><div class="rp-splits">' + pl.splits.map(function (s) { return '<div><span>' + (s.k === pl.km ? 'Chegada' : k(s.k) + ' km') + '</span><b>' + hms(s.t) + '</b></div>'; }).join('') + '</div>' +
       (pl.gels.length ? '<div class="fld-l" style="margin-top:12px">Géis</div>' + pl.gels.map(function (g, i) { return '<div class="rp-gel">' + (i + 1) + 'º gel · ~' + g.min + ' min · perto do km ' + Math.round(g.km) + '</div>'; }).join('') +
         '<div class="hint">Tome com água, num posto. Use só gel que você já testou nos longões.</div>' : '') +
-      (pl.notes ? '<div class="rp-notes"><div class="fld-l">Recado do coach</div>' + RB.md(pl.notes) + '</div>' : '') +
+      (pl.notes ? '<div class="rp-notes"><div class="fld-l">Recado da treinadora</div>' + RB.md(pl.notes) + '</div>' : '') +
       '<div class="fld-l" style="margin-top:12px">Checklist</div>' + [
         ['Véspera', 'Kit separado: tênis já usado, roupa testada, número de peito e alfinetes, chip. Jantar habitual, nada novo. Dormir cedo.'],
         ['Manhã da prova', 'Café da manhã testado 2–3h antes. Chegar 45 min antes. Banheiro com folga. Trote leve de 10 min.'],
         ['Durante', 'Larga no seu pelotão. Não persegue ninguém nos primeiros km. Água em todos os postos se estiver calor.'],
-        ['Depois', 'Hidrata, come, trota ou caminha 10 min. Conta pro coach como foi no feedback.']
+        ['Depois', 'Hidrata, come, trota ou caminha 10 min. Conta pra treinadora como foi no feedback.']
       ].map(function (c) { return '<div class="rp-ck"><b>' + c[0] + '</b>' + c[1] + '</div>'; }).join('');
   };
   // aluno: abre o plano

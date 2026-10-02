@@ -59,7 +59,7 @@
     var up = V.upcoming(), past = V.list.filter(function (e) { return up.indexOf(e) < 0; }).reverse();
     var html = (V.opts.noTitle && el.id === 'galera-body' ? '' : RB.tt('EVENTOS')) + '<div class="sub">Treinões, provas do grupo e encontros da Run Base.</div>' +
       (coach ? '<button class="btn btn-r" style="margin:0 0 16px" onclick="RB.events.form()">+ NOVO EVENTO</button>' : '') +
-      (up.length ? up.map(function (e) { return card(e, coach); }).join('') : RB.empty('Nenhum evento marcado por enquanto.' + (coach ? '' : '<br>Quando o coach criar, aparece aqui.'))) +
+      (up.length ? up.map(function (e) { return card(e, coach); }).join('') : RB.empty('Nenhum evento marcado por enquanto.' + (coach ? '' : '<br>Quando a treinadora criar, aparece aqui.'))) +
       (past.length ? '<button class="btn-link" onclick="RB.events.togglePast()">' + (V.showPast ? 'Esconder' : 'Ver') + ' eventos anteriores (' + past.length + ')</button>' + (V.showPast ? past.map(function (e) { return card(e, coach); }).join('') : '') : '');
     el.innerHTML = html;
     if (!coach) RB.setBadge('evBadge', V.pendingCount());

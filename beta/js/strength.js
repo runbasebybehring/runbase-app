@@ -50,7 +50,7 @@
 
   function draw() {
     var html = RB.tt('FORÇA') + '<div class="hint-row">Toque no <span class="info-i sm">i</span> ou em <b>▶ Vídeo</b> para ver a técnica. Registre a carga de cada série.</div>';
-    if (c.weeks >= RB.cfg.gymSwapWeeks) html += '<div class="card rl">' + RB.ew('⚠ Hora de evoluir') + '<div class="p">Você está no mesmo treino de força há ' + c.weeks + ' semanas. Fale com seu coach sobre progredir a carga ou trocar os exercícios.</div></div>';
+    if (c.weeks >= RB.cfg.gymSwapWeeks) html += '<div class="card rl">' + RB.ew('⚠ Hora de evoluir') + '<div class="p">Você está no mesmo treino de força há ' + c.weeks + ' semanas. Fale com sua treinadora sobre progredir a carga ou trocar os exercícios.</div></div>';
     c.gym.forEach(function (d, di) {
       var open = !!G.open[di];
       html += '<div class="card gday' + (open ? ' open' : '') + '"><div class="gday-h" onclick="RB.strength.toggle(' + di + ')"><div><div class="gday-d">' + RB.esc(d.dia) + '</div><div class="gday-t">' + RB.esc(d.tipo) + '</div></div>' +

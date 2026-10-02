@@ -80,7 +80,7 @@
     var apple = '<button class="btn btn-r" onclick="RB.wk.sub(\'apple\')">' + (ios ? 'ASSINAR NO IPHONE' : 'CALENDÁRIO DA APPLE (IPHONE / MAC)') + '</button>';
     var google = '<button class="btn btn-' + (ios ? 'o' : 'r') + '" onclick="RB.wk.sub(\'google\')">GOOGLE AGENDA</button>';
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('📅 Agenda') + '<div class="sh-t">Seus treinos no calendário</div>' +
-      '<div class="sh-s">Você assina uma vez e os treinos aparecem sozinhos no seu calendário. Quando a coach muda a planilha, a agenda atualiza junto.</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="sh-s">Você assina uma vez e os treinos aparecem sozinhos no seu calendário. Quando a treinadora muda a planilha, a agenda atualiza junto.</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       '<div class="cal-opts">' + (ios ? apple + google : google + apple) +
       '<button class="btn btn-o" onclick="RB.wk.sub(\'copy\')">COPIAR LINK</button></div>' +
       '<div class="hint" style="margin-top:10px">' + (ios ? 'No iPhone, toque em <b>Assinar</b> na tela que abrir.' : 'No Google Agenda, confirme em <b>Adicionar</b>. Pode levar algumas horas para os treinos aparecerem no celular.') +

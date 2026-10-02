@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       let sent = 0;
       for (const id of who) {
         const w = todays.find((x) => x.athlete_id === id)!;
-        sent += await send([id], { title: "Como foi o treino de hoje?", body: `${w.type} — conta pro coach em 30 segundos.`, tab: "feedback", tag: "lembrete" });
+        sent += await send([id], { title: "Como foi o treino de hoje?", body: `${w.type} — conta pra treinadora em 30 segundos.`, tab: "feedback", tag: "lembrete" });
       }
       return json({ ok: true, sent });
     }
@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         const done = new Set((cks ?? []).map((c) => c.athlete_id));
         const who = all.map((a) => a.id).filter((id) => !done.has(id));
         let n = 0;
-        for (const id of who) n += await send([id], { title: "☀ Check-in da semana", body: "3 toques: sono, estresse e dores. Ajuda a coach a ajustar seus treinos.", tab: "home", tag: "checkin" });
+        for (const id of who) n += await send([id], { title: "☀ Check-in da semana", body: "3 toques: sono, estresse e dores. Ajuda a treinadora a ajustar seus treinos.", tab: "home", tag: "checkin" });
         out.push("checkin:" + n);
       }
 
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
       const fb = r.feedbacks as unknown as { athlete_id: string; athletes: { name: string } };
       const preview = r.body.length > 110 ? r.body.slice(0, 110) + "…" : r.body;
       const to = isCoach ? fb.athlete_id : COACH_ID;
-      const title = isCoach ? "Mensagem do coach" : `${first(fb.athletes?.name)} respondeu`;
+      const title = isCoach ? "Mensagem da treinadora" : `${first(fb.athletes?.name)} respondeu`;
       return json({ sent: await send([to], { title, body: preview, tab: isCoach ? "feedback" : "feedbacks", tag: "reply" }) });
     }
 
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
       if (!isCoach) return json({ error: "forbidden" }, 403);
       const text = String(body.text ?? "").trim().slice(0, 180) || "Como estão os treinos? Registra no app pra eu acompanhar.";
       const tab = ["home", "feedback", "forca", "planilha"].includes(body.tab) ? body.tab : "home";
-      return json({ sent: await send([String(body.athlete_id)], { title: "Recado do coach 👋", body: text, tab, tag: "nudge" }) });
+      return json({ sent: await send([String(body.athlete_id)], { title: "Recado da treinadora 👋", body: text, tab, tag: "nudge" }) });
     }
 
     return json({ error: "bad_request" }, 400);
