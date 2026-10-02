@@ -121,7 +121,7 @@
       (hl.length ? RB.ew('Destaques') + '<div class="rig">' + hl.map(function (i) {
         return '<div class="ri ' + RB.esc(i.cls || 'note') + '"><div class="ri-t">' + RB.esc(i.t) + '</div><p>' + RB.md(i.x) + '</p></div>';
       }).join('') + '</div>' : '') +
-      (r.coach_note ? RB.ew('Nota do coach') + '<div class="rcn"><p>' + RB.md(r.coach_note) + '</p><div class="rcn-s">— RUNBASE · ' + RB.esc(R.periodLabel(r.period)) + '</div></div>' : '') +
+      (r.coach_note ? RB.ew('Nota da treinadora') + '<div class="rcn"><p>' + RB.md(r.coach_note) + '</p><div class="rcn-s">— RUNBASE · ' + RB.esc(R.periodLabel(r.period)) + '</div></div>' : '') +
       '</div>';
     if (!opts.noPdf) html += '<button class="btn btn-o no-print" onclick="RB.reports.print()">⤓ BAIXAR PDF</button>';
     return html;
@@ -197,7 +197,7 @@
         return '<div class="hl-ed"><select class="fi sel" id="r-hl-c' + i + '">' + HL_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (h.cls === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select>' +
           inp('r-hl-t' + i, h.t, 'Título') + area('r-hl-x' + i, h.x, 2, 'Texto') + '</div>';
       }).join('')) +
-      field('Nota do coach', area('r-note', r.coach_note, 4, 'Mensagem pessoal para o aluno...')) +
+      field('Nota da treinadora', area('r-note', r.coach_note, 4, 'Mensagem pessoal para o aluno...')) +
       '<details class="adv"><summary>Números e barras manuais (opcional)</summary>' +
       '<div class="hint" style="margin:8px 0">Se deixar em branco, o relatório mostra os números automáticos do mês.</div>' +
       field('Números em destaque', st.map(function (s, i) {

@@ -20,9 +20,9 @@
   // cartão na home do aluno (segunda a quinta, até responder)
   K.homeCard = function () {
     var dow = (new Date().getDay() + 6) % 7;
-    if (K.cur) return dow <= 1 ? '<div class="card gl ck-done">' + RB.ew('Check-in da semana', 'green') + '<div class="p">Feito ✓ Obrigada! A coach já recebeu.</div></div>' : '';
+    if (K.cur) return dow <= 1 ? '<div class="card gl ck-done">' + RB.ew('Check-in da semana', 'green') + '<div class="p">Feito ✓ Obrigada! A treinadora já recebeu.</div></div>' : '';
     if (dow > 3) return '';
-    return '<div class="card ck-card" id="ck-card">' + RB.ew('☀ Check-in da semana', 'blue') + '<div class="p" style="margin-bottom:10px">3 perguntas rápidas para a coach ajustar seus treinos.</div>' +
+    return '<div class="card ck-card" id="ck-card">' + RB.ew('☀ Check-in da semana', 'blue') + '<div class="p" style="margin-bottom:10px">3 perguntas rápidas para a treinadora ajustar seus treinos.</div>' +
       '<div class="fld-l">Como está seu sono?</div>' + scale('sono', SONO, COL) +
       '<div class="fld-l">Nível de estresse</div>' + scale('estresse', EST, COL.slice().reverse()) +
       '<div class="fld-l">Alguma dor ou incômodo?</div><div class="ck-sc">' +
@@ -40,7 +40,7 @@
     var row = { athlete_id: RB.state.user.id, week_start: K.weekStart(), sono: K.f.sono, estresse: K.f.estresse, dor: K.f.dor, dor_onde: K.f.dor ? (K.f.dor_onde || '').trim() || null : null, note: (K.f.note || '').trim() || null };
     var r = await sb.from('checkins').insert(row).select().single();
     if (r.error) { RB.toast('Não deu para enviar', false); return; }
-    K.cur = r.data; RB.toast(row.dor ? 'Enviado ✓ — a coach vai ver o aviso de dor' : 'Check-in enviado ✓');
+    K.cur = r.data; RB.toast(row.dor ? 'Enviado ✓ — a treinadora vai ver o aviso de dor' : 'Check-in enviado ✓');
     RB.athlete.go('home');
   };
 

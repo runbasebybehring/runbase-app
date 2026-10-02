@@ -42,7 +42,7 @@
         out += '<div class="card ms-card ms-win">' + RB.ew('🎉 Marco', 'green') +
           '<div class="ms-big">' + w + ' semanas completas</div>' +
           '<div class="p">' + (w === 4 ? 'Primeiro bloco fechado. A base está sendo construída, treino a treino.' : 'Mais um bloco fechado. Constância assim faz diferença no dia da prova.') +
-          ' Seu coach já foi avisado para revisar o próximo bloco com você.</div>' +
+          ' Sua treinadora já foi avisada para revisar o próximo bloco com você.</div>' +
           '<button class="btn btn-r sm" onclick="RB.ms.ack(\'' + k + '\', this)">VALEU! 👊</button></div>';
       }
     }
@@ -52,7 +52,7 @@
       if (!M.acked[gk]) {
         out += '<div class="card ms-card rl">' + RB.ew('🔁 Treino de força') +
           '<div class="ms-big">' + sw + ' semanas no mesmo treino</div>' +
-          '<div class="p">Hora de evoluir: carga, estrutura ou exercícios novos. Seu coach já foi avisado. Registre as cargas e o feedback dos treinos para ajudar no ajuste.</div>' +
+          '<div class="p">Hora de evoluir: carga, estrutura ou exercícios novos. Sua treinadora já foi avisada. Registre as cargas e o feedback dos treinos para ajudar no ajuste.</div>' +
           '<button class="btn btn-o sm" onclick="RB.ms.ack(\'' + gk + '\', this)">ENTENDI</button></div>';
       }
     }

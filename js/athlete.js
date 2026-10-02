@@ -84,7 +84,7 @@
     // mensagens novas do coach
     var unreadFbs = A.feedbacks.filter(function (f) { return RB.threads.unread(A.replies[f.id]); });
     if (unreadFbs.length) {
-      html += '<div class="card coachmsg">' + RB.ew('💬 Mensagem do coach') + unreadFbs.slice(0, 2).map(function (f) {
+      html += '<div class="card coachmsg">' + RB.ew('💬 Mensagem da treinadora') + unreadFbs.slice(0, 2).map(function (f) {
         var reps = A.replies[f.id], last = reps[reps.length - 1];
         return '<div class="cm" onclick="RB.threads.open(' + f.id + ')"><div class="cm-w">' + RB.esc(f.workouts ? f.workouts.day_label + ' — ' + f.workouts.type : 'Treino') + '</div><div class="cm-b">' + RB.esc(last.body.length > 120 ? last.body.slice(0, 120) + '…' : last.body) + '</div><div class="cm-a">Responder ›</div></div>';
       }).join('') + '</div>';
@@ -180,8 +180,8 @@
     } else if (A.fbView === 'conversas') {
       var withMsgs = A.feedbacks.filter(function (f) { return (A.replies[f.id] || []).length; });
       withMsgs.sort(function (x, y) { var a = A.replies[x.id], b = A.replies[y.id]; return new Date(b[b.length - 1].created_at) - new Date(a[a.length - 1].created_at); });
-      html += '<div class="sub">Toque em qualquer treino para falar com o coach sobre ele.</div>' +
-        (withMsgs.length ? withMsgs.map(function (f) { return RB.fbCard(f, { replies: A.replies[f.id] }); }).join('') : RB.empty('Nenhuma conversa ainda.<br>Quando o coach responder um feedback, aparece aqui.'));
+      html += '<div class="sub">Toque em qualquer treino para falar com a treinadora sobre ele.</div>' +
+        (withMsgs.length ? withMsgs.map(function (f) { return RB.fbCard(f, { replies: A.replies[f.id] }); }).join('') : RB.empty('Nenhuma conversa ainda.<br>Quando a treinadora responder um feedback, aparece aqui.'));
     } else {
       html += history();
     }
@@ -235,7 +235,7 @@
   }
   function tail() {
     return '<div class="fq">' + RB.ew('Comentário (opcional)', 'mid') + '<textarea id="fb-comment" class="ft" rows="2" placeholder="' + (F.kind === 'strength' ? 'Carga, técnica, algo diferente...' : 'Dor, dúvida, algo diferente...') + '"></textarea></div>' +
-      (RB.audio.supported() ? '<div class="fq">' + RB.ew('Prefere falar? <span class="hint">grave um áudio pro coach · até 3 min</span>', 'mid') + RB.audio.recorder('fb') + '</div>' : '') +
+      (RB.audio.supported() ? '<div class="fq">' + RB.ew('Prefere falar? <span class="hint">grave um áudio pra treinadora · até 3 min</span>', 'mid') + RB.audio.recorder('fb') + '</div>' : '') +
       '<div class="fq">' + RB.ew('Data do treino', 'mid') + '<input type="date" class="fi" id="fb-date" value="' + new Date().toISOString().slice(0, 10) + '"></div>' +
       '<button id="submit-fb" class="sb2" onclick="RB.athlete.submit()">' + needText() + '</button>';
   }
@@ -319,7 +319,7 @@
     RB.push.notify({ type: 'feedback', feedback_id: res.data.id });
     if (F.w) A.byWorkout[F.w.id] = res.data;
     RB.closeSheet();
-    RB.toast(F.dor === 'sim' ? 'Enviado ✓ — o coach vai ver o alerta de dor' : (F.kind === 'strength' ? 'Treino de força registrado ✓' : 'Feedback enviado ✓'));
+    RB.toast(F.dor === 'sim' ? 'Enviado ✓ — a treinadora vai ver o alerta de dor' : (F.kind === 'strength' ? 'Treino de força registrado ✓' : 'Feedback enviado ✓'));
     A.go(A.tab);
     // treino com distância e tempo: oferece a imagem para compartilhar
     if (res.data.distance_km && res.data.duration_sec) setTimeout(function () { RB.share.open(res.data); }, 500);
@@ -332,7 +332,7 @@
     var key = 'rb_reminder_' + RB.state.user.id + '_' + A.cur.id;
     try { if (localStorage.getItem(key)) return; localStorage.setItem(key, '1'); } catch (e) {}
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Lembrete') + '<div class="sh-t">Treinos da semana passada<br>sem feedback</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
-      '<div class="p" style="margin-bottom:20px">Você tem ' + overdue + ' treino' + (overdue > 1 ? 's' : '') + ' da semana passada sem feedback. Toda avaliação ajuda seu coach a ajustar o plano.</div>' +
+      '<div class="p" style="margin-bottom:20px">Você tem ' + overdue + ' treino' + (overdue > 1 ? 's' : '') + ' da semana passada sem feedback. Toda avaliação ajuda sua treinadora a ajustar o plano.</div>' +
       '<button class="btn btn-r" onclick="RB.closeSheet();RB.athlete.fbView=\'semana\';RB.athlete.go(\'feedback\')">DAR FEEDBACK AGORA</button><button class="btn btn-o" onclick="RB.closeSheet()">Lembrar depois</button>');
   };
 
@@ -361,7 +361,7 @@
   A.pickReport = function (id) { A.repSel = id; A.go('relatorio'); };
   async function relatorio(el) {
     if (!A.reports.length) {
-      el.innerHTML = RB.tt('RELATÓRIO') + '<div class="card rl">' + RB.ew('Em breve') + '<div class="sh-t" style="margin-bottom:10px">Seu primeiro relatório</div><div class="p">Ao fim de cada mês você recebe aqui um resumo do seu progresso: números, evolução, destaques e uma nota do coach.</div></div>';
+      el.innerHTML = RB.tt('RELATÓRIO') + '<div class="card rl">' + RB.ew('Em breve') + '<div class="sh-t" style="margin-bottom:10px">Seu primeiro relatório</div><div class="p">Ao fim de cada mês você recebe aqui um resumo do seu progresso: números, evolução, destaques e uma nota da treinadora.</div></div>';
       return;
     }
     var id = A.repSel || A.reports[0].id;

@@ -27,7 +27,7 @@
     ['Saúde', [
       ['lesoes_atuais', 'Sente alguma dor ou lesão hoje?', 'area', 'Onde, há quanto tempo, o que piora'],
       ['lesoes_antes', 'Lesões ou cirurgias anteriores', 'area', 'Ex.: canelite em 2024, cirurgia no joelho...'],
-      ['saude', 'Algo de saúde que a coach precisa saber', 'area', 'Condições, medicamentos, liberação médica...']]],
+      ['saude', 'Algo de saúde que a treinadora precisa saber', 'area', 'Condições, medicamentos, liberação médica...']]],
     ['Equipamento', [
       ['tenis', 'Tênis que usa (modelo e mais ou menos quantos km)', 'text', 'Nike Pegasus 41, ~300 km']]],
     ['Para fechar', [
@@ -76,7 +76,7 @@
     var ov = document.createElement('div');
     ov.className = 'preview-overlay ed-ov'; ov.id = 'in-ov';
     ov.innerHTML = '<div class="preview-bar"><span>Ficha de entrada</span><span class="ed-btns"><button onclick="RB.intake.close()">Depois</button><button class="save" onclick="RB.intake.save()">Enviar</button></span></div>' +
-      '<div class="preview-body" id="in-body"><div class="in-hello"><div class="sh-t">Oi, ' + esc(A.me.name.split(' ')[0]) + '! 👋</div><div class="p">Antes de montar seus treinos, quero te conhecer melhor. Leva uns 5 minutos e só a coach vê suas respostas.</div></div>' +
+      '<div class="preview-body" id="in-body"><div class="in-hello"><div class="sh-t">Oi, ' + esc(A.me.name.split(' ')[0]) + '! 👋</div><div class="p">Antes de montar seus treinos, quero te conhecer melhor. Leva uns 5 minutos e só a treinadora vê suas respostas.</div></div>' +
       SECTIONS.map(function (s) { return '<div class="card in-sec">' + RB.ew(s[0], 'blue') + s[1].map(field).join('') + '</div>'; }).join('') +
       '<button class="btn btn-r" onclick="RB.intake.save()">ENVIAR FICHA</button></div>';
     document.body.appendChild(ov); document.body.classList.add('locked');
@@ -95,7 +95,7 @@
   I.homeCard = function () {
     var me = RB.athlete.me;
     if (!me || !me.needs_anamnesis) return '';
-    return '<div class="card rl">' + RB.ew('📋 Ficha de entrada') + '<div class="p" style="margin-bottom:10px">Conta um pouco sobre você para a coach montar seus treinos. Leva 5 minutos.</div><button class="btn btn-r sm" onclick="RB.intake.open()">PREENCHER AGORA</button></div>';
+    return '<div class="card rl">' + RB.ew('📋 Ficha de entrada') + '<div class="p" style="margin-bottom:10px">Conta um pouco sobre você para a treinadora montar seus treinos. Leva 5 minutos.</div><button class="btn btn-r sm" onclick="RB.intake.open()">PREENCHER AGORA</button></div>';
   };
 
   // coach: resumo e leitura completa
