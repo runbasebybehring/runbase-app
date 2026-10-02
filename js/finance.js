@@ -29,7 +29,8 @@
     F.el = el; if (!F.month) F.month = monthStart(new Date());
     el.innerHTML = '<div class="ld"><div class="sp"></div></div>';
     var ref = iso(F.month);
-    var r = await Promise.all([sb.from('billing').select('*'), sb.from('payments').select('*').eq('ref_month', ref)]);
+    var r = await Promise.all([sb.from('billing').select('*'), sb.from('payments').select('*').eq('ref_month', ref), sb.from('settings').select('*').in('key', ['pix_key', 'pix_name'])]);
+    F.set = {}; (r[2].data || []).forEach(function (x) { F.set[x.key] = x.value || ''; });
     F.billing = {}; (r[0].data || []).forEach(function (b) { F.billing[b.athlete_id] = b; });
     F.pays = {}; (r[1].data || []).forEach(function (p) { F.pays[p.athlete_id] = p; });
     var aths = RB.coach.athletes.slice();
@@ -54,6 +55,10 @@
       '<div class="card">' + RB.statGrid([{ v: brl(rec).replace(',00', ''), l: 'Recebido', a: true }, { v: brl(open).replace(',00', ''), l: 'A receber' }, { v: brl(late).replace(',00', ''), l: nl ? 'Atrasado (' + nl + ')' : 'Atrasado' }]) + '</div>' +
       (active.length ? '<div class="card fin-list">' + active.map(row).join('') + '</div>' : '') +
       (off.length ? '<details class="fin-off"><summary>Sem cobrança ativa (' + off.length + ')</summary><div class="card fin-list">' + off.map(row).join('') + '</div></details>' : '') +
+      '<div class="card fin-pix">' + RB.ew('Lembretes para os alunos', 'blue') +
+      '<div class="p" style="margin-bottom:10px">O aluno recebe uma notificação <b>2 dias antes</b>, <b>no dia do vencimento</b> e <b>3 dias depois</b>, se ainda não estiver marcado como pago. Na tela inicial dele também aparece um aviso com a chave Pix.</div>' +
+      '<div class="fld-l">Sua chave Pix (vai na mensagem)</div><input class="fi" id="fin-pix" value="' + esc(F.set.pix_key || '') + '" placeholder="e-mail, CPF/CNPJ, celular ou chave aleatória">' +
+      '<div class="fld-l" style="margin-top:8px">Nome que aparece no Pix (opcional)</div><input class="fi" id="fin-pixn" value="' + esc(F.set.pix_name || '') + '" placeholder="Vic Behring"><button class="btn btn-o sm" style="margin-top:10px" onclick="RB.fin.savePix()">SALVAR PIX</button></div>' +
       '<div class="hint" style="text-align:center;margin-top:8px">Toque no aluno para definir valor e dia de vencimento. Você recebe um aviso no dia do vencimento e quando atrasar 3 dias.</div>';
   };
 
@@ -96,6 +101,45 @@
     var b = F.billing[id] || {};
     if (await savePay(id, b.amount || null, iso(new Date()), 'Pix')) { RB.toast('Pagamento registrado ✓ (Pix, hoje)'); F.render(F.el); }
   };
+  F.savePix = async function () {
+    var now = new Date().toISOString();
+    var r = await sb.from('settings').upsert([{ key: 'pix_key', value: RB.$('fin-pix').value.trim(), updated_at: now }, { key: 'pix_name', value: RB.$('fin-pixn').value.trim(), updated_at: now }]);
+    if (r.error) { RB.toast('Erro ao salvar', false); return; }
+    RB.toast('Chave Pix salva ✓');
+  };
+
+  // ---------- aluno: aviso de mensalidade na tela inicial ----------
+  F.loadMine = async function (uid) {
+    F.mine = null;
+    try {
+      var b = (await sb.from('billing').select('*').eq('athlete_id', uid).maybeSingle()).data;
+      if (!b || b.active === false || !b.amount || !b.due_day) return;
+      var t = today0(), cand = [-1, 0, 1].map(function (k) { var m = new Date(t.getFullYear(), t.getMonth() + k, 1); var last = new Date(m.getFullYear(), m.getMonth() + 1, 0).getDate(); return { ref: iso(m), due: new Date(m.getFullYear(), m.getMonth(), Math.min(b.due_day, last)) }; });
+      var refs = cand.map(function (c) { return c.ref; });
+      var pays = (await sb.from('payments').select('ref_month').eq('athlete_id', uid).in('ref_month', refs)).data || [];
+      var paid = {}; pays.forEach(function (p) { paid[p.ref_month] = 1; });
+      // a cobrança em aberto mais antiga, de 2 dias antes até 20 dias depois do vencimento
+      var open = cand.find(function (c) { var d = Math.round((c.due - t) / 864e5); return !paid[c.ref] && d <= 2 && d >= -20; });
+      if (!open) return;
+      var st = (await sb.from('settings').select('key,value').in('key', ['pix_key', 'pix_name'])).data || [];
+      var set = {}; st.forEach(function (x) { set[x.key] = x.value; });
+      F.mine = { amount: b.amount, due: open.due, days: Math.round((open.due - t) / 864e5), pix: (set.pix_key || '').trim(), pixName: (set.pix_name || '').trim() };
+    } catch (e) { F.mine = null; }
+  };
+  F.studentCard = function () {
+    var m = F.mine; if (!m) return '';
+    var when = m.days > 1 ? 'vence em ' + m.days + ' dias (dia ' + m.due.getDate() + ')' : m.days === 1 ? 'vence amanhã' : m.days === 0 ? 'vence hoje' : 'venceu dia ' + String(m.due.getDate()).padStart(2, '0') + '/' + String(m.due.getMonth() + 1).padStart(2, '0');
+    return '<div class="card ' + (m.days < 0 ? 'rl' : '') + ' fin-st">' + RB.ew('💳 Mensalidade', m.days < 0 ? undefined : 'blue') +
+      '<div class="fin-st-v"><b>' + brl(m.amount) + '</b> · ' + when + '</div>' +
+      (m.pix ? '<div class="fin-st-pix"><span>Pix' + (m.pixName ? ' · ' + esc(m.pixName) : '') + '</span><code>' + esc(m.pix) + '</code></div><button class="btn btn-o sm" onclick="RB.fin.copyPix()">COPIAR CHAVE PIX</button>' : '') +
+      '<div class="hint" style="margin-top:8px">Já pagou? Pode desconsiderar — o aviso some quando a treinadora registrar o pagamento.</div></div>';
+  };
+  F.copyPix = function () {
+    var k = F.mine && F.mine.pix; if (!k) return;
+    var ok = function () { RB.toast('Chave Pix copiada ✓'); };
+    if (navigator.clipboard) navigator.clipboard.writeText(k).then(ok, function () { prompt('Copie a chave Pix:', k); }); else prompt('Copie a chave Pix:', k);
+  };
+
   F.undo = async function () {
     if (!confirm('Desfazer o pagamento deste mês?')) return;
     await sb.from('payments').delete().eq('athlete_id', F.cur.id).eq('ref_month', iso(F.month));

@@ -665,3 +665,6 @@ body:has(.preview-overlay) .sheet{z-index:350}
 .inact{margin-top:22px}
 .ar.off{opacity:.6}.ar.off .ar-s{margin-bottom:0}
 .inact-b{border-left:4px solid var(--mid)}
+.fin-pix{margin-top:14px}.fin-pix-r{display:flex;gap:8px;align-items:center}.fin-pix-r .fi{flex:1;margin:0}
+.fin-st-v{font-size:16px;margin:2px 0 10px}.fin-st-v b{font-family:'Barlow Condensed',sans-serif;font-size:22px}
+.fin-st-pix{display:flex;flex-direction:column;gap:4px;background:var(--cream2);padding:10px 12px;margin-bottom:10px}.fin-st-pix span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}.fin-st-pix code{font-size:15px;word-break:break-all}
