@@ -107,7 +107,7 @@
         '<span class="muted-s">Preenchida em ' + RB.fmtDate(row.completed_at) + (row.updated_at && row.updated_at.slice(0, 10) !== row.completed_at.slice(0, 10) ? ' · atualizada em ' + RB.fmtDate(row.updated_at) : '') + '</span>'
       : athlete.needs_anamnesis ? 'Pedida ao aluno — ainda não preenchida.' : 'Não preenchida.';
     var btn = row && row.completed_at ? '<button class="mini" onclick="RB.intake.view()">Ver ficha</button>'
-      : athlete.needs_anamnesis ? '' : '<button class="mini" onclick="RB.intake.ask()">Pedir ao aluno</button>';
+      : '<span class="in-btns">' + (athlete.needs_anamnesis ? '' : '<button class="mini" onclick="RB.intake.ask()">Pedir ao aluno</button>') + '<button class="mini ghost" onclick="RB.intake.preview()">Ver perguntas</button></span>';
     return '<div class="card pl-sec"><div class="pl-h">' + RB.ew('Ficha de entrada', 'blue') + btn + '</div><div class="pl-b">' + body + '</div></div>';
   };
   I.view = function () {
@@ -121,6 +121,12 @@
           return '<div class="in-q">' + esc(f[1]) + '</div><div class="in-a">' + esc(show(v)).replace(/\n/g, '<br>') + '</div>';
         }).join('') + '</div>';
       }).join('') + '<button class="btn btn-o" style="margin-top:12px" onclick="RB.closeSheet()">FECHAR</button>');
+  };
+  // coach: vê as perguntas que o aluno vai responder
+  I.preview = function () {
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Ficha de entrada') + '<div class="sh-t">Perguntas que o aluno responde</div><div class="sh-s">Aparece sozinha no primeiro acesso de quem você cadastra pelo app. Para alunos antigos, use "Pedir ao aluno".</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      SECTIONS.map(function (s) { return '<div class="in-v">' + RB.ew(s[0], 'blue') + s[1].map(function (f) { return '<div class="in-a">• ' + esc(f[1]) + (f[2] === 'one' || f[2] === 'many' ? ' <span class="muted-s">(' + f[3].join(' / ') + ')</span>' : '') + '</div>'; }).join('') + '</div>'; }).join('') +
+      '<button class="btn btn-o" style="margin-top:12px" onclick="RB.closeSheet()">FECHAR</button>');
   };
   I.ask = async function () {
     var a = RB.coach.athlete;

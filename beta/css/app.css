@@ -659,3 +659,4 @@ body:has(.preview-overlay) .sheet{z-index:350}
 .ck-line .tags{margin-top:4px}
 .aiw-why{background:var(--blue-bg);padding:10px;font-size:13px;line-height:1.45;margin-bottom:10px}
 .nav-btn .icon{font-weight:700}
+.in-btns{display:flex;gap:4px}.in-btns .mini{margin:0}
