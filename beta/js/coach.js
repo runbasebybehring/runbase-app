@@ -75,14 +75,18 @@
     } else {
       html += '<div class="card gl">' + RB.ew('Tudo respondido', 'green') + '<div class="p">Nenhum feedback esperando resposta. 👊</div></div>';
     }
-    html += '<div style="margin-top:18px">' + RB.ew('Alunos') + C.athletes.map(function (a) { return athleteRow(a); }).join('') + '</div>' + RB.installCard();
+    html += '<div style="margin-top:18px">' + RB.ew('Alunos') + C.athletes.map(function (a) { return athleteRow(a); }).join('') + '</div>' + inactiveSection() + RB.installCard();
     el.innerHTML = html;
   }
 
   function list(el) {
     el.innerHTML = RB.tt('ALUNOS') + '<button class="btn btn-r sm" style="margin-bottom:12px" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('') +
-      (C.inactive.length ? '<details class="inact"><summary>Inativos (' + C.inactive.length + ')</summary><div class="hint" style="margin:6px 0 10px">Não aparecem no radar, no resumo, nas mensalidades nem nos avisos, e não recebem notificações.</div>' +
-        C.inactive.map(function (a) { return '<div class="ar off" onclick="RB.coach.open(\'' + a.id + '\')">' + RB.av(a.img, 40) + '<div style="flex:1;min-width:0"><div class="ar-n">' + RB.esc(a.name) + '</div><div class="ar-s">' + (a.inactive_since ? 'Inativo desde ' + RB.fmtDate(a.inactive_since + 'T12:00:00') : 'Inativo') + '</div></div><div class="chev">›</div></div>'; }).join('') + '</details>' : '');
+      inactiveSection();
+  }
+  function inactiveSection() {
+    if (!C.inactive || !C.inactive.length) return '';
+    return '<div class="inact">' + RB.ew('Inativos (' + C.inactive.length + ')', 'mid') + '<div class="hint" style="margin:-2px 0 10px">Sem notificações e fora do radar, do resumo e das mensalidades. Toque para ver ou reativar.</div>' +
+      C.inactive.map(function (a) { return '<div class="ar off" onclick="RB.coach.open(\'' + a.id + '\')">' + RB.av(a.img, 40) + '<div style="flex:1;min-width:0"><div class="ar-n">' + RB.esc(a.name) + '</div><div class="ar-s">' + (a.inactive_since ? 'Inativo desde ' + RB.fmtDate(a.inactive_since + 'T12:00:00') : 'Inativo') + '</div></div><div class="chev">›</div></div>'; }).join('') + '</div>';
   }
   // inativar / reativar aluno
   C.setActive = async function (on) {
