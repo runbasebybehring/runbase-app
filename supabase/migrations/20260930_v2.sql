@@ -254,3 +254,25 @@ grant execute on function public.community_board() to authenticated;
 --      (as funções ficam no banco, sem acesso; o app não as usa mais). A coluna athletes.mural ficou sem uso.
 -- 18) Avisos diários para a coach: notify { type: "coach_cron" } (resumo pronto na segunda, aluno com 7 dias sem registrar,
 --     prova em 7 dias, lembrete de relatórios no dia 1º). public.run_coach_alerts() + cron 'runbase-avisos-coach' 11:07 UTC (08:07 SP).
+
+-- 19) Mensalidades (billing, payments — só coach), ficha de entrada (anamnesis + athletes.needs_anamnesis),
+--     check-in de segunda (checkins: sono, estresse 1–5, dor). Claudio Giraldi marcado para preencher a ficha.
+create table if not exists public.billing (athlete_id uuid primary key references public.athletes(id) on delete cascade, amount numeric check (amount is null or amount >= 0), due_day int check (due_day between 1 and 31), active boolean not null default true, notes text, updated_at timestamptz not null default now());
+alter table public.billing enable row level security;
+create policy billing_coach on public.billing for all to authenticated using (public.is_coach()) with check (public.is_coach());
+create table if not exists public.payments (id uuid primary key default gen_random_uuid(), athlete_id uuid not null references public.athletes(id) on delete cascade, ref_month date not null, amount numeric, paid_at date not null default current_date, method text, created_at timestamptz not null default now(), unique (athlete_id, ref_month));
+alter table public.payments enable row level security;
+create policy payments_coach on public.payments for all to authenticated using (public.is_coach()) with check (public.is_coach());
+alter table public.athletes add column if not exists needs_anamnesis boolean not null default false;
+create table if not exists public.anamnesis (athlete_id uuid primary key references public.athletes(id) on delete cascade, data jsonb not null default '{}'::jsonb, completed_at timestamptz, updated_at timestamptz not null default now());
+alter table public.anamnesis enable row level security;
+create policy anamnesis_read on public.anamnesis for select to authenticated using (athlete_id = (select auth.uid()) or public.is_coach());
+create policy anamnesis_insert on public.anamnesis for insert to authenticated with check (athlete_id = (select auth.uid()) or public.is_coach());
+create policy anamnesis_update on public.anamnesis for update to authenticated using (athlete_id = (select auth.uid()) or public.is_coach());
+create table if not exists public.checkins (id uuid primary key default gen_random_uuid(), athlete_id uuid not null references public.athletes(id) on delete cascade, week_start date not null, sono int check (sono between 1 and 5), estresse int check (estresse between 1 and 5), dor boolean, dor_onde text, note text, created_at timestamptz not null default now(), unique (athlete_id, week_start));
+alter table public.checkins enable row level security;
+create policy checkins_read on public.checkins for select to authenticated using (athlete_id = (select auth.uid()) or public.is_coach());
+create policy checkins_write on public.checkins for insert to authenticated with check (athlete_id = (select auth.uid()));
+create policy checkins_update on public.checkins for update to authenticated using (athlete_id = (select auth.uid()));
+-- 19b) Funções: suggest-week (IA sugere a próxima semana), admin cria aluno com needs_anamnesis=true,
+--      notify coach_cron ganhou mensalidade vencendo/atrasada e lembrete de check-in na segunda; weekly-digest lê os check-ins.

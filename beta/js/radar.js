@@ -24,6 +24,10 @@
       var last3 = mine.filter(function (f) { return f.rpe; }).slice(0, 3);
       var hi = last3.filter(function (f) { return f.rpe >= 8; }).length;
       if (hi >= 2) { items.push({ t: 'rpe', l: 'RPE alto em ' + hi + ' dos últimos ' + last3.length }); score += 50; }
+      var ac = RB.trainLoad.acwr(mine);
+      if (ac && ac.k === 'risco') { items.push({ t: 'rpe', l: 'carga subiu rápido (' + ac.r.toFixed(1).replace('.', ',') + '×)' }); score += 60; }
+      var ck = (R.checkins || {})[a.id];
+      if (ck && (ck.estresse >= 4 || ck.sono <= 2 || ck.dor)) { items.push({ t: ck.dor ? 'dor' : 'rpe', l: 'check-in: ' + [ck.sono <= 2 ? 'sono ruim' : '', ck.estresse >= 4 ? 'estresse alto' : '', ck.dor ? 'dor' + (ck.dor_onde ? ' (' + ck.dor_onde + ')' : '') : ''].filter(Boolean).join(', ') }); score += ck.dor ? 70 : 40; }
       var lastD = mine.length ? fdate(mine[0]) : null;
       var gap = lastD ? Math.floor((now - lastD) / DAY) : null;
       if (gap == null || gap >= 7) { items.push({ t: 'gap', l: gap == null ? 'sem registro há mais de 60 dias' : gap + ' dias sem registrar' }); score += gap == null ? 20 : Math.min(gap, 40); }
@@ -69,6 +73,13 @@
     RB.closeSheet();
     if (r.data && r.data.sent) RB.toast('Recado enviado ✓');
     else RB.toast(first(R.target.name) + ' ainda não ativou as notificações. Mande pelo WhatsApp.', false);
+  };
+
+  // check-ins da semana atual (ou da anterior, no começo da semana)
+  R.loadCheckins = async function () {
+    var d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7 - 7);
+    var r = await sb.from('checkins').select('*').gte('week_start', d.toISOString().slice(0, 10)).order('week_start', { ascending: false });
+    R.checkins = {}; (r.data || []).forEach(function (c) { if (!R.checkins[c.athlete_id]) R.checkins[c.athlete_id] = c; });
   };
 
   // ---------- RESUMO SEMANAL (IA) ----------

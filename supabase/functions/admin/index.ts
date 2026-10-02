@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         id, name, img: String(b.img ?? "").trim().toUpperCase().slice(0, 3) || initials(name),
         goal: String(b.goal ?? "").trim() || "A definir", race: String(b.race ?? "").trim() || "Sem prova no momento",
         pace: String(b.pace ?? "").trim() || "A definir", vol: String(b.vol ?? "").trim() || "A definir",
-        obs: String(b.obs ?? "").trim() || null,
+        obs: String(b.obs ?? "").trim() || null, needs_anamnesis: true,
       };
       const ins = await db.from("athletes").insert(row).select().single();
       if (ins.error) { await db.auth.admin.deleteUser(id); return json({ error: ins.error.message }, 400); }

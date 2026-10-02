@@ -120,6 +120,38 @@ Deno.serve(async (req) => {
         out.push("prova");
       }
 
+      // mensalidades: vence hoje e 3 dias de atraso (sem pagamento registrado no mês)
+      const { data: bills } = await db.from("billing").select("athlete_id,amount,due_day,active").eq("active", true).not("due_day", "is", null);
+      if ((bills ?? []).length) {
+        const lastDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate();
+        const ref = iso(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
+        const { data: pays } = await db.from("payments").select("athlete_id").eq("ref_month", ref);
+        const paid = new Set((pays ?? []).map((p) => p.athlete_id));
+        const dueDay = (b: { due_day: number }) => Math.min(b.due_day, lastDay);
+        const brl = (v: number) => "R$ " + (Math.round(v * 100) / 100).toFixed(2).replace(".", ",").replace(",00", "");
+        const dueToday = (bills ?? []).filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate());
+        const late3 = (bills ?? []).filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate() - 3);
+        if (dueToday.length) {
+          const tot = dueToday.reduce((s2, b) => s2 + (+b.amount || 0), 0);
+          sent += await send([COACH_ID], { title: `💰 Vence hoje: ${names(dueToday.map((b) => short(b.athlete_id)))}`, body: tot ? `Total ${brl(tot)}. Marque como pago na aba Mensal.` : "Marque como pago na aba Mensal.", tab: "financeiro", tag: "mensal" });
+          out.push("vence");
+        }
+        if (late3.length) {
+          sent += await send([COACH_ID], { title: `Mensalidade atrasada: ${names(late3.map((b) => short(b.athlete_id)))}`, body: "3 dias após o vencimento, sem pagamento registrado.", tab: "financeiro", tag: "atraso" });
+          out.push("atraso");
+        }
+      }
+
+      // segunda: lembrete do check-in para os alunos que ainda não responderam
+      if (today.getUTCDay() === 1) {
+        const { data: cks } = await db.from("checkins").select("athlete_id").eq("week_start", iso(today));
+        const done = new Set((cks ?? []).map((c) => c.athlete_id));
+        const who = all.map((a) => a.id).filter((id) => !done.has(id));
+        let n = 0;
+        for (const id of who) n += await send([id], { title: "☀ Check-in da semana", body: "3 toques: sono, estresse e dores. Ajuda a coach a ajustar seus treinos.", tab: "home", tag: "checkin" });
+        out.push("checkin:" + n);
+      }
+
       // dia 1º: relatórios do mês anterior
       if (today.getUTCDate() === 1) {
         const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];

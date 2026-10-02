@@ -48,11 +48,12 @@ Deno.serve(async (req) => {
     const from = new Date(today.getTime() - 7 * 864e5).toISOString().slice(0, 10);
     const from14 = new Date(today.getTime() - 14 * 864e5).toISOString().slice(0, 10);
 
-    const [aths, fbs, gym, lastAll] = await Promise.all([
+    const [aths, fbs, gym, lastAll, cks] = await Promise.all([
       db.from("athletes").select("id,name,goal,race,pace,vol"),
       db.from("feedbacks").select("athlete_id,kind,strength_day,rpe,dor,pain_exercises,comment,distance_km,duration_sec,completion,performed_at,workouts(type)").gte("performed_at", from14),
       db.from("gym_logs").select("athlete_id,exercise_name,carga,created_at").gte("created_at", from),
       db.from("feedbacks").select("athlete_id,performed_at").order("performed_at", { ascending: false }).limit(2000),
+      db.from("checkins").select("athlete_id,week_start,sono,estresse,dor,dor_onde,note").gte("week_start", from14).order("week_start", { ascending: false }),
     ]);
     const last: Record<string, string> = {};
     for (const f of lastAll.data ?? []) if (!last[f.athlete_id] && f.performed_at) last[f.athlete_id] = f.performed_at;
@@ -74,12 +75,14 @@ Deno.serve(async (req) => {
           rpe: f.rpe, dor: f.dor, exercicios_com_dor: f.pain_exercises, completou: f.completion, km: f.distance_km, comentario: f.comment,
         })),
         registros_de_carga_semana: (gym.data ?? []).filter((g) => g.athlete_id === a.id).length,
+        checkin_mais_recente: (cks.data ?? []).find((c) => c.athlete_id === a.id) ?? null,
       };
     });
 
     const system = `Você escreve o resumo semanal da Vic Behring, head coach da RUNBASE (corrida + força, São Paulo), sobre os alunos dela.
 Seja direto e útil para a coach agir: quem precisa de atenção (dor, sumiço, esforço alto seguido, queda de treinos), quem evoluiu, quem tem prova chegando.
 Português do Brasil, frases curtas, sem enrolação, sem diagnóstico médico. Use só o que está nos dados; não invente números.
+Check-in: sono e estresse vão de 1 a 5 (sono 1 = péssimo, estresse 5 = muito alto); dor no check-in é ponto de atenção.
 Use o primeiro nome do aluno. Se houver dois alunos com o mesmo primeiro nome, use também a inicial do sobrenome.`;
     const tool = {
       name: "resumo",
