@@ -27,11 +27,11 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid)]);
+    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid)]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
-    A.reminder();
+    if (A.me.needs_anamnesis && !A.intakeShown) { A.intakeShown = true; RB.intake.open(); } else A.reminder();
   };
 
   A.refreshReplies = async function () {
@@ -79,6 +79,7 @@
     var done = wo.filter(function (w) { return A.byWorkout[w.id]; }).length;
     var pct = wo.length ? Math.round(done / wo.length * 100) : 0;
     var html = '<div class="hello"><div class="hello-s">Olá,</div><div class="hello-n">' + RB.esc(a.name.split(' ')[0].toUpperCase()) + '.</div></div>';
+    html += RB.intake.homeCard() + RB.checkin.homeCard();
 
     // mensagens novas do coach
     var unreadFbs = A.feedbacks.filter(function (f) { return RB.threads.unread(A.replies[f.id]); });
@@ -138,7 +139,7 @@
 
   // ---------- PLANILHA ----------
   function planilha(el) {
-    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard() + RB.perf.card(false);
+    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard() + RB.wk.volumeCard() + RB.wk.calButton() + RB.perf.card(false);
     if (!A.weeks.length) { el.innerHTML = html + RB.empty('Planilha ainda não publicada.') + RB.pace.calcCard(); return; }
     A.weeks.forEach(function (wk) {
       var ic = A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
@@ -341,6 +342,7 @@
       '<div class="fld"><div class="fld-l">Nova senha <span class="hint">mínimo 6 caracteres</span></div><input class="fi" type="password" id="my-pw" autocomplete="new-password"></div>' +
       '<div class="fld"><div class="fld-l">Repita a nova senha</div><input class="fi" type="password" id="my-pw2" autocomplete="new-password"></div>' +
       '<button class="btn btn-o" id="my-pw-go" onclick="RB.athlete.changePw()">TROCAR SENHA</button>' +
+      '<button class="btn btn-o" style="margin-top:10px" onclick="RB.closeSheet();RB.intake.open()">MINHA FICHA DE ENTRADA</button>' +
       '<button class="btn-link danger" style="margin-top:14px" onclick="RB.closeSheet();RB.logout()">Sair do app</button>');
   };
   A.changePw = async function () {

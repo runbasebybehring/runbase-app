@@ -144,7 +144,7 @@
   }
   RB.openTab = function (tab) {
     if (!S.user) return;
-    if (S.isCoach) { RB.coach.go(['feedbacks', 'eventos', 'calendar', 'athletes'].indexOf(tab) >= 0 ? tab : (tab === 'feedback' ? 'feedbacks' : 'dashboard')); return; }
+    if (S.isCoach) { RB.coach.go(['feedbacks', 'eventos', 'calendar', 'athletes', 'financeiro'].indexOf(tab) >= 0 ? tab : (tab === 'feedback' ? 'feedbacks' : 'dashboard')); return; }
     if (tab === 'feedback') RB.athlete.fbView = 'conversas';
     RB.athlete.go(['home', 'planilha', 'forca', 'eventos', 'feedback', 'relatorio'].indexOf(tab) >= 0 ? tab : 'home');
   };

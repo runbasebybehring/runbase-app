@@ -29,7 +29,7 @@
   };
 
   function drawPlanilha() {
-    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button><button class="btn btn-o sm" onclick="RB.edit.tplPick(\'week\')">+ DE UM MODELO</button></div>' +
+    var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button><button class="btn btn-o sm" onclick="RB.edit.tplPick(\'week\')">+ DE UM MODELO</button><button class="btn btn-b sm" onclick="RB.edit.aiWeek()">✦ SUGERIR COM IA</button></div>' +
       '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>' +
       '<div class="card cal-card" onclick="RB.edit.startForm()"><div>' + RB.ew('Calendário', 'blue') + '<div class="cal-t">' +
       (P.athlete.plan_start ? 'Semana 1 em ' + fmtBR(P.athlete.plan_start) + ' · avança toda segunda' : 'Sem data · a semana só muda manualmente') + '</div></div><span class="mini">Alterar</span></div>';
@@ -256,6 +256,38 @@
     RB.toast('Zonas preenchidas pelo teste — revise e salve');
   };
 
+  // ======================= IA: PRÓXIMA SEMANA =======================
+  var AIW = null;
+  E.aiWeek = function () {
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('✦ IA · próxima semana') + '<div class="sh-t">Rascunho para ' + esc(P.athlete.name.split(' ')[0]) + '</div><div class="sh-s">A IA lê as últimas semanas, feedbacks, check-ins, testes, ficha e a prova. Você revisa antes de criar.</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="fld"><div class="fld-l">Algum pedido? <span class="hint">opcional</span></div><textarea class="ft" id="aiw-h" rows="2" placeholder="Ex.: semana regenerativa · incluir tiros na quarta · ele viaja no fim de semana"></textarea></div>' +
+      '<button class="btn btn-r" id="aiw-go" onclick="RB.edit.aiWeekGo()">GERAR SUGESTÃO</button>');
+  };
+  E.aiWeekGo = async function () {
+    var b = RB.$('aiw-go'), hint = (RB.$('aiw-h') || {}).value || '';
+    if (b) { b.disabled = true; b.textContent = 'A IA está montando a semana... (até 1 min)'; }
+    var r = await sb.functions.invoke('suggest-week', { body: { athlete_id: P.athlete.id, hint: hint.trim() } });
+    var d = r.data || {};
+    if (r.error || d.error) { if (b) { b.disabled = false; b.textContent = 'GERAR SUGESTÃO'; } RB.toast(d.error === 'not_configured' ? 'IA ainda não configurada' : 'Não deu para gerar agora', false); return; }
+    AIW = d; AIW.hint = hint;
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('✦ Sugestão da IA') + '<div class="sh-t">' + esc(d.label) + '</div><div class="sh-s">Volume ' + esc(d.volume) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="aiw-why">' + esc(d.justificativa) + '</div>' +
+      (d.treinos || []).map(function (t) { return '<div class="dr"><div class="dr-h"><span class="dr-d">' + esc(t.day_label) + '</span>' + RB.tag(t.type, 'r') + '</div><div class="dr-t">' + esc(t.description) + '</div></div>'; }).join('') +
+      '<button class="btn btn-r" style="margin-top:12px" onclick="RB.edit.aiWeekCreate()">CRIAR ESTA SEMANA</button>' +
+      '<button class="btn btn-o" onclick="RB.edit.aiWeek();RB.$(\'aiw-h\').value=' + "RB.edit.aiHint()" + '">PEDIR OUTRA VERSÃO</button>' +
+      '<div class="hint" style="text-align:center;margin-top:6px">A semana entra no fim da planilha. Depois dá para editar cada treino.</div>');
+  };
+  E.aiHint = function () { return AIW ? AIW.hint || '' : ''; };
+  E.aiWeekCreate = async function () {
+    if (!AIW) return;
+    RB.closeSheet();
+    var w = await createWeek({ volume: AIW.volume || '', workouts: (AIW.treinos || []).map(function (t) { return { day_label: t.day_label, type: String(t.type || '').toUpperCase(), description: t.description }; }) });
+    if (!w) return;
+    await sb.from('weeks').update({ label: AIW.label || ('Semana ' + w.week_number) }).eq('id', w.id);
+    RB.toast('Semana criada a partir da sugestão ✓');
+    await reload();
+  };
+
   // ======================= MODELOS =======================
   // modelos de treino de força (o programa inteiro) e de semana de corrida (treinos da semana)
   var TPL = { list: [] };
@@ -326,7 +358,8 @@
     var r = await Promise.all([
       sb.from('athlete_plans').select('*').eq('athlete_id', athlete.id).maybeSingle(),
       sb.from('zones').select('*').eq('athlete_id', athlete.id).order('sort_order'),
-      RB.perf.load(athlete.id)
+      RB.perf.load(athlete.id),
+      RB.intake.load(athlete.id)
     ]);
     var plan = r[0].data || { athlete_id: athlete.id, block: null, week_layout: null, strength: null };
     S = { athlete: athlete, el: el, plan: plan, zones: r[1].data || [] };
@@ -335,6 +368,7 @@
     var sw = plan.strength_started_at ? RB.weeksSince(plan.strength_started_at) : 0;
     el.innerHTML =
       section('Perfil e objetivo', esc(athlete.goal || '—') + '<br><span class="muted-s">' + esc(athlete.race || '') + ' · ' + esc(athlete.pace || '') + '</span>', 'perfil') +
+      RB.intake.coachSection(athlete) +
       section('Bloco atual', b.mes ? '<b>' + esc(b.mes) + '</b>' + (b.obj ? ' · ' + esc(b.obj) : '') + '<br><span class="muted-s">' + esc((b.resumo || '').slice(0, 120)) + (b.resumo && b.resumo.length > 120 ? '…' : '') + '</span>' : 'não cadastrado', 'bloco') +
       section('Organização da semana', plan.week_layout && plan.week_layout.length ? '<div class="wkgrid">' + plan.week_layout.map(wkCell).join('') + '</div>' : 'não cadastrada', 'semana') +
       RB.perf.card(true) +

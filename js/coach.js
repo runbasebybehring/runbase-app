@@ -19,7 +19,7 @@
     C.athletes = r[0].data || [];
     C.fbs = r[1].data || [];
     C.replies = await RB.threads.load(C.fbs.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.coachLoad(), RB.radar.loadDigest()]);
+    await Promise.all([RB.ms.coachLoad(), RB.radar.loadDigest(), RB.radar.loadCheckins()]);
     C.gymWeeks = {}; Object.keys(RB.ms.coach.gym).forEach(function (id) { C.gymWeeks[id] = RB.ms.coach.gym[id].weeks; });
     C.lastFb = {}; C.fbs.forEach(function (f) { if (!C.lastFb[f.athlete_id]) C.lastFb[f.athlete_id] = f.created_at; });
     RB.setBadge('fbBadge', C.awaiting().length);
@@ -41,6 +41,7 @@
     else if (C.tab === 'feedbacks') inbox(el);
     else if (C.tab === 'calendar') agenda(el);
     else if (C.tab === 'eventos') RB.events.render(el);
+    else if (C.tab === 'financeiro') RB.fin.render(el);
     window.scrollTo(0, 0);
   };
 
@@ -108,7 +109,8 @@
       var fbs = fr2.data || [];
       var reps = await RB.threads.load(fbs.map(function (f) { return f.id; }));
       var rp = fbs.filter(function (f) { return f.rpe; }).slice(0, 20).reverse();
-      body.innerHTML = (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
+      var ckr = await sb.from('checkins').select('*').eq('athlete_id', a.id).order('week_start', { ascending: false }).limit(1);
+      body.innerHTML = RB.checkin.line((ckr.data || [])[0]) + RB.trainLoad.card(fbs) + (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
         (fbs.length ? fbs.map(function (f) { return RB.fbCard(f, { athlete: a, replies: reps[f.id] }); }).join('') : RB.empty('Nenhum feedback ainda'));
     } else if (C.dtab === 'relatorios') {
       await RB.reports.list(a, body);
