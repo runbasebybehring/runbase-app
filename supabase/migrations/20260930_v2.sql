@@ -284,3 +284,11 @@ create unique index if not exists athletes_cal_token_idx on athletes(cal_token);
 -- 21. Alunos inativos (v2.9.4): saem do radar, resumo, mensalidades, avisos e notificações (notify v7, weekly-digest v3)
 alter table athletes add column if not exists active boolean not null default true;
 alter table athletes add column if not exists inactive_since date;
+
+-- 22. Lembretes de mensalidade para o aluno (v2.9.6): settings (pix_key, pix_name), aluno lê a própria cobrança/pagamentos (notify v8)
+create table if not exists settings (key text primary key, value text, updated_at timestamptz default now());
+alter table settings enable row level security;
+create policy settings_coach on settings for all using (is_coach()) with check (is_coach());
+create policy settings_read on settings for select using (auth.uid() is not null and key in ('pix_key','pix_name'));
+create policy billing_own_read on billing for select using (athlete_id = auth.uid());
+create policy payments_own_read on payments for select using (athlete_id = auth.uid());

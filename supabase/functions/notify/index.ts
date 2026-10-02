@@ -120,28 +120,44 @@ Deno.serve(async (req) => {
         out.push("prova");
       }
 
-      // mensalidades: vence hoje e 3 dias de atraso (sem pagamento registrado no mês)
+      // mensalidades: avisos para a treinadora (vence hoje, 3 dias de atraso) e para o aluno (2 dias antes, no dia, 3 dias de atraso)
       const { data: bills } = await db.from("billing").select("athlete_id,amount,due_day,active").eq("active", true).not("due_day", "is", null);
       const activeIds = new Set(all.map((a) => a.id));
-      const billsA = (bills ?? []).filter((b) => activeIds.has(b.athlete_id));
+      const billsA = (bills ?? []).filter((b) => activeIds.has(b.athlete_id) && b.due_day);
       if (billsA.length) {
-        const lastDay = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0)).getUTCDate();
-        const ref = iso(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1)));
-        const { data: pays } = await db.from("payments").select("athlete_id").eq("ref_month", ref);
-        const paid = new Set((pays ?? []).map((p) => p.athlete_id));
-        const dueDay = (b: { due_day: number }) => Math.min(b.due_day, lastDay);
+        const monthStart = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+        const dueIn = (b: { due_day: number }, d: Date) => {
+          const last = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+          return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), Math.min(b.due_day, last)));
+        };
+        const refs = [-1, 0, 1].map((k) => iso(new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + k, 1))));
+        const { data: pays } = await db.from("payments").select("athlete_id,ref_month").in("ref_month", refs);
+        const paid = new Set((pays ?? []).map((p) => p.athlete_id + "|" + p.ref_month));
+        // alunos cuja mensalidade vence em (hoje + k) e ainda não está paga naquele mês
+        const hit = (k: number) => {
+          const target = plus(k);
+          return billsA.filter((b) => iso(dueIn(b, target)) === iso(target) && !paid.has(b.athlete_id + "|" + iso(monthStart(target))));
+        };
         const brl = (v: number) => "R$ " + (Math.round(v * 100) / 100).toFixed(2).replace(".", ",").replace(",00", "");
-        const dueToday = billsA.filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate());
-        const late3 = billsA.filter((b) => !paid.has(b.athlete_id) && dueDay(b) === today.getUTCDate() - 3);
+        const { data: st } = await db.from("settings").select("key,value").in("key", ["pix_key", "pix_name"]);
+        const pix = (st ?? []).find((x) => x.key === "pix_key")?.value?.trim();
+        const pixTxt = pix ? ` Pix: ${pix}` : "";
+        const ddmm = (d: Date) => `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+        const dueToday = hit(0), late3 = hit(-3), soon2 = hit(2);
         if (dueToday.length) {
           const tot = dueToday.reduce((s2, b) => s2 + (+b.amount || 0), 0);
-          sent += await send([COACH_ID], { title: `💰 Vence hoje: ${names(dueToday.map((b) => short(b.athlete_id)))}`, body: tot ? `Total ${brl(tot)}. Marque como pago na aba Mensal.` : "Marque como pago na aba Mensal.", tab: "financeiro", tag: "mensal" });
+          sent += await send([COACH_ID], { title: `\u{1F4B0} Vence hoje: ${names(dueToday.map((b) => short(b.athlete_id)))}`, body: tot ? `Total ${brl(tot)}. Marque como pago na aba Mensal.` : "Marque como pago na aba Mensal.", tab: "financeiro", tag: "mensal" });
           out.push("vence");
         }
         if (late3.length) {
           sent += await send([COACH_ID], { title: `Mensalidade atrasada: ${names(late3.map((b) => short(b.athlete_id)))}`, body: "3 dias após o vencimento, sem pagamento registrado.", tab: "financeiro", tag: "atraso" });
           out.push("atraso");
         }
+        let na = 0;
+        for (const b of soon2) na += await send([b.athlete_id], { title: "\u{1F4B3} Mensalidade vence em 2 dias", body: `${b.amount ? brl(+b.amount) + " · " : ""}dia ${ddmm(plus(2))}.${pixTxt}`, tab: "home", tag: "mensal-aluno" });
+        for (const b of dueToday) na += await send([b.athlete_id], { title: "\u{1F4B3} Sua mensalidade vence hoje", body: `${b.amount ? brl(+b.amount) + "." : ""}${pixTxt} Se já pagou, pode desconsiderar.`.trim(), tab: "home", tag: "mensal-aluno" });
+        for (const b of late3) na += await send([b.athlete_id], { title: "Mensalidade em aberto", body: `Venceu dia ${ddmm(plus(-3))}${b.amount ? " (" + brl(+b.amount) + ")" : ""}.${pixTxt} Se já pagou, me avisa!`, tab: "home", tag: "mensal-aluno" });
+        if (soon2.length + dueToday.length + late3.length) out.push("aluno-mensal:" + na);
       }
 
       // segunda: lembrete do check-in para os alunos que ainda não responderam
