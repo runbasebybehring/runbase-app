@@ -276,3 +276,7 @@ create policy checkins_write on public.checkins for insert to authenticated with
 create policy checkins_update on public.checkins for update to authenticated using (athlete_id = (select auth.uid()));
 -- 19b) Funções: suggest-week (IA sugere a próxima semana), admin cria aluno com needs_anamnesis=true,
 --      notify coach_cron ganhou mensalidade vencendo/atrasada e lembrete de check-in na segunda; weekly-digest lê os check-ins.
+
+-- 20. Agenda por assinatura (v2.9.2): link secreto por aluno lido pela função calendar (verify_jwt false; o token é a autenticação)
+alter table athletes add column if not exists cal_token uuid default gen_random_uuid();
+create unique index if not exists athletes_cal_token_idx on athletes(cal_token);

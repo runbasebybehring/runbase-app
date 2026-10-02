@@ -69,7 +69,34 @@
     lines.push('END:VCALENDAR');
     return { text: lines.join('\r\n'), n: n };
   };
-  W.addToCalendar = async function () {
+  // assinatura: o calendário do celular busca o link sozinho e acompanha as mudanças da planilha
+  var FN = 'qjoftlswytvdnznbuvbz.supabase.co/functions/v1/calendar?t=';
+  W.subUrl = function () { var t = RB.athlete.me && RB.athlete.me.cal_token; return t ? FN + t : null; };
+  var isIOS = function () { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); };
+  W.addToCalendar = function () {
+    var u = W.subUrl();
+    if (!u) { W.downloadIcs(); return; }
+    var ios = isIOS();
+    var apple = '<button class="btn btn-r" onclick="RB.wk.sub(\'apple\')">' + (ios ? 'ASSINAR NO IPHONE' : 'CALENDÁRIO DA APPLE (IPHONE / MAC)') + '</button>';
+    var google = '<button class="btn btn-' + (ios ? 'o' : 'r') + '" onclick="RB.wk.sub(\'google\')">GOOGLE AGENDA</button>';
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('📅 Agenda') + '<div class="sh-t">Seus treinos no calendário</div>' +
+      '<div class="sh-s">Você assina uma vez e os treinos aparecem sozinhos no seu calendário. Quando a coach muda a planilha, a agenda atualiza junto.</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      '<div class="cal-opts">' + (ios ? apple + google : google + apple) +
+      '<button class="btn btn-o" onclick="RB.wk.sub(\'copy\')">COPIAR LINK</button></div>' +
+      '<div class="hint" style="margin-top:10px">' + (ios ? 'No iPhone, toque em <b>Assinar</b> na tela que abrir.' : 'No Google Agenda, confirme em <b>Adicionar</b>. Pode levar algumas horas para os treinos aparecerem no celular.') +
+      ' Para remover depois, apague o calendário "RUNBASE · Treinos" nas configurações da agenda.</div>' +
+      '<button class="btn-link" style="margin-top:8px" onclick="RB.closeSheet();RB.wk.downloadIcs()">Prefiro baixar só esta semana (arquivo .ics)</button>');
+  };
+  W.sub = function (k) {
+    var u = W.subUrl();
+    if (k === 'apple') { location.href = 'webcal://' + u; return; }
+    if (k === 'google') { window.open('https://calendar.google.com/calendar/render?cid=' + encodeURIComponent('webcal://' + u), '_blank'); return; }
+    var full = 'https://' + u;
+    var ok = function () { RB.toast('Link copiado ✓ Cole em "Adicionar calendário por URL"'); };
+    if (navigator.clipboard) navigator.clipboard.writeText(full).then(ok, function () { prompt('Copie o link:', full); });
+    else prompt('Copie o link:', full);
+  };
+  W.downloadIcs = async function () {
     var A = RB.athlete;
     var next = A.weeks.find(function (w) { return w.week_number === A.cur.week_number + 1; });
     var c = W.ics(next ? [A.cur, next] : [A.cur]);
@@ -86,6 +113,6 @@
   W.calButton = function () {
     var A = RB.athlete; if (!A.cur || !A.cur.workouts.length) return '';
     var next = A.weeks.some(function (w) { return w.week_number === A.cur.week_number + 1; });
-    return '<button class="btn btn-o sm cal-b" onclick="RB.wk.addToCalendar()">📅 ADICIONAR À AGENDA DO CELULAR</button><div class="hint" style="text-align:center;margin:-4px 0 12px">Semana atual' + (next ? ' e a próxima' : '') + ' · eventos de dia inteiro</div>';
+    return '<button class="btn btn-o sm cal-b" onclick="RB.wk.addToCalendar()">📅 COLOCAR TREINOS NA AGENDA</button><div class="hint" style="text-align:center;margin:-4px 0 12px">Atualiza sozinho quando a planilha muda</div>';
   };
 })();
