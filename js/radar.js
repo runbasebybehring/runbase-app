@@ -140,7 +140,7 @@
     var err = r.data && r.data.error;
     if (r.error || err) { RB.toast(err === 'email_em_uso' ? 'Esse e-mail já tem cadastro' : 'Não deu para cadastrar', false); return; }
     var a = r.data.athlete;
-    RB.coach.athletes.push(a); RB.coach.athletes.sort(function (x, y) { return x.name.localeCompare(y.name); });
+    RB.coach.athletes.push(a); RB.coach.athletes.sort(function (x, y) { return x.name.localeCompare(y.name); }); if (RB.coach.all && RB.coach.all !== RB.coach.athletes) RB.coach.all.push(a);
     welcome(a, body.email, body.password, 'Aluno cadastrado ✓');
   };
   function welcomeText(a, email, password) {

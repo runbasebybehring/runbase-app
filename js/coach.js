@@ -16,7 +16,9 @@
       sb.from('athletes').select('*').order('name'),
       sb.from('feedbacks').select('*,athletes(name,img),workouts(day_label,type,description)').gte('created_at', since).order('created_at', { ascending: false })
     ]);
-    C.athletes = r[0].data || [];
+    C.all = r[0].data || [];
+    C.athletes = C.all.filter(function (a) { return a.active !== false; });
+    C.inactive = C.all.filter(function (a) { return a.active === false; });
     C.fbs = r[1].data || [];
     C.replies = await RB.threads.load(C.fbs.map(function (f) { return f.id; }));
     await Promise.all([RB.ms.coachLoad(), RB.radar.loadDigest(), RB.radar.loadCheckins()]);
@@ -78,12 +80,23 @@
   }
 
   function list(el) {
-    el.innerHTML = RB.tt('ALUNOS') + '<button class="btn btn-r sm" style="margin-bottom:12px" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('');
+    el.innerHTML = RB.tt('ALUNOS') + '<button class="btn btn-r sm" style="margin-bottom:12px" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('') +
+      (C.inactive.length ? '<details class="inact"><summary>Inativos (' + C.inactive.length + ')</summary><div class="hint" style="margin:6px 0 10px">Não aparecem no radar, no resumo, nas mensalidades nem nos avisos, e não recebem notificações.</div>' +
+        C.inactive.map(function (a) { return '<div class="ar off" onclick="RB.coach.open(\'' + a.id + '\')">' + RB.av(a.img, 40) + '<div style="flex:1;min-width:0"><div class="ar-n">' + RB.esc(a.name) + '</div><div class="ar-s">' + (a.inactive_since ? 'Inativo desde ' + RB.fmtDate(a.inactive_since + 'T12:00:00') : 'Inativo') + '</div></div><div class="chev">›</div></div>'; }).join('') + '</details>' : '');
   }
+  // inativar / reativar aluno
+  C.setActive = async function (on) {
+    var a = C.athlete;
+    if (!on && !confirm('Mover ' + a.name.split(' ')[0] + ' para Inativos? Ele sai do radar, do resumo e das mensalidades, e para de receber notificações. Os treinos e o histórico ficam guardados.')) return;
+    var r = await sb.from('athletes').update({ active: on, inactive_since: on ? null : (function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })(new Date()) }).eq('id', a.id);
+    if (r.error) { RB.toast('Não deu para salvar', false); return; }
+    RB.toast(on ? a.name.split(' ')[0] + ' voltou para os ativos ✓' : a.name.split(' ')[0] + ' foi para Inativos');
+    C.athlete = null; C.tab = 'athletes'; await C.refresh();
+  };
 
   // ---------- DETALHE DO ALUNO ----------
   C.open = function (id) {
-    C.athlete = C.athletes.find(function (a) { return a.id === id; });
+    C.athlete = C.all.find(function (a) { return a.id === id; });
     C.dtab = 'planilha'; C.tab = 'athletes';
     C.render();
   };
@@ -96,7 +109,8 @@
   async function detail(el) {
     var a = C.athlete;
     var head = '<button class="bb" onclick="RB.coach.go(\'athletes\')">← Alunos</button>' +
-      '<div class="ath-h">' + RB.av(a.img, 60) + '<div style="flex:1"><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div><button class="mini ghost acc-b" onclick="RB.radar.access()">Acesso</button></div>';
+      '<div class="ath-h">' + RB.av(a.img, 60) + '<div style="flex:1"><div class="ath-n">' + RB.esc(a.name) + '</div><div class="ath-g">' + RB.esc(a.goal) + '</div><div class="tags">' + RB.tag(a.pace, 'm') + ' ' + RB.tag(a.vol, 'm') + '</div></div><span class="acc-bs"><button class="mini ghost acc-b" onclick="RB.radar.access()">Acesso</button>' + (a.active === false ? '' : '<button class="mini ghost acc-b" onclick="RB.coach.setActive(false)">Inativar</button>') + '</span></div>';
+    if (a.active === false) head += '<div class="card inact-b">' + RB.ew('Aluno inativo', 'mid') + '<div class="p">Não recebe notificações e não aparece no radar, no resumo nem nas mensalidades.</div><button class="btn btn-o sm" style="margin-top:12px" onclick="RB.coach.setActive(true)">REATIVAR ALUNO</button></div>';
     var gw = C.gymWeeks[a.id] || 0;
     if (gw >= RB.cfg.gymSwapWeeks) head += '<div class="card rl">' + RB.ew('⚠ Treino de força há ' + gw + ' semanas') + '<div class="p">Está na hora de considerar trocar os exercícios ou progredir a carga/estrutura.</div><button class="btn btn-o sm" style="margin-top:12px" onclick="RB.edit.gotoForca()">EDITAR TREINO DE FORÇA</button></div>';
     head += RB.seg([['planilha', 'Planilha de corrida'], ['plano', 'Força e plano'], ['feedbacks', 'Feedbacks'], ['relatorios', 'Relatórios']], C.dtab, 'RB.coach.dt').replace('class="tr"', 'class="tr tr4"');
