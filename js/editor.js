@@ -232,7 +232,7 @@
   E.raceForm = function () {
     var rp = S.plan.race_plan || {};
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Plano de prova') + '<div class="sh-t">' + esc(S.athlete.race || 'Prova') + '</div><div class="sh-s">O aluno vê o plano no app (com destaque nas 3 semanas antes da prova).</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
-      '<div class="calc-r"><div><div class="fld-l">Meta de tempo <span class="hint">h:mm:ss</span></div><input class="fi" id="rp-t" value="' + esc(rp.target || '') + '" placeholder="vazio = estimativa do teste" oninput="RB.edit.racePrev()"></div>' +
+      '<div class="calc-r"><div><div class="fld-l">Meta de tempo <span class="hint">h:mm:ss</span></div><input class="fi" id="rp-t" inputmode="numeric" value="' + esc(rp.target || '') + '" placeholder="vazio = estimativa do teste" oninput="RB.pace.mask(this);RB.edit.racePrev()"></div>' +
       '<div><div class="fld-l">Gel a cada (min)</div><input class="fi" id="rp-g" inputmode="numeric" value="' + esc(rp.gel_min || 40) + '" oninput="RB.edit.racePrev()"></div></div>' +
       '<div class="fld"><div class="fld-l">Recado para a prova <span class="hint">opcional · **negrito** funciona</span></div><textarea class="ft" id="rp-n" rows="3" placeholder="Largue no pelotão de 5:30, não persiga ninguém até o km 15.">' + esc(rp.notes || '') + '</textarea></div>' +
       '<div class="card rp-prev" id="rp-prev"></div>' +

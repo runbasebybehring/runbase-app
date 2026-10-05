@@ -144,8 +144,8 @@
       '<div class="calc"><div class="fld-l">Distância</div><div class="calc-d">' + [['5', '5K'], ['10', '10K'], ['21.0975', '21K'], ['42.195', '42K']].map(function (d, i) {
         return '<button class="' + (i === 2 ? 'on' : '') + '" onclick="RB.pace.pickDist(this,\'' + d[0] + '\')">' + d[1] + '</button>';
       }).join('') + '<input class="fi" id="calc-km" inputmode="decimal" value="21.0975" oninput="RB.pace.calc(\'time\')"></div>' +
-      '<div class="calc-r"><div><div class="fld-l">Tempo (h:mm:ss)</div><input class="fi" id="calc-time" placeholder="1:59:00" oninput="RB.pace.calc(\'time\')"></div>' +
-      '<div><div class="fld-l">Pace (min/km)</div><input class="fi" id="calc-pace" placeholder="5:39" oninput="RB.pace.calc(\'pace\')"></div></div>' +
+      '<div class="calc-r"><div><div class="fld-l">Tempo (h:mm:ss)</div><input class="fi" id="calc-time" inputmode="numeric" placeholder="1:59:00" oninput="RB.pace.mask(this);RB.pace.calc(\'time\')"></div>' +
+      '<div><div class="fld-l">Pace (min/km)</div><input class="fi" id="calc-pace" inputmode="numeric" placeholder="5:39" oninput="RB.pace.mask(this,4);RB.pace.calc(\'pace\')"></div></div>' +
       '<div class="calc-out" id="calc-out">Preencha o tempo ou o pace.</div></div></div>';
   };
   P.pickDist = function (b, km) {
@@ -153,13 +153,47 @@
     RB.$('calc-km').value = km; P.calc(RB.$('calc-time').value ? 'time' : 'pace');
   };
   var parseHMS = function (s) {
-    var p = (s || '').trim().split(':').map(Number);
+    s = String(s || '').trim().replace(/[.,;h]/g, ':').replace(/[^0-9:]/g, '');
+    // só números (teclado numérico do celular): 5230 → 52:30, 10530 → 1:05:30
+    if (s.indexOf(':') < 0 && s.length >= 3) s = maskDigits(s, 6);
+    if (!s) return null;
+    var p = s.split(':').map(Number);
     if (p.some(isNaN) || !p.length) return null;
     return p.reduce(function (a, x) { return a * 60 + x; }, 0);
   };
   var fmtHMS = function (sec) {
     sec = Math.round(sec); var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
     return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+  };
+  // máscara de tempo: o aluno digita só números e os ":" entram sozinhos
+  function maskDigits(d, max) {
+    d = String(d).replace(/\D/g, '').slice(0, max || 6);
+    if (d.length <= 2) return d;
+    if (d.length <= 4) return d.slice(0, -2) + ':' + d.slice(-2);
+    return d.slice(0, -4) + ':' + d.slice(-4, -2) + ':' + d.slice(-2);
+  }
+  P.mask = function (el, max) {
+    var prev = el.dataset.d || '', d = el.value.replace(/\D/g, '').slice(0, max || 6);
+    // apagar um ":" apaga o número antes dele
+    if (d === prev && el.value.length < (el.dataset.v || '').length) d = d.slice(0, -1);
+    var v = maskDigits(d, max);
+    el.value = v; el.dataset.d = d; el.dataset.v = v;
+  };
+  // km: aceita "10,5", "10.5", "10,5 km"; ignora o resto
+  P.kmMask = function (el) {
+    var v = el.value.replace(/[^0-9.,]/g, '').replace('.', ',');
+    var i = v.indexOf(','); if (i >= 0) v = v.slice(0, i + 1) + v.slice(i + 1).replace(/,/g, '').slice(0, 2);
+    el.value = v;
+  };
+  // tempo em 3 caixinhas (h / min / seg): sem ":" e sem ambiguidade no teclado numérico
+  P.timeFields = function (id, onchange) {
+    var box = function (suf, ph, lbl, max) { return '<label class="tf-b"><input class="fi" id="' + id + '-' + suf + '" inputmode="numeric" maxlength="' + max + '" placeholder="' + ph + '" oninput="this.value=this.value.replace(/\\D/g,\'\');' + (onchange || '') + '"><span>' + lbl + '</span></label>'; };
+    return '<div class="tf">' + box('h', '0', 'h', 2) + box('m', '52', 'min', 3) + box('s', '30', 'seg', 2) + '</div>';
+  };
+  P.readTime = function (id) {
+    var v = function (suf) { var e = RB.$(id + '-' + suf); return e ? parseInt(e.value, 10) || 0 : 0; };
+    var t = v('h') * 3600 + v('m') * 60 + v('s');
+    return t > 0 ? t : null;
   };
   P.parseHMS = parseHMS; P.fmtHMS = fmtHMS; P.fmtPace = fmtPace; P.kmh = kmh;
   // "10,5" → 10.5

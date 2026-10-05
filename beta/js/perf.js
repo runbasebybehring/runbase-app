@@ -59,19 +59,19 @@
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Teste de corrida') + '<div class="sh-t">Registrar teste</div><div class="sh-s">Teste feito no máximo esforço sustentável, de preferência em pista ou percurso plano.</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       '<div class="fld"><div class="fld-l">Distância</div><div class="calc-d">' + [['3', '3K'], ['5', '5K'], ['10', '10K']].map(function (d, i) {
         return '<button class="' + (i === 1 ? 'on' : '') + '" onclick="this.parentNode.querySelectorAll(\'button\').forEach(function(b){b.classList.remove(\'on\')});this.classList.add(\'on\');RB.$(\'ts-km\').value=\'' + d[0] + '\';RB.perf.preview()">' + d[1] + '</button>';
-      }).join('') + '<input class="fi" id="ts-km" inputmode="decimal" value="5" oninput="RB.perf.preview()"></div></div>' +
-      '<div class="calc-r"><div><div class="fld-l">Tempo (h:mm:ss)</div><input class="fi" id="ts-time" inputmode="numeric" placeholder="25:30" oninput="RB.perf.preview()"></div>' +
+      }).join('') + '<input class="fi" id="ts-km" inputmode="decimal" value="5" oninput="RB.pace.kmMask(this);RB.perf.preview()"></div></div>' +
+      '<div class="fld-l">Tempo</div>' + RB.pace.timeFields('ts-time', 'RB.perf.preview()') + '<div style="margin-top:10px">' +
       '<div><div class="fld-l">Data</div><input class="fi" type="date" id="ts-date" value="' + new Date().toISOString().slice(0, 10) + '"></div></div>' +
       '<div class="fld"><div class="fld-l">Observação <span class="hint">opcional</span></div><input class="fi" id="ts-notes" placeholder="Pista do Ibirapuera, calor"></div>' +
       '<div class="calc-out" id="ts-prev"></div>' +
       '<button class="btn btn-r" onclick="RB.perf.save()">SALVAR TESTE</button>');
   };
   X.preview = function () {
-    var km = P().km(RB.$('ts-km').value), t = P().parseHMS(RB.$('ts-time').value), o = RB.$('ts-prev');
+    var km = P().km(RB.$('ts-km').value), t = P().readTime('ts-time'), o = RB.$('ts-prev');
     o.innerHTML = km && t ? 'Pace <b>' + P().fmtPace(t / km) + ' /km</b> · limiar estimado ' + P().fmtPace(X.ltPace(t, km)) + ' /km' : '';
   };
   X.save = async function () {
-    var km = P().km(RB.$('ts-km').value), t = P().parseHMS(RB.$('ts-time').value);
+    var km = P().km(RB.$('ts-km').value), t = P().readTime('ts-time');
     if (!km || !t || t < 300) { RB.toast('Preencha distância e tempo', false); return; }
     var r = await sb.from('tests').insert({ athlete_id: X.aid, distance_km: km, duration_sec: t, test_date: RB.$('ts-date').value || undefined, notes: RB.$('ts-notes').value.trim() || null }).select().single();
     if (r.error) { RB.toast('Erro ao salvar', false); return; }

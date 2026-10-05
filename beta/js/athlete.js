@@ -249,8 +249,8 @@
     F = { w: w, kind: 'run' };
     var html = '<div class="sh-top"><div>' + RB.ew('Feedback do treino') + '<div class="sh-t">' + RB.esc(w.day_label + ' — ' + w.type) + '</div><div class="sh-s">' + RB.esc(w.description) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
       '<div class="fq">' + RB.ew('Dados do treino <span class="hint">opcional · viram imagem para compartilhar</span>', 'mid') +
-      '<div class="calc-r"><div><div class="fld-l">Distância (km)</div><input class="fi" id="fb-km" inputmode="decimal" placeholder="10,0" oninput="RB.athlete.metrics()"></div>' +
-      '<div><div class="fld-l">Tempo (h:mm:ss)</div><input class="fi" id="fb-time" inputmode="numeric" placeholder="52:30" oninput="RB.athlete.metrics()"></div></div>' +
+      '<div class="fld-l">Distância (km)</div><input class="fi fb-km" id="fb-km" inputmode="decimal" placeholder="10,0" oninput="RB.pace.kmMask(this);RB.athlete.metrics()">' +
+      '<div class="fld-l" style="margin-top:10px">Tempo total</div>' + RB.pace.timeFields('fb-time', 'RB.athlete.metrics()') +
       '<div class="calc-out" id="fb-pace"></div>' +
       '<div class="fld-l" style="margin-top:10px">Link do Strava <span class="hint">opcional</span></div><input class="fi" id="fb-strava" inputmode="url" placeholder="https://strava.app.link/..."></div>' +
       rpeBlock() + Object.keys(OPTS).map(function (k) { return optBlock(k, OPTS[k], LABELS[k]); }).join('') + tail();
@@ -275,8 +275,9 @@
     RB.openSheet(html);
   };
   A.metrics = function () {
-    var km = RB.pace.km(RB.$('fb-km').value), t = RB.pace.parseHMS(RB.$('fb-time').value), o = RB.$('fb-pace');
-    o.innerHTML = km && t ? 'Pace <b>' + RB.pace.fmtPace(t / km) + ' /km</b> · ' + RB.pace.kmh(t / km) + ' km/h' : '';
+    var km = RB.pace.km(RB.$('fb-km').value), t = RB.pace.readTime('fb-time'), o = RB.$('fb-pace');
+    o.innerHTML = km && t ? 'Pace <b>' + RB.pace.fmtPace(t / km) + ' /km</b> · ' + RB.pace.kmh(t / km) + ' km/h' +
+      (t / km < 150 || t / km > 1200 ? '<div class="in-alert" style="font-size:13px;margin-top:4px">⚠ Esse pace parece estranho — confira se o tempo está em horas, minutos e segundos certinho.</div>' : '') : '';
   };
   A.pickPain = function (b) {
     var name = F.exs[+b.dataset.i].b, i = F.pain.indexOf(name);
@@ -297,7 +298,7 @@
     btn.classList.toggle('ready', ready()); btn.textContent = ready() ? 'ENVIAR FEEDBACK' : needText();
   };
   function runMetrics() {
-    var km = RB.pace.km(RB.$('fb-km') && RB.$('fb-km').value), t = RB.pace.parseHMS(RB.$('fb-time') && RB.$('fb-time').value);
+    var km = RB.pace.km(RB.$('fb-km') && RB.$('fb-km').value), t = RB.pace.readTime('fb-time');
     var link = (RB.$('fb-strava') && RB.$('fb-strava').value.trim()) || '';
     if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
     return { distance_km: km || null, duration_sec: t && t > 0 ? t : null, strava_url: link || null };
