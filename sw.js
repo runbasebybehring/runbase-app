@@ -1,12 +1,12 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
 var PREFIX = self.registration.scope.indexOf('/beta/') > 0 ? 'rb-beta-' : 'rb-app-';
-var VERSION = PREFIX + 'v2.9.7';
+var VERSION = PREFIX + 'v2.9.8';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=2.9.7',
-  'js/config.js?v=2.9.7', 'js/core.js?v=2.9.7', 'js/charts.js?v=2.9.7', 'js/threads.js?v=2.9.7',
-  'js/reports.js?v=2.9.7', 'js/media.js?v=2.9.7', 'js/strength.js?v=2.9.7', 'js/pace.js?v=2.9.7', 'js/push.js?v=2.9.7', 'js/events.js?v=2.9.7', 'js/editor.js?v=2.9.7', 'js/share.js?v=2.9.7', 'js/milestones.js?v=2.9.7', 'js/radar.js?v=2.9.7', 'js/perf.js?v=2.9.7', 'js/community.js?v=2.9.7', 'js/audio.js?v=2.9.7', 'js/finance.js?v=2.9.7', 'js/intake.js?v=2.9.7', 'js/load.js?v=2.9.7', 'js/weekly.js?v=2.9.7', 'js/checkin.js?v=2.9.7', 'js/athlete.js?v=2.9.7', 'js/coach.js?v=2.9.7',
+  'css/app.css?v=2.9.8',
+  'js/config.js?v=2.9.8', 'js/core.js?v=2.9.8', 'js/charts.js?v=2.9.8', 'js/threads.js?v=2.9.8',
+  'js/reports.js?v=2.9.8', 'js/media.js?v=2.9.8', 'js/strength.js?v=2.9.8', 'js/pace.js?v=2.9.8', 'js/push.js?v=2.9.8', 'js/events.js?v=2.9.8', 'js/editor.js?v=2.9.8', 'js/share.js?v=2.9.8', 'js/milestones.js?v=2.9.8', 'js/radar.js?v=2.9.8', 'js/perf.js?v=2.9.8', 'js/community.js?v=2.9.8', 'js/audio.js?v=2.9.8', 'js/finance.js?v=2.9.8', 'js/intake.js?v=2.9.8', 'js/load.js?v=2.9.8', 'js/weekly.js?v=2.9.8', 'js/checkin.js?v=2.9.8', 'js/athlete.js?v=2.9.8', 'js/coach.js?v=2.9.8',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/aileron-latin-800-italic.woff2', 'fonts/aileron-latin-800-normal.woff2', 'fonts/aileron-latin-700-normal.woff2', 'fonts/aileron-latin-400-normal.woff2'
 ];
 self.addEventListener('install', function (e) {
