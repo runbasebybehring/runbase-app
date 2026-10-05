@@ -14,6 +14,13 @@
     return RB.esc(s).replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   };
   RB.$ = function (id) { return document.getElementById(id); };
+  // redesenha sem pular a tela: o elemento `sel` fica no mesmo lugar onde estava antes do clique
+  RB.keepAnchor = function (sel, render) {
+    var a = document.querySelector(sel), top = a ? a.getBoundingClientRect().top : null;
+    render();
+    var b = document.querySelector(sel);
+    if (b && top !== null) window.scrollBy(0, b.getBoundingClientRect().top - top);
+  };
 
   // ---------- pedaços de interface ----------
   RB.tag = function (t, c) { return '<span class="tag ' + c + '">' + RB.esc(t) + '</span>'; };

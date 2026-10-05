@@ -38,7 +38,7 @@
     P.weeks.slice().reverse().forEach(function (wk) {
       var io = !!P.open[wk.id], done = wk.workouts.filter(function (x) { return P.fb[x.id]; }).length;
       var past = cur && wk.week_number < cur.week_number;
-      html += '<div class="wb' + (wk.is_current ? ' cur' : '') + (past ? ' past' : '') + '"><div class="wh" onclick="RB.edit.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (wk.is_current ? ' cur' : '') + '">' + esc(wk.label) + '</div>' +
+      html += '<div class="wb' + (wk.is_current ? ' cur' : '') + (past ? ' past' : '') + '"><div class="wh" data-wk="' + wk.id + '" onclick="RB.edit.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (wk.is_current ? ' cur' : '') + '">' + esc(wk.label) + '</div>' +
         (wk.is_current ? '<div class="wk-now">Semana atual</div>' : '') + '</div><div class="wk-r"><span class="wk-done">' + done + '/' + wk.workouts.length + '</span><span class="wk-v">' + esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>';
       if (io) {
         html += '<div class="wbd open">' + wk.workouts.map(function (d, i) {
@@ -61,7 +61,7 @@
     P.el.innerHTML = html;
   }
   E.gotoForca = async function () { await RB.coach.dt('plano'); E.open('forca'); };
-  E.toggleWeek = function (id) { P.open[id] = !P.open[id]; drawPlanilha(); };
+  E.toggleWeek = function (id) { P.open[id] = !P.open[id]; RB.keepAnchor('[data-wk="' + id + '"]', drawPlanilha); };
   var reload = function () { return E.planilha(P.athlete, P.el); };
   var findWeek = function (id) { return P.weeks.find(function (w) { return w.id === id; }); };
 

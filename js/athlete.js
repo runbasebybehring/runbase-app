@@ -61,7 +61,7 @@
     return n;
   };
 
-  A.go = function (tab) {
+  A.go = function (tab, keepScroll) {
     A.tab = tab;
     document.querySelectorAll('#screen-athlete .nav-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === tab); });
     RB.setBadge('pendBadge', A.pending().filter(function (w) { return w.isCur; }).length + A.unreadTotal());
@@ -69,7 +69,7 @@
     RB.setBadge('evBadge', RB.events.pendingCount());
     var el = RB.$('athlete-content');
     ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.galera.render(el); }, feedback: feedback, relatorio: relatorio })[tab](el);
-    window.scrollTo(0, 0);
+    if (!keepScroll) window.scrollTo(0, 0);
   };
 
   // ---------- HOME ----------
@@ -144,7 +144,7 @@
     A.weeks.forEach(function (wk) {
       var ic = A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
       var dn = wk.workouts.filter(function (w) { return A.byWorkout[w.id]; }).length;
-      html += '<div class="wb' + (ic ? ' cur' : '') + '"><div class="wh" onclick="RB.athlete.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (ic ? ' cur' : '') + '">' + RB.esc(wk.label) + '</div>' + (ic ? '<div class="wk-now">Semana atual</div>' : '') + '</div>' +
+      html += '<div class="wb' + (ic ? ' cur' : '') + '"><div class="wh" data-wk="' + wk.id + '" onclick="RB.athlete.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (ic ? ' cur' : '') + '">' + RB.esc(wk.label) + '</div>' + (ic ? '<div class="wk-now">Semana atual</div>' : '') + '</div>' +
         '<div class="wk-r"><span class="wk-done">' + dn + '/' + wk.workouts.length + '</span><span class="wk-v">' + RB.esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>' +
         '<div class="wbd' + (io ? ' open' : '') + '">' + wk.workouts.map(function (d) {
           var f = A.byWorkout[d.id];
@@ -155,7 +155,7 @@
     el.innerHTML = html + RB.pace.calcCard();
   }
   A.zonesOpen = false;
-  A.toggleZones = function () { A.zonesOpen = !A.zonesOpen; A.go('planilha'); };
+  A.toggleZones = function () { A.zonesOpen = !A.zonesOpen; RB.keepAnchor('.zcard-h', function () { A.go('planilha', true); }); };
   function zonesCard() {
     if (!A.zones.length) return '';
     return '<div class="card zcard"><div class="zcard-h" onclick="RB.athlete.toggleZones()">' + RB.ew('Suas zonas de treino', 'blue') + '<span class="arrow">' + (A.zonesOpen ? '▲' : '▼') + '</span></div>' +
@@ -164,7 +164,7 @@
       }).join('') + '<div class="hint" style="margin-top:6px">Use como guia: o corpo é o melhor monitor.</div>' :
         '<div class="zchips">' + A.zones.slice(0, 5).map(function (z) { return '<span class="zchip" style="--zc:' + RB.esc(z.color) + '"><b>' + RB.esc(z.zone.split('·')[0].trim()) + '</b> ' + RB.esc(RB.pace.show(z.pace)) + '</span>'; }).join('') + '</div>') + '</div>';
   }
-  A.toggleWeek = function (id) { A.openWeek = A.openWeek === id ? null : id; A.go('planilha'); };
+  A.toggleWeek = function (id) { A.openWeek = A.openWeek === id ? null : id; RB.keepAnchor('[data-wk="' + id + '"]', function () { A.go('planilha', true); }); };
 
   // ---------- FEEDBACK ----------
   A.fbTab = function (v) { A.fbView = v; A.go('feedback'); };
