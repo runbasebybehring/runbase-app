@@ -14,7 +14,9 @@
     P.athlete = athlete; P.el = el;
     el.innerHTML = '<div class="ld"><div class="sp"></div></div>';
     var wr = await sb.from('weeks').select('*,workouts(*)').eq('athlete_id', athlete.id).order('week_number');
-    P.weeks = (wr.data || []).map(function (w) { w.workouts.sort(function (a, b) { return a.sort_order - b.sort_order || a.id - b.id; }); return w; });
+    var ac = athlete.active_cycle || 1, allw = (wr.data || []).map(function (w) { w.workouts.sort(function (a, b) { return a.sort_order - b.sort_order || a.id - b.id; }); return w; });
+    P.weeks = allw.filter(function (w) { return (w.cycle || 1) === ac; });
+    P.archived = allw.length - P.weeks.length; // semanas de ciclos anteriores (o aluno vê na aba "Ciclo anterior")
     var ids = []; P.weeks.forEach(function (w) { w.workouts.forEach(function (x) { ids.push(x.id); }); });
     P.fb = {};
     if (ids.length) {
@@ -31,6 +33,7 @@
   function drawPlanilha() {
     var html = '<div class="pl-bar"><button class="btn btn-r sm" onclick="RB.edit.newWeek(true)">+ SEMANA (DUPLICAR ÚLTIMA)</button><button class="btn btn-o sm" onclick="RB.edit.newWeek(false)">+ EM BRANCO</button><button class="btn btn-o sm" onclick="RB.edit.tplPick(\'week\')">+ DE UM MODELO</button><button class="btn btn-b sm" onclick="RB.edit.aiWeek()">✦ SUGERIR COM IA</button></div>' +
       '<button class="btn-link go-forca" onclick="RB.edit.gotoForca()">Editar o treino de força deste aluno ›</button>' +
+      (P.archived ? '<div class="hint" style="margin:-6px 0 12px">Ciclo ' + (P.athlete.active_cycle || 1) + ' em andamento. ' + P.archived + ' semanas de ciclos anteriores ficam arquivadas e o aluno vê na aba "Ciclo anterior".</div>' : '') +
       '<div class="card cal-card" onclick="RB.edit.startForm()"><div>' + RB.ew('Calendário', 'blue') + '<div class="cal-t">' +
       (P.athlete.plan_start ? 'Semana 1 em ' + fmtBR(P.athlete.plan_start) + ' · avança toda segunda' : 'Sem data · a semana só muda manualmente') + '</div></div><span class="mini">Alterar</span></div>';
     if (!P.weeks.length) html += RB.empty('Nenhuma semana ainda.<br>Crie a primeira acima.');
@@ -68,7 +71,7 @@
   async function createWeek(src) {
     var last = P.weeks[P.weeks.length - 1];
     var n = (last ? last.week_number : 0) + 1;
-    var ins = await sb.from('weeks').insert({ athlete_id: P.athlete.id, label: 'Semana ' + n, volume: src ? src.volume : '', week_number: n, is_current: !P.weeks.length }).select().single();
+    var ins = await sb.from('weeks').insert({ athlete_id: P.athlete.id, label: 'Semana ' + n, volume: src ? src.volume : '', week_number: n, cycle: P.athlete.active_cycle || 1, is_current: !P.weeks.length && !P.archived }).select().single();
     if (ins.error) { RB.toast('Erro ao criar semana', false); return null; }
     if (src && src.workouts.length) {
       var rows = src.workouts.map(function (w, i) { return { week_id: ins.data.id, athlete_id: P.athlete.id, day_label: w.day_label, type: w.type, description: w.description, structure: w.structure || null, sort_order: i }; });

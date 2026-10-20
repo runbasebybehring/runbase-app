@@ -17,7 +17,11 @@
     ]);
     if (!r[0].data) { RB.toast('Perfil não encontrado', false); return; }
     A.me = r[0].data;
-    A.weeks = (r[1].data || []).map(function (w) { w.workouts = (w.workouts || []).sort(function (a, b) { return a.sort_order - b.sort_order; }); return w; });
+    var allWeeks = (r[1].data || []).map(function (w) { w.workouts = (w.workouts || []).sort(function (a, b) { return a.sort_order - b.sort_order; }); return w; });
+    // ciclos: o aluno vive no ciclo ativo; os anteriores ficam só para consulta
+    A.cycle = A.me.active_cycle || 1;
+    A.weeks = allWeeks.filter(function (w) { return (w.cycle || 1) === A.cycle; });
+    A.oldWeeks = allWeeks.filter(function (w) { return (w.cycle || 1) < A.cycle; });
     A.zones = r[2].data || [];
     A.plan = r[3].data || null;
     A.feedbacks = r[4].data || [];
@@ -27,7 +31,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid)]);
+    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid), RB.stories.load(uid)]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -79,7 +83,7 @@
     var done = wo.filter(function (w) { return A.byWorkout[w.id]; }).length;
     var pct = wo.length ? Math.round(done / wo.length * 100) : 0;
     var html = '<div class="hello"><div class="hello-s">Olá,</div><div class="hello-n">' + RB.esc(a.name.split(' ')[0].toUpperCase()) + '.</div></div>';
-    html += RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard();
+    html += RB.stories.row() + RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard();
 
     // mensagens novas do coach
     var unreadFbs = A.feedbacks.filter(function (f) { return RB.threads.unread(A.replies[f.id]); });
@@ -138,20 +142,39 @@
   }
 
   // ---------- PLANILHA ----------
+  A.cycTab = 'atual';
+  A.cycTabGo = function (v) { A.cycTab = v; A.go('planilha'); };
+  function cycleTitle(n) { var t = A.me.cycle_titles && A.me.cycle_titles[n]; return t ? RB.esc(t) : ''; }
+  // uma semana da planilha; ro = ciclo anterior (só consulta, sem botão de feedback)
+  function weekBlock(wk, ro) {
+    var ic = !ro && A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
+    var dn = wk.workouts.filter(function (w) { return A.byWorkout[w.id]; }).length;
+    return '<div class="wb' + (ic ? ' cur' : '') + '"><div class="wh" data-wk="' + wk.id + '" onclick="RB.athlete.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (ic ? ' cur' : '') + '">' + RB.esc(wk.label) + '</div>' + (ic ? '<div class="wk-now">Semana atual</div>' : '') + '</div>' +
+      '<div class="wk-r"><span class="wk-done">' + dn + '/' + wk.workouts.length + '</span><span class="wk-v">' + RB.esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>' +
+      '<div class="wbd' + (io ? ' open' : '') + '">' + wk.workouts.map(function (d) {
+        var f = A.byWorkout[d.id];
+        return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div>' + RB.pace.workout(d, A.zones) +
+          (!ro && !f && (ic || (A.cur && wk.week_number === A.cur.week_number - 1)) ? '<button class="mini" onclick="RB.athlete.feedbackForm(' + d.id + ')">Dar feedback</button>' : '') + '</div>';
+      }).join('') + '</div></div>';
+  }
   function planilha(el) {
-    var html = RB.tt('PLANILHA') + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' + zonesCard() + RB.wk.volumeCard() + RB.wk.calButton() + RB.perf.card(false);
+    var hasOld = A.oldWeeks.length > 0;
+    if (!hasOld) A.cycTab = 'atual';
+    var tabs = hasOld ? RB.seg([['atual', 'Ciclo atual'], ['anterior', 'Ciclo anterior']], A.cycTab, 'RB.athlete.cycTabGo') : '';
+    if (hasOld && A.cycTab === 'anterior') {
+      var html = RB.tt('PLANILHA') + tabs + '<div class="sub">Treinos dos ciclos anteriores. Só para consulta.</div>';
+      var byC = {}; A.oldWeeks.forEach(function (w) { (byC[w.cycle || 1] = byC[w.cycle || 1] || []).push(w); });
+      Object.keys(byC).map(Number).sort(function (a, b) { return b - a; }).forEach(function (c) {
+        html += RB.ew('Ciclo ' + c + (cycleTitle(c) ? ' · ' + cycleTitle(c) : ''), 'mid') +
+          byC[c].slice().sort(function (a, b) { return b.week_number - a.week_number; }).map(function (wk) { return weekBlock(wk, true); }).join('');
+      });
+      el.innerHTML = html; return;
+    }
+    var html = RB.tt('PLANILHA') + tabs + '<div class="sub">' + RB.esc(A.me.goal) + '</div>' +
+      (hasOld && cycleTitle(A.cycle) ? '<div class="cyc-now">' + RB.ew('Ciclo novo · semana 1 em diante', 'blue') + '<div class="cyc-t">' + cycleTitle(A.cycle) + '</div></div>' : '') +
+      zonesCard() + RB.wk.volumeCard() + RB.wk.calButton() + RB.perf.card(false);
     if (!A.weeks.length) { el.innerHTML = html + RB.empty('Planilha ainda não publicada.') + RB.pace.calcCard(); return; }
-    A.weeks.forEach(function (wk) {
-      var ic = A.cur && wk.id === A.cur.id, io = A.openWeek === wk.id;
-      var dn = wk.workouts.filter(function (w) { return A.byWorkout[w.id]; }).length;
-      html += '<div class="wb' + (ic ? ' cur' : '') + '"><div class="wh" data-wk="' + wk.id + '" onclick="RB.athlete.toggleWeek(' + wk.id + ')"><div><div class="wk-l' + (ic ? ' cur' : '') + '">' + RB.esc(wk.label) + '</div>' + (ic ? '<div class="wk-now">Semana atual</div>' : '') + '</div>' +
-        '<div class="wk-r"><span class="wk-done">' + dn + '/' + wk.workouts.length + '</span><span class="wk-v">' + RB.esc(wk.volume) + '</span><span class="arrow">' + (io ? '▲' : '▼') + '</span></div></div>' +
-        '<div class="wbd' + (io ? ' open' : '') + '">' + wk.workouts.map(function (d) {
-          var f = A.byWorkout[d.id];
-          return '<div class="dr' + (f ? ' ok' : '') + '"><div class="dr-h"><span class="dr-d">' + RB.esc(d.day_label) + '</span>' + RB.tag(d.type, 'r') + (f ? '<span class="dr-ok" style="color:' + RB.rpeColor(f.rpe) + '">✓ RPE ' + f.rpe + '</span>' : '') + '</div>' + RB.pace.workout(d, A.zones) +
-            (!f && (ic || (A.cur && wk.week_number === A.cur.week_number - 1)) ? '<button class="mini" onclick="RB.athlete.feedbackForm(' + d.id + ')">Dar feedback</button>' : '') + '</div>';
-        }).join('') + '</div></div>';
-    });
+    A.weeks.forEach(function (wk) { html += weekBlock(wk, false); });
     el.innerHTML = html + RB.pace.calcCard();
   }
   A.zonesOpen = false;

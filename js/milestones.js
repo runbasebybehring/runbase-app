@@ -62,13 +62,15 @@
   // avisos do coach (painel)
   M.coachLoad = async function () {
     var r = await Promise.all([
-      sb.from('weeks').select('id,athlete_id,week_number,is_current,workouts(id)'),
+      sb.from('weeks').select('id,athlete_id,week_number,cycle,is_current,workouts(id)'),
+      sb.from('athletes').select('id,active_cycle'),
       sb.from('feedbacks').select('workout_id').not('workout_id', 'is', null),
       sb.from('athlete_plans').select('athlete_id,strength_started_at').not('strength', 'is', null),
       M.loadAcks()
     ]);
-    var fb = {}; (r[1].data || []).forEach(function (f) { fb[f.workout_id] = 1; });
-    var byAth = {}; (r[0].data || []).forEach(function (w) { (byAth[w.athlete_id] = byAth[w.athlete_id] || []).push(w); });
+    var fb = {}; (r[2].data || []).forEach(function (f) { fb[f.workout_id] = 1; });
+    var ac = {}; (r[1].data || []).forEach(function (a) { ac[a.id] = a.active_cycle || 1; });
+    var byAth = {}; (r[0].data || []).forEach(function (w) { if ((w.cycle || 1) !== (ac[w.athlete_id] || 1)) return; (byAth[w.athlete_id] = byAth[w.athlete_id] || []).push(w); });
     M.coach = { plan: {}, gym: {} };
     M.coach.cur = {};
     Object.keys(byAth).forEach(function (id) {
@@ -76,7 +78,7 @@
       var c = byAth[id].find(function (w) { return w.is_current; });
       M.coach.cur[id] = { n: c ? c.week_number : null, last: Math.max.apply(null, byAth[id].map(function (w) { return w.week_number; })) };
     });
-    (r[2].data || []).forEach(function (p) { M.coach.gym[p.athlete_id] = { weeks: RB.weeksSince(p.strength_started_at), start: p.strength_started_at }; });
+    (r[3].data || []).forEach(function (p) { M.coach.gym[p.athlete_id] = { weeks: RB.weeksSince(p.strength_started_at), start: p.strength_started_at }; });
   };
   M.coachCards = function (athletes) {
     if (!M.coach) return '';
