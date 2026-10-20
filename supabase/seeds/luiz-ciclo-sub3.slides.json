@@ -1,0 +1,536 @@
+[
+ {
+  "theme": "blue",
+  "cover": true,
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Ciclo de maratona · 24 semanas"
+   },
+   {
+    "t": "title",
+    "size": "huge",
+    "text": "Sub\n3h"
+   },
+   {
+    "t": "pill",
+    "big": "4:15",
+    "text": " /km por 42 km"
+   },
+   {
+    "t": "spacer"
+   },
+   {
+    "t": "ghost",
+    "text": "42"
+   },
+   {
+    "t": "foot",
+    "text": "Maratona Internacional de São Paulo\n04 abril 2027 · Luiz"
+   }
+  ]
+ },
+ {
+  "theme": "cream",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "A meta"
+   },
+   {
+    "t": "title",
+    "text": "Duas metas,\num caminho"
+   },
+   {
+    "t": "goal",
+    "label": "Maratona · 04/04/2027",
+    "title": "Sub 3h",
+    "pace": "4:15"
+   },
+   {
+    "t": "goal",
+    "label": "No caminho · 5K",
+    "title": "Sub 20'",
+    "pace": "3:59"
+   },
+   {
+    "t": "text",
+    "text": "O 5K abaixo de 20 minutos mostra que sua velocidade está em dia. A maratona mostra até onde ela vai."
+   }
+  ]
+ },
+ {
+  "theme": "ink",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Ponto de partida"
+   },
+   {
+    "t": "title",
+    "text": "Você já\ntem velocidade"
+   },
+   {
+    "t": "stat",
+    "big": "19:53",
+    "title": "5K na esteira",
+    "text": "3:59 por km"
+   },
+   {
+    "t": "stat",
+    "big": "14 km",
+    "title": "ritmado a 4:18",
+    "text": "quase o pace do sub-3"
+   },
+   {
+    "t": "stat",
+    "big": "19 km",
+    "title": "longão a 4:50",
+    "text": "na esteira, FC perto de 150"
+   },
+   {
+    "t": "spacer"
+   },
+   {
+    "t": "text",
+    "text": "Falta uma coisa: fazer isso durar 42 km."
+   }
+  ]
+ },
+ {
+  "theme": "red",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "O que falta"
+   },
+   {
+    "t": "title",
+    "text": "Sustentar 4:15\npor 42 km"
+   },
+   {
+    "t": "pillar",
+    "title": "Base",
+    "text": "Volume e longões, semana após semana, sem faltar."
+   },
+   {
+    "t": "pillar",
+    "title": "Resistência específica",
+    "text": "Pace de maratona dentro dos longões e dos treinos de limiar."
+   },
+   {
+    "t": "pillar",
+    "title": "Disciplina de pace",
+    "text": "O sub-3 se decide nos dias fáceis, onde você guarda energia pro dia de qualidade."
+   }
+  ]
+ },
+ {
+  "theme": "cream",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Do começo à prova"
+   },
+   {
+    "t": "title",
+    "text": "4 fases,\n24 semanas"
+   },
+   {
+    "t": "timeline",
+    "phases": [
+     {
+      "weeks": 9,
+      "color": "blue",
+      "name": "Base e construção inicial",
+      "until": "até 20/12"
+     },
+     {
+      "weeks": 8,
+      "color": "green",
+      "name": "Construção",
+      "until": "até 14/02"
+     },
+     {
+      "weeks": 4,
+      "color": "red",
+      "name": "Específico de maratona",
+      "until": "até 14/03"
+     },
+     {
+      "weeks": 3,
+      "color": "ink",
+      "name": "Taper",
+      "until": "até 04/04"
+     }
+    ],
+    "ticks": [
+     "21 out",
+     "dez",
+     "fev",
+     "mar",
+     "4 abr"
+    ]
+   },
+   {
+    "t": "flag",
+    "text": "Largada 04/04"
+   }
+  ]
+ },
+ {
+  "theme": "blue",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Fase 1 de 4 · 21/10 a 20/12"
+   },
+   {
+    "t": "title",
+    "size": "h3",
+    "text": "Base e construção inicial"
+   },
+   {
+    "t": "big",
+    "value": "16→24",
+    "text": "km no\nlongão"
+   },
+   {
+    "t": "rows",
+    "items": [
+     [
+      "Volume",
+      "Sobe de uns 50 para uns 60 km por semana."
+     ],
+     [
+      "Qualidade",
+      "Tiros de 800 a 1000 m e tempo runs de 6 a 8 km."
+     ],
+     [
+      "Foco",
+      "Voltar à rotina e construir a base. A 1ª semana é de transição."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "green",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Fase 2 de 4 · 21/12 a 14/02"
+   },
+   {
+    "t": "title",
+    "size": "h3",
+    "text": "Construção"
+   },
+   {
+    "t": "big",
+    "value": "26→28",
+    "text": "km no\nlongão"
+   },
+   {
+    "t": "rows",
+    "items": [
+     [
+      "Volume",
+      "Chega ao pico do ciclo."
+     ],
+     [
+      "Qualidade",
+      "Tiros de 1200 a 2000 m e tempo runs mais longos."
+     ],
+     [
+      "Foco",
+      "Longões com trechos progressivos."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "red",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Fase 3 de 4 · 15/02 a 14/03"
+   },
+   {
+    "t": "title",
+    "size": "h3",
+    "text": "Específico de maratona"
+   },
+   {
+    "t": "big",
+    "value": "30–32",
+    "text": "km no\nlongão"
+   },
+   {
+    "t": "rows",
+    "items": [
+     [
+      "Volume",
+      "Estável, com a qualidade toda voltada pra prova."
+     ],
+     [
+      "Qualidade",
+      "Blocos em pace de maratona, 4:15, dentro do longão."
+     ],
+     [
+      "Foco",
+      "Ver se o 4:15 se sustenta. É este treino que diz se o sub-3 é real."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "ink",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Fase 4 de 4 · 15/03 a 04/04"
+   },
+   {
+    "t": "title",
+    "size": "h3",
+    "text": "Taper"
+   },
+   {
+    "t": "big",
+    "value": "3 sem",
+    "text": "de volume\ncaindo"
+   },
+   {
+    "t": "rows",
+    "items": [
+     [
+      "Volume",
+      "Reduz semana a semana até a prova."
+     ],
+     [
+      "Qualidade",
+      "Poucos toques de ritmo pra manter a perna afiada."
+     ],
+     [
+      "Foco",
+      "Chegar descansado na largada."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "cream",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Marcos do caminho"
+   },
+   {
+    "t": "title",
+    "text": "Como saber que\nestamos no rumo"
+   },
+   {
+    "t": "path",
+    "items": [
+     {
+      "when": "Novembro · 10/11",
+      "title": "Teste de 5K na rua",
+      "text": "O número real rumo ao sub-20. O 19:53 foi na esteira."
+     },
+     {
+      "when": "Fevereiro",
+      "title": "Meia maratona",
+      "text": "Em torno de 1h26 ou melhor indica que o sub-3 é viável."
+     },
+     {
+      "when": "Fev e março",
+      "title": "Longão de 30 km",
+      "text": "Com um bloco longo a 4:15. A prova de fogo do ciclo."
+     },
+     {
+      "when": "04/04/2027",
+      "title": "Maratona de SP"
+     }
+    ]
+   },
+   {
+    "t": "text",
+    "small": true,
+    "text": "Os paces dos testes são referência. Se algum vier diferente, ajustamos o plano."
+   }
+  ]
+ },
+ {
+  "theme": "ink",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Suas zonas · pace por km"
+   },
+   {
+    "t": "title",
+    "text": "Cada treino\ntem seu ritmo"
+   },
+   {
+    "t": "zones",
+    "items": [
+     {
+      "tag": "Z1",
+      "color": "blue",
+      "name": "Regenerativo",
+      "text": "Dias de recuperação",
+      "pace": "5:30–6:00"
+     },
+     {
+      "tag": "Z2",
+      "color": "green",
+      "name": "Aeróbico",
+      "text": "Longões e rodagens",
+      "pace": "5:00–5:30"
+     },
+     {
+      "tag": "Z3",
+      "color": "orange",
+      "name": "Limiar",
+      "text": "Tempo runs",
+      "pace": "4:12–4:40"
+     },
+     {
+      "tag": "Z4",
+      "color": "red",
+      "name": "Intervalado",
+      "text": "Tiros",
+      "pace": "3:55–4:12"
+     },
+     {
+      "tag": "Z5",
+      "color": "purple",
+      "name": "Forte",
+      "text": "Uso pontual",
+      "pace": "< 3:55"
+     },
+     {
+      "tag": "SUB3",
+      "goal": true,
+      "name": "Pace da prova",
+      "text": "Meta em 04/04",
+      "pace": "4:15"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "blue",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Regras do ciclo"
+   },
+   {
+    "t": "title",
+    "text": "O que não\nse negocia"
+   },
+   {
+    "t": "rules",
+    "items": [
+     [
+      "Dia fácil tem teto",
+      "Em Z1 não passe de 6:00. Em Z2, não passe de 5:20. Correr mais rápido tira energia dos dias de qualidade."
+     ],
+     [
+      "Dois fortes seguidos, não",
+      "Precisou trocar um treino de dia? Me avisa antes que eu reorganizo."
+     ],
+     [
+      "Panturrilha avisou",
+      "Qualquer incômodo diferente: reduz e me chama."
+     ],
+     [
+      "Gel a cada 45 min",
+      "Nos longões acima de 18 km. Teste tudo que vai usar na prova."
+     ],
+     [
+      "Fortalecimento fica",
+      "Ele sustenta o volume sem lesão."
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "cream",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Começando agora"
+   },
+   {
+    "t": "title",
+    "text": "As 4 primeiras\nsemanas"
+   },
+   {
+    "t": "weeks",
+    "items": [
+     {
+      "title": "Semana 1 · Transição",
+      "vol": "21–25/10",
+      "text": "Qua 8 km Z1 · Qui fortalecimento · Sáb longão Z2",
+      "long": 16
+     },
+     {
+      "title": "Semana 2 · Construção",
+      "vol": "~50 km",
+      "text": "Tiros 6x800 · Tempo run 6 km · Longão com gel",
+      "long": 20
+     },
+     {
+      "title": "Semana 3 · Construção",
+      "vol": "~56 km",
+      "text": "Tiros 5x1000 · Tempo run 8 km · Longão com 3 km finais a 4:40",
+      "long": 22
+     },
+     {
+      "title": "Semana 4 · Regenerativa",
+      "vol": "~41 km",
+      "text": "Teste de 5K na rua na terça · Longão leve",
+      "long": 16
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "theme": "red",
+  "blocks": [
+   {
+    "t": "kick",
+    "text": "Dia 16/11"
+   },
+   {
+    "t": "title",
+    "text": "Entra a 5ª corrida\nda semana"
+   },
+   {
+    "t": "text",
+    "text": "Uma rodagem leve na **quarta-feira**, entre os dois dias de qualidade. Começa com 6 km e chega a 8 km em Z1, com teto de 6:00."
+   },
+   {
+    "t": "cond",
+    "text": "**Condição:** completar todos os treinos das semanas 2 a 4."
+   },
+   {
+    "t": "spacer"
+   },
+   {
+    "t": "title",
+    "size": "huge",
+    "text": "Bora,\nLuiz."
+   }
+  ]
+ }
+]
