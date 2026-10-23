@@ -397,6 +397,8 @@
       return '<button class="' + (x.id === id ? 'on' : '') + '" onclick="RB.athlete.pickReport(\'' + x.id + '\')">' + RB.esc(x.title) + (x.seen_at ? '' : ' •') + '</button>';
     }).join('') + '</div>' : '';
     el.innerHTML = picker + RB.reports.view(r, { athleteName: A.me.name });
+    // relatório novo com versão em stories: abre direto nos stories
+    if (!r.seen_at && r.auto_stats && r.auto_stats.story) RB.mstory.play(r);
     if (!r.seen_at) {
       await sb.rpc('mark_report_seen', { p_report: r.id });
       A.reports.forEach(function (x) { if (x.id === r.id) x.seen_at = new Date().toISOString(); });

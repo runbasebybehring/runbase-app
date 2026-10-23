@@ -28,7 +28,11 @@
   // ---------- blocos de um slide ----------
   var B = {
     kick: function (b) { return '<div class="stv-kick">' + RB.esc(b.text) + '</div>'; },
-    title: function (b) { return '<h2 class="stv-d ' + (b.size || 'h2') + '">' + RB.md(b.text) + '</h2>'; },
+    title: function (b) {
+      var size = b.size || 'h2', cap = { huge: 150, h2: 54, h3: 28 }[size] || 54;
+      var L = Math.max.apply(null, String(b.text || '').split(/\s+/).map(function (w) { return w.length; }).concat([1]));
+      return '<h2 class="stv-d ' + size + '" style="font-size:min(' + cap + 'px,calc(145cqw / ' + L + '))">' + RB.md(b.text) + '</h2>';
+    },
     text: function (b) { return '<p class="stv-p"' + (b.small ? ' style="font-size:13.5px"' : '') + '>' + RB.md(b.text) + '</p>'; },
     spacer: function () { return '<div class="stv-sp"></div>'; },
     foot: function (b) { return '<div class="stv-foot">' + RB.md(b.text) + '</div>'; },
@@ -41,7 +45,7 @@
     },
     stat: function (b) { return '<div class="stv-stat"><div class="stv-d s">' + RB.esc(b.big) + '</div><b>' + RB.esc(b.title) + '</b><span>' + RB.esc(b.text) + '</span></div>'; },
     pillar: function (b) { return '<div class="stv-pil"><div class="stv-d pl">' + RB.esc(b.title) + '</div><p class="stv-p">' + RB.md(b.text) + '</p></div>'; },
-    big: function (b) { return '<div class="stv-big"><div class="stv-d bg">' + RB.esc(b.value) + '</div><span>' + RB.md(b.text) + '</span></div>'; },
+    big: function (b) { return '<div class="stv-big"><div class="stv-d bg" style="white-space:nowrap;font-size:min(92px,calc(150cqw / ' + Math.max(3, String(b.value).length) + '))">' + RB.esc(b.value) + '</div><span>' + RB.md(b.text) + '</span></div>'; },
     rows: function (b) {
       return '<div class="stv-rows">' + b.items.map(function (r) { return '<div><b>' + RB.esc(r[0]) + '</b><p class="stv-p">' + RB.md(r[1]) + '</p></div>'; }).join('') + '</div>';
     },
@@ -63,6 +67,34 @@
     rules: function (b) {
       return '<div>' + b.items.map(function (r) { return '<div class="stv-rule"><div><b>' + RB.esc(r[0]) + '</b><p class="stv-p">' + RB.md(r[1]) + '</p></div></div>'; }).join('') + '</div>';
     },
+    // ---- blocos do relatório mensal ----
+    tiles: function (b) {
+      return '<div class="stv-tiles">' + b.items.map(function (x) { return '<div class="stv-tile"><div class="stv-d tv"' + (String(x.v).length > 4 ? ' style="font-size:38px"' : '') + '>' + RB.esc(x.v) + '</div><span>' + RB.esc(x.l) + '</span></div>'; }).join('') + '</div>';
+    },
+    cal: function (b) {
+      var h = '<div class="stv-cal" role="img" aria-label="Calendário do mês com os dias de treino marcados">';
+      ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].forEach(function (d) { h += '<div class="h">' + d + '</div>'; });
+      var lead = (new Date(b.year, b.month, 1).getDay() + 6) % 7, n = new Date(b.year, b.month + 1, 0).getDate();
+      for (var k = 0; k < lead; k++) h += '<div class="c e"></div>';
+      for (var d = 1; d <= n; d++) {
+        var r = (b.run || []).indexOf(d) > -1, st = (b.str || []).indexOf(d) > -1;
+        h += '<div class="c' + (r && st ? ' both' : r ? ' run' : st ? ' str' : '') + (b.until && d > b.until ? ' fut' : '') + '">' + d + '</div>';
+      }
+      return h + '</div><div class="stv-calleg"><span><i class="run"></i>corrida</span><span><i class="str"></i>força</span></div>';
+    },
+    vs: function (b) {
+      return '<div class="stv-vs"><div><small>' + RB.esc(b.a.label) + '</small><div class="stv-d v">' + RB.esc(b.a.v) + '</div></div><div class="vs-ar">→</div><div class="r"><small>' + RB.esc(b.b.label) + '</small><div class="stv-d v">' + RB.esc(b.b.v) + '</div></div></div>';
+    },
+    lifts: function (b) {
+      return '<div>' + b.items.map(function (l) { return '<div class="stv-lift"><b>' + RB.esc(l.name) + '</b><em>' + RB.esc(l.val) + '</em>' + (l.sub ? '<span>' + RB.esc(l.sub) + '</span>' : '') + '</div>'; }).join('') + '</div>';
+    },
+    mile: function (b) { return '<div class="stv-mile"><div class="stv-d m">' + RB.esc(b.big) + '</div><p>' + RB.md(b.text) + '</p></div>'; },
+    meter: function (b) {
+      return '<div><div class="stv-kick" style="margin-bottom:8px">' + RB.esc(b.label) + '</div><div class="stv-meter">' + b.items.map(function (x) { return '<i class="' + (x.on ? 'on' : '') + '">' + RB.esc(x.t) + '</i>'; }).join('') + '</div></div>';
+    },
+    quote: function (b) { return '<p class="stv-quote">' + RB.esc(b.text) + '</p>'; },
+    note: function (b) { return '<div class="stv-note"><p>' + RB.md(b.text) + '</p></div>'; },
+    bullets: function (b) { return '<div class="stv-bul">' + b.items.map(function (t) { return '<div><p>' + RB.md(t) + '</p></div>'; }).join('') + '</div>'; },
     weeks: function (b) {
       var max = Math.max.apply(null, b.items.map(function (w) { return +w.long || 0; })) || 1;
       return '<div>' + b.items.map(function (w) {
@@ -80,6 +112,19 @@
   // ---------- visualizador ----------
   ST.open = function (k) {
     var h = ST.list[k]; if (!h || !(h.slides || []).length) return;
+    ST.play(h.slides);
+    // marca como visto (o aro fica cinza em todos os aparelhos)
+    var kk = key(h);
+    if (RB.ms && !RB.ms.acked[kk]) {
+      RB.ms.acked[kk] = true;
+      sb.from('acks').upsert({ key: kk, user_id: RB.state.user.id }).then(function () {}, function () {});
+    }
+  };
+  // abre qualquer sequência de slides (destaques ou relatório mensal)
+  ST.play = function (slides) {
+    if (!slides || !slides.length) return;
+    var old = RB.$('stv'); if (old) old.remove();
+    var h = { slides: slides };
     ST.cur = h; ST.i = 0;
     var n = h.slides.length;
     var el = document.createElement('div'); el.id = 'stv'; el.className = 'stv';
@@ -94,12 +139,6 @@
     c.addEventListener('touchend', function (e) { if (sx === null) return; var dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 60) ST.go(ST.i + (dx < 0 ? 1 : -1)); }, { passive: true });
     document.addEventListener('keydown', ST.key);
     ST.go(0);
-    // marca como visto (o aro fica cinza em todos os aparelhos)
-    var kk = key(h);
-    if (RB.ms && !RB.ms.acked[kk]) {
-      RB.ms.acked[kk] = true;
-      sb.from('acks').upsert({ key: kk, user_id: RB.state.user.id }).then(function () {}, function () {});
-    }
   };
   ST.key = function (e) {
     if (e.key === 'Escape') ST.close();
