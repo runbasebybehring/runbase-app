@@ -80,7 +80,7 @@
   }
 
   function list(el) {
-    el.innerHTML = RB.tt('ALUNOS') + '<button class="btn btn-r sm" style="margin-bottom:12px" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('') +
+    el.innerHTML = RB.tt('ALUNOS') + '<div class="ed-row" style="gap:8px;margin-bottom:12px"><button class="btn btn-r sm" style="margin:0" onclick="RB.radar.newAthlete()">+ NOVO ALUNO</button><button class="btn btn-o sm" style="margin:0" onclick="RB.reports.monthPanel()">RELATÓRIOS DO MÊS</button></div>' + C.athletes.map(function (a) { return athleteRow(a, 52); }).join('') +
       inactiveSection();
   }
   function inactiveSection() {
@@ -109,6 +109,7 @@
     await detail(RB.$('coach-content'));
     RB.reports.newFor();
   };
+  C.openReports = function (id) { RB.closeSheet(); C.open(id); C.dt('relatorios'); };
   C.dt = function (t) { C.dtab = t; return detail(RB.$('coach-content')); };
   async function detail(el) {
     var a = C.athlete;

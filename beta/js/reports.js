@@ -41,7 +41,10 @@
     var str = fbs.filter(function (f) { return f.kind === 'strength'; });
     var strR = str.filter(function (f) { return f.rpe; });
     var pains = {}; str.forEach(function (f) { (f.pain_exercises || []).forEach(function (e) { pains[e] = (pains[e] || 0) + 1; }); });
+    var adesao = planned ? Math.round(done / planned * 100) : null, story = null;
+    try { story = await RB.mstory.data(athleteId, period, adesao); } catch (e) { console.error('stories', e); }
     return {
+      story: story,
       month: m.label,
       n: fbs.length,
       rpe_avg: rpes.length ? Math.round(rpes.reduce(function (a, f) { return a + f.rpe; }, 0) / rpes.length * 10) / 10 : null,
@@ -53,7 +56,7 @@
         subiu: str.filter(function (f) { return f.load_trend === 'subiu'; }).length,
         pain: pains
       } : null,
-      adesao: planned ? Math.round(done / planned * 100) : null,
+      adesao: adesao,
       planned: planned, done: done,
       dor: fbs.filter(function (f) { return f.dor; }).length,
       sono: count('sono', ['ruim', 'ok', 'bom', 'ótimo']),
@@ -110,7 +113,9 @@
     var badges = (r.badges || []).map(function (b) { return '<span class="rb2 ' + RB.esc(b.c || 'b') + '">' + RB.esc(b.t) + '</span>'; }).join('');
     var stats = (r.stats && r.stats.length) ? r.stats : (a && a.n ? R.autoTiles(a) : []);
     var hl = (r.highlights || []).filter(function (i) { return i.t || i.x; });
-    var html = '<div class="report" id="report-view">' +
+    R._sv = r;
+    var story = a && a.story ? '<button class="rep-story no-print" onclick="RB.mstory.play(RB.reports._sv)"><span class="rs-ring"><span>' + String((a.story.month || 0) + 1).padStart(2, '0') + '</span></span><span><small>Seu mês em stories</small><b>' + RB.esc(r.title) + '</b></span></button>' : '';
+    var html = story + '<div class="report" id="report-view">' +
       '<div class="rep-head"><div class="rep-eyebrow">' + RB.esc(r.title) + (r.objective ? ' · ' + RB.esc(r.objective) : '') + '</div>' +
       RB.tt('RELATÓRIO MENSAL') + (opts.athleteName ? '<div class="rep-name">' + RB.esc(opts.athleteName) + '</div>' : '') +
       '<div style="margin-bottom:4px">' + badges + '</div></div>' +
@@ -197,7 +202,8 @@
         return '<div class="hl-ed"><select class="fi sel" id="r-hl-c' + i + '">' + HL_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (h.cls === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') + '</select>' +
           inp('r-hl-t' + i, h.t, 'Título') + area('r-hl-x' + i, h.x, 2, 'Texto') + '</div>';
       }).join('')) +
-      field('Nota da treinadora', area('r-note', r.coach_note, 4, 'Mensagem pessoal para o aluno...')) +
+      field('Nota da treinadora <span class="hint">vira o recado no último story</span>', area('r-note', r.coach_note, 4, 'Mensagem pessoal para o aluno...')) +
+      '<div id="r-story">' + storyEditor(r) + '</div>' +
       '<details class="adv"><summary>Números e barras manuais (opcional)</summary>' +
       '<div class="hint" style="margin:8px 0">Se deixar em branco, o relatório mostra os números automáticos do mês.</div>' +
       field('Números em destaque', st.map(function (s, i) {
@@ -211,6 +217,55 @@
       '<button class="btn btn-r" onclick="RB.reports.save(\'published\')">' + (r.status === 'published' ? 'ATUALIZAR PUBLICADO' : 'PUBLICAR PARA O ALUNO') + '</button>' +
       (r.id ? '<button class="btn-link danger" onclick="RB.reports.remove()">Excluir relatório</button>' : '') + '</div>';
     RB.openSheet(html);
+  };
+  // ---------- stories do relatório ----------
+  function storyEditor(r) {
+    var s = r.auto_stats && r.auto_stats.story, o = r.story_opts || {};
+    if (!s) return field('Stories', '<div class="sto-box"><div class="hint">Este relatório ainda não tem a versão em stories.</div><button class="btn btn-o sm" onclick="RB.reports.buildStory()">MONTAR STORIES DESTE MÊS</button></div>');
+    var av = RB.mstory.available(s), hide = o.hide || [], qi = -1;
+    (s.comments || []).forEach(function (c, i) { if (o.quote && qi < 0 && (c.text === o.quote.text || (c.d === o.quote.d && c.text.indexOf(o.quote.text) > -1))) qi = i; });
+    var pick = 'onchange="RB.reports.pickQuote(this.value)"';
+    var quotes = '<label><input type="radio" name="r-sq" value="-1" ' + pick + (qi < 0 && !(o.quote && o.quote.text) ? ' checked' : '') + '><span>Sem frase do mês</span></label>' +
+      (s.comments || []).map(function (c, i) {
+        return '<label><input type="radio" name="r-sq" value="' + i + '" ' + pick + (qi === i ? ' checked' : '') + '><span><small>' + RB.fmtDate(c.d + 'T12:00:00') + '</small>' + RB.esc(c.text) + '</span></label>';
+      }).join('');
+    return field('Stories', '<div class="sto-box">' +
+      field('Palavra da capa', inp('r-sw', o.word || '', RB.mstory.defaultWord(s))) +
+      field('Frase do mês <span class="hint">escolha um comentário do aluno</span>', '<div class="sto-q">' + quotes + '</div>') +
+      '<div id="r-sqt-w"' + (o.quote && o.quote.text ? '' : ' hidden') + '>' + field('Trecho que vai no story <span class="hint">pode recortar</span>', area('r-sqt', o.quote ? o.quote.text : '', 3, '')) + '</div>' +
+      field('Próximo mês <span class="hint">um item por linha</span>', area('r-sn', (o.next || []).join('\n'), 3, 'Consolidar o 5K na faixa alvo\nNovo programa de força')) +
+      field('Slides', '<div class="sto-sl">' + RB.mstory.KEYS.filter(function (k) { return av[k[0]]; }).map(function (k) {
+        return '<label><input type="checkbox" id="r-sh-' + k[0] + '"' + (hide.indexOf(k[0]) < 0 ? ' checked' : '') + '>' + k[1] + '</label>';
+      }).join('') + '</div>') +
+      '<button class="btn btn-b sm" onclick="RB.reports.previewStory()">▶ VER STORIES</button>' +
+      '<div class="hint">Perfil: ' + ({ 'prova-feita': 'fez prova no mês', prova: 'com prova marcada', forca: 'só força', retomada: 'retomada (poucos treinos)', corrida: 'corrida sem prova' }[s.profile] || s.profile) + '. Cargas: só aparecem as que subiram.</div></div>');
+  }
+  function storyOpts() {
+    var s = ed.report.auto_stats && ed.report.auto_stats.story, o = {};
+    if (!s) return ed.report.story_opts || {};
+    var w = RB.$('r-sw'); if (w && w.value.trim()) o.word = w.value.trim();
+    var q = document.querySelector('input[name="r-sq"]:checked'), qi = q ? +q.value : -1, qt = RB.$('r-sqt');
+    var qtext = qt && qt.value.trim();
+    if (qi >= 0 && s.comments[qi]) o.quote = { text: qtext || s.comments[qi].text, d: s.comments[qi].d };
+    else if (!q && qtext && ed.report.story_opts && ed.report.story_opts.quote) o.quote = { text: qtext, d: ed.report.story_opts.quote.d };
+    var n = RB.$('r-sn'); o.next = n ? n.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 4) : [];
+    o.hide = RB.mstory.KEYS.map(function (k) { return k[0]; }).filter(function (k) { var c = RB.$('r-sh-' + k); return c && !c.checked; });
+    return o;
+  }
+  R.pickQuote = function (v) {
+    var s = ed.report.auto_stats.story, c = s.comments[+v], w = RB.$('r-sqt-w');
+    w.hidden = !c; RB.$('r-sqt').value = c ? c.text : '';
+  };
+  R.buildStory = async function () {
+    var box = RB.$('r-story'); box.innerHTML = '<div class="muted-s">montando...</div>';
+    var period = (RB.$('r-period').value || ed.report.period.slice(0, 7)) + '-01';
+    var a = await R.autoStats(ed.athlete.id, period);
+    ed.report.auto_stats = a;
+    box.innerHTML = storyEditor(ed.report);
+  };
+  R.previewStory = function () {
+    var d = collect();
+    RB.mstory.play(d);
   };
   function autoSummary(a) {
     if (!a) return '<div class="muted-s">Sem números automáticos.</div>';
@@ -226,6 +281,8 @@
     var a = await R.autoStats(ed.athlete.id, period);
     ed.report.period = period; ed.report.auto_stats = a;
     RB.$('r-auto').innerHTML = autoSummary(a);
+    var keep = storyOpts(); ed.report.story_opts = { word: keep.word, next: keep.next, hide: keep.hide };
+    RB.$('r-story').innerHTML = storyEditor(ed.report);
     var t = RB.$('r-title'); if (!t.value || /^[A-Za-zç]+ \d{4}$/.test(t.value)) t.value = R.periodLabel(period);
   };
   function collect() {
@@ -239,6 +296,7 @@
       summary: val('r-summary') || null,
       coach_note: val('r-note') || null,
       auto_stats: r.auto_stats || null,
+      story_opts: storyOpts(),
       highlights: [0, 1, 2, 3].map(function (i) { return { cls: val('r-hl-c' + i), t: val('r-hl-t' + i), x: val('r-hl-x' + i) }; }).filter(function (h) { return h.t || h.x; }),
       stats: [0, 1, 2].map(function (i) { return { v: val('r-st-v' + i), l: val('r-st-l' + i), s: val('r-st-s' + i) }; }).filter(function (s) { return s.v; }),
       progress: [0, 1, 2, 3].map(function (i) { return { l: val('r-pr-l' + i), v: val('r-pr-v' + i), w: Math.max(0, Math.min(100, +val('r-pr-w' + i) || 0)), c: ['#2E7D32', '#2B4EAA', '#C41731', '#2E7D32'][i] }; }).filter(function (p) { return p.l; })
@@ -279,6 +337,51 @@
     RB.closeSheet();
     if (ed.listEl) R.list(ed.athlete, ed.listEl);
   };
+  // ---------- relatórios do mês: todos os alunos ativos ----------
+  R.closingPeriod = function () {
+    var now = new Date();
+    var d = now.getDate() <= 10 ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : new Date(now.getFullYear(), now.getMonth(), 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  };
+  R.monthPanel = async function (period) {
+    period = period || R.closingPeriod();
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Relatórios do mês') + '<div class="sh-t">' + RB.esc(R.periodLabel(period)) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div><div id="mrep"><div class="ld"><div class="sp"></div></div></div>');
+    var ath = RB.coach.athletes || [];
+    var res = await sb.from('reports').select('id,athlete_id,status,seen_at').eq('period', period);
+    var by = {}; (res.data || []).forEach(function (x) { if (!by[x.athlete_id] || x.status === 'published') by[x.athlete_id] = x; });
+    var missing = ath.filter(function (a) { return !by[a.id]; });
+    var rows = ath.map(function (a) {
+      var x = by[a.id];
+      var t = !x ? RB.tag('sem relatório', 'm') : x.status === 'published' ? RB.tag(x.seen_at ? 'lido' : 'publicado', x.seen_at ? 'g' : 'b') : RB.tag('rascunho', 'r');
+      return '<div class="mrep-r" onclick="RB.coach.openReports(\'' + a.id + '\')">' + RB.av(a.img, 34) + '<div style="flex:1;min-width:0"><div class="ar-n">' + RB.esc(a.name) + '</div></div>' + t + '<div class="chev">›</div></div>';
+    }).join('');
+    RB.$('mrep').innerHTML =
+      '<div class="hint" style="margin-bottom:12px">Cria um rascunho para cada aluno ativo que ainda não tem relatório deste mês, com números e stories prontos. Você entra em cada um, escolhe a frase, escreve o recado e publica.</div>' +
+      (missing.length ? '<button class="btn btn-r" id="mrep-go" onclick="RB.reports.draftAll(\'' + period + '\')">CRIAR ' + missing.length + ' RASCUNHO' + (missing.length > 1 ? 'S' : '') + '</button>' : '<div class="card gl">' + RB.ew('Tudo criado', 'green') + '<div class="p">Todos os alunos ativos já têm relatório deste mês.</div></div>') +
+      '<div id="mrep-st" class="hint" style="margin:8px 0"></div>' + rows;
+  };
+  R.draftAll = async function (period) {
+    var btn = RB.$('mrep-go'); if (btn) { btn.disabled = true; btn.textContent = 'CRIANDO...'; }
+    var ath = RB.coach.athletes || [];
+    var res = await sb.from('reports').select('athlete_id').eq('period', period);
+    var has = {}; (res.data || []).forEach(function (x) { has[x.athlete_id] = 1; });
+    var todo = ath.filter(function (a) { return !has[a.id]; }), made = 0, empty = [];
+    for (var i = 0; i < todo.length; i++) {
+      var a = todo[i];
+      RB.$('mrep-st').textContent = 'Montando ' + a.name.split(' ')[0] + ' (' + (i + 1) + '/' + todo.length + ')...';
+      try {
+        var auto = await R.autoStats(a.id, period);
+        var st = auto.story;
+        if (!auto.n && !(st && st.str_days.length)) { empty.push(a.name.split(' ')[0]); continue; }
+        var ins = await sb.from('reports').insert({ athlete_id: a.id, period: period, title: R.periodLabel(period), objective: a.goal || null, auto_stats: auto, story_opts: {}, status: 'draft' });
+        if (!ins.error) made++;
+      } catch (e) { console.error('rascunho', a.name, e); }
+    }
+    RB.toast(made + ' rascunho' + (made === 1 ? '' : 's') + ' criado' + (made === 1 ? '' : 's') + ' ✓');
+    await R.monthPanel(period);
+    if (empty.length) RB.$('mrep-st').textContent = 'Sem treinos registrados no mês (não criei): ' + empty.join(', ') + '.';
+  };
+
   R.ai = async function () {
     var btn = RB.$('ai-btn');
     btn.disabled = true; btn.textContent = 'ESCREVENDO...';
