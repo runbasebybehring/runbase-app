@@ -15,8 +15,8 @@
 
   async function save(sub) {
     var j = sub.toJSON();
-    await sb.from('push_subscriptions').delete().eq('endpoint', j.endpoint); // se outra conta usou este aparelho
-    return sb.from('push_subscriptions').upsert({ endpoint: j.endpoint, user_id: RB.state.user.id, p256dh: j.keys.p256dh || enc(sub.getKey('p256dh')), auth: j.keys.auth || enc(sub.getKey('auth')) });
+    // função no banco: passa o aparelho para a conta logada mesmo se outra conta já usou este aparelho
+    return sb.rpc('claim_push_subscription', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh || enc(sub.getKey('p256dh')), p_auth: j.keys.auth || enc(sub.getKey('auth')) });
   }
   N.enable = async function (btn) {
     if (!N.supported()) {
