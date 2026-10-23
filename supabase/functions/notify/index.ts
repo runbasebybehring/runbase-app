@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         if (d) { sent += await send([COACH_ID], { title: "✦ Resumo da semana pronto", body: (d.content as { headline?: string })?.headline ?? "Veja quem precisa de atenção esta semana.", tab: "dashboard", tag: "digest" }); out.push("digest"); }
       }
 
-      const { data: aths } = await db.from("athletes").select("id,name,race,goal").eq("active", true);
+      const { data: aths } = await db.from("athletes").select("id,name,race,goal,active_cycle").eq("active", true);
       const all = aths ?? [];
       const fullName = (id: string) => all.find((a) => a.id === id)?.name ?? "";
       const short = (id: string) => {
@@ -158,6 +158,43 @@ Deno.serve(async (req) => {
         for (const b of dueToday) na += await send([b.athlete_id], { title: "\u{1F4B3} Sua mensalidade vence hoje", body: `${b.amount ? brl(+b.amount) + "." : ""}${pixTxt} Se já pagou, pode desconsiderar.`.trim(), tab: "home", tag: "mensal-aluno" });
         for (const b of late3) na += await send([b.athlete_id], { title: "Mensalidade em aberto", body: `Venceu dia ${ddmm(plus(-3))}${b.amount ? " (" + brl(+b.amount) + ")" : ""}.${pixTxt} Se já pagou, me avisa!`, tab: "home", tag: "mensal-aluno" });
         if (soon2.length + dueToday.length + late3.length) out.push("aluno-mensal:" + na);
+      }
+
+      // planilha no fim e treino de força vencido — avisa uma vez por marco (guardado em acks)
+      {
+        const { data: ackRows } = await db.from("acks").select("key").eq("user_id", COACH_ID).like("key", "push:%");
+        const acked = new Set((ackRows ?? []).map((a) => a.key));
+        const notify = async (items: { id: string; key: string }[], msg: (l: string) => Msg, label: string) => {
+          const fresh = items.filter((i) => !acked.has(i.key));
+          if (!fresh.length) return;
+          const n = await send([COACH_ID], msg(names(fresh.map((i) => short(i.id)))));
+          if (n) { await db.from("acks").upsert(fresh.map((i) => ({ user_id: COACH_ID, key: i.key }))); sent += n; out.push(label); }
+        };
+        const ids = all.map((a) => a.id);
+        const { data: wks } = await db.from("weeks").select("id,athlete_id,week_number,cycle,is_current,workouts(id)").in("athlete_id", ids);
+        const { data: fbw } = await db.from("feedbacks").select("workout_id").in("athlete_id", ids).not("workout_id", "is", null);
+        const hasFb = new Set((fbw ?? []).map((f) => f.workout_id));
+        const lastWeek: { id: string; key: string }[] = [], finished: { id: string; key: string }[] = [];
+        for (const a of all) {
+          const cyc = a.active_cycle ?? 1;
+          const ws = (wks ?? []).filter((w) => w.athlete_id === a.id && (w.cycle ?? 1) === cyc);
+          const cur = ws.find((w) => w.is_current);
+          if (!cur || !ws.length || cur.week_number < Math.max(...ws.map((w) => w.week_number))) continue;
+          const wos = (cur.workouts as { id: number }[] | null) ?? [];
+          if (wos.length && wos.every((wo) => hasFb.has(wo.id))) finished.push({ id: a.id, key: `push:plan-fim:${a.id}:${cyc}:${cur.id}` });
+          else lastWeek.push({ id: a.id, key: `push:plan-ultima:${a.id}:${cyc}:${cur.id}` });
+        }
+        await notify(finished, (l) => ({ title: `✅ Planilha concluída: ${l}`, body: "Todos os treinos da última semana foram feitos. Hora de montar o próximo bloco.", tab: "athletes", tag: "plan-fim" }), "plan-fim");
+        await notify(lastWeek, (l) => ({ title: `📋 Última semana da planilha: ${l}`, body: "Já dá pra preparar o próximo bloco.", tab: "athletes", tag: "plan-ultima" }), "plan-ultima");
+
+        const { data: gyms } = await db.from("athlete_plans").select("athlete_id,strength_started_at").in("athlete_id", ids).not("strength", "is", null).not("strength_started_at", "is", null);
+        const gymDue: { id: string; key: string }[] = [];
+        for (const g of gyms ?? []) {
+          const weeks = Math.floor((Date.now() - new Date(g.strength_started_at).getTime()) / (7 * 864e5));
+          const lvl = Math.floor(weeks / 4);
+          if (lvl >= 1) gymDue.push({ id: g.athlete_id, key: `push:gym:${g.athlete_id}:${String(g.strength_started_at).slice(0, 10)}:${lvl}` });
+        }
+        await notify(gymDue, (l) => ({ title: `🏋 Hora de trocar a força: ${l}`, body: "4+ semanas no mesmo treino de força. Progrida a carga ou troque os exercícios.", tab: "athletes", tag: "gym" }), "gym");
       }
 
       // segunda: lembrete do check-in para os alunos que ainda não responderam
