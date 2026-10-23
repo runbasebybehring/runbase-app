@@ -43,7 +43,13 @@
   // garante que este aparelho está ligado à conta logada
   N.sync = async function () {
     if (!N.granted()) return;
-    try { var reg = await navigator.serviceWorker.ready; var sub = await reg.pushManager.getSubscription(); if (sub) await save(sub); } catch (e) {}
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.getSubscription();
+      // permissão já dada mas o aparelho perdeu a inscrição (expirou ou foi apagada): cria de novo
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(KEY) });
+      if (sub) await save(sub);
+    } catch (e) {}
   };
   // ao sair, este aparelho deixa de receber notificações da conta
   N.unlink = async function () {
