@@ -1,12 +1,12 @@
 // Run Base — service worker: guarda a "casca" do app para abrir rápido e funcionar com internet ruim.
 // Dados do Supabase nunca são guardados aqui: sempre vêm da rede.
 var PREFIX = self.registration.scope.indexOf('/beta/') > 0 ? 'rb-beta-' : 'rb-app-';
-var VERSION = PREFIX + 'v3.1.0';
+var VERSION = PREFIX + 'v3.1.1';
 var SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'css/app.css?v=3.1.0',
-  'js/config.js?v=3.1.0', 'js/core.js?v=3.1.0', 'js/charts.js?v=3.1.0', 'js/threads.js?v=3.1.0',
-  'js/reports.js?v=3.1.0', 'js/media.js?v=3.1.0', 'js/strength.js?v=3.1.0', 'js/pace.js?v=3.1.0', 'js/push.js?v=3.1.0', 'js/events.js?v=3.1.0', 'js/editor.js?v=3.1.0', 'js/share.js?v=3.1.0', 'js/milestones.js?v=3.1.0', 'js/radar.js?v=3.1.0', 'js/perf.js?v=3.1.0', 'js/community.js?v=3.1.0', 'js/audio.js?v=3.1.0', 'js/finance.js?v=3.1.0', 'js/intake.js?v=3.1.0', 'js/load.js?v=3.1.0', 'js/weekly.js?v=3.1.0', 'js/stories.js?v=3.1.0', 'js/monthstory.js?v=3.1.0', 'js/checkin.js?v=3.1.0', 'js/athlete.js?v=3.1.0', 'js/coach.js?v=3.1.0',
+  'css/app.css?v=3.1.1',
+  'js/config.js?v=3.1.1', 'js/core.js?v=3.1.1', 'js/charts.js?v=3.1.1', 'js/threads.js?v=3.1.1',
+  'js/reports.js?v=3.1.1', 'js/media.js?v=3.1.1', 'js/strength.js?v=3.1.1', 'js/pace.js?v=3.1.1', 'js/push.js?v=3.1.1', 'js/events.js?v=3.1.1', 'js/editor.js?v=3.1.1', 'js/share.js?v=3.1.1', 'js/milestones.js?v=3.1.1', 'js/radar.js?v=3.1.1', 'js/perf.js?v=3.1.1', 'js/community.js?v=3.1.1', 'js/audio.js?v=3.1.1', 'js/finance.js?v=3.1.1', 'js/intake.js?v=3.1.1', 'js/load.js?v=3.1.1', 'js/weekly.js?v=3.1.1', 'js/stories.js?v=3.1.1', 'js/monthstory.js?v=3.1.1', 'js/checkin.js?v=3.1.1', 'js/athlete.js?v=3.1.1', 'js/coach.js?v=3.1.1',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.png', 'fonts/aileron-latin-800-italic.woff2', 'fonts/aileron-latin-800-normal.woff2', 'fonts/aileron-latin-700-normal.woff2', 'fonts/aileron-latin-400-normal.woff2'
 ];
 self.addEventListener('install', function (e) {
