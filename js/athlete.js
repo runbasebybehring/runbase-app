@@ -363,6 +363,7 @@
   // ---------- MINHA CONTA ----------
   A.account = function () {
     RB.openSheet('<div class="sh-top"><div>' + RB.ew('Minha conta') + '<div class="sh-t">' + RB.esc(A.me.name) + '</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' +
+      RB.fsPicker() +
       '<div class="fld"><div class="fld-l">Nova senha <span class="hint">mínimo 6 caracteres</span></div><input class="fi" type="password" id="my-pw" autocomplete="new-password"></div>' +
       '<div class="fld"><div class="fld-l">Repita a nova senha</div><input class="fi" type="password" id="my-pw2" autocomplete="new-password"></div>' +
       '<button class="btn btn-o" id="my-pw-go" onclick="RB.athlete.changePw()">TROCAR SENHA</button>' +
