@@ -14,6 +14,24 @@
     return RB.esc(s).replace(/\*\*([\s\S]+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   };
   RB.$ = function (id) { return document.getElementById(id); };
+  // ---------- tamanho da letra (vale só neste aparelho) ----------
+  RB.FS = [['0', 'Padrão'], ['1', 'Maior'], ['2', 'Muito maior']];
+  RB.getFs = function () { return document.documentElement.dataset.fs || '0'; };
+  RB.setFs = function (v) {
+    if (v === '0') delete document.documentElement.dataset.fs; else document.documentElement.dataset.fs = v;
+    try { localStorage.setItem('rb_fs', v); } catch (e) {}
+    document.querySelectorAll('.fs-opt').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); });
+  };
+  RB.fsPicker = function () {
+    var cur = RB.getFs();
+    return '<div class="fld"><div class="fld-l">Tamanho da letra <span class="hint">vale neste celular</span></div><div class="fs-row">' + RB.FS.map(function (o, i) {
+      return '<button type="button" class="fs-opt' + (o[0] === cur ? ' on' : '') + '" data-v="' + o[0] + '" onclick="RB.setFs(\'' + o[0] + '\')"><b style="font-size:' + (15 + i * 4) + 'px">Aa</b><span>' + o[1] + '</span></button>';
+    }).join('') + '</div></div>';
+  };
+  RB.fontSheet = function () {
+    RB.openSheet('<div class="sh-top"><div>' + RB.ew('Leitura') + '<div class="sh-t">Tamanho da letra</div></div><button class="x" onclick="RB.closeSheet()">✕</button></div>' + RB.fsPicker() +
+      '<button class="btn btn-r" onclick="RB.closeSheet()">PRONTO</button>');
+  };
   // redesenha sem pular a tela: o elemento `sel` fica no mesmo lugar onde estava antes do clique
   RB.keepAnchor = function (sel, render) {
     var a = document.querySelector(sel), top = a ? a.getBoundingClientRect().top : null;
