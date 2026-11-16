@@ -43,8 +43,21 @@
       treino: 'Siga o plano ajustando pela sensação. Treinos leves e de força costumam ajudar no humor e no sono.',
       dica: 'Priorize dormir bem e diminua o sal se o inchaço incomodar.' }
   };
-  var ORDEM = ['menstrual', 'folicular', 'ovulatoria', 'lutea', 'tpm'];
+  F.ativa = { n: 'Pílula ativa', c: '#00897B', e: '💊',
+    corpo: 'Os hormônios vêm da pílula e ficam estáveis: não tem ovulação nem as oscilações do ciclo natural.',
+    treino: 'Treine pela planilha normalmente: a energia tende a ser mais constante. Se algum dia pesar, é mais provável ser sono, estresse ou carga do que o ciclo.',
+    dica: 'Tome sempre no mesmo horário. Em viagem pra prova, atenção ao fuso.' };
+  F.pausa = { n: 'Pausa', c: '#C41731', e: '⏸️',
+    corpo: 'Sem a pílula, o hormônio cai e vem o sangramento da pausa. Cólica, inchaço e cansaço podem aparecer, parecido com uma TPM.',
+    treino: 'Siga o plano ajustando pela sensação. Movimento leve costuma aliviar a cólica.',
+    dica: 'Capriche na hidratação e em alimentos com ferro, como na menstruação.' };
+  var ORDEM_NAT = ['menstrual', 'folicular', 'ovulatoria', 'lutea', 'tpm'], ORDEM_PIL = ['ativa', 'pausa'];
   var natural = function () { return C.cfg && C.cfg.hormonal === 'nao'; };
+  // pílula com pausa e data da cartela: dá pra saber se está na semana ativa ou na pausa
+  var pilula = function () { return C.cfg && C.cfg.hormonal === 'pilula' && C.cfg.pill_start && C.cfg.pill_pause > 0; };
+  var fases = function () { return pilula() ? ORDEM_PIL : natural() ? ORDEM_NAT : []; };
+  C.temFase = function () { return natural() || pilula(); };
+  var CARTELAS = [['21-7', '21 + 7 de pausa'], ['24-4', '24 + 4 de pausa'], ['0', 'Contínua (sem pausa)']];
 
   // inícios de menstruação: dia com fluxo cujo dia com fluxo anterior está a mais de 2 dias
   function starts() {
@@ -70,13 +83,19 @@
   }
   // fase de uma data qualquer (null se não dá pra saber)
   C.phaseOf = function (date) {
+    if (pilula()) {
+      var A = C.cfg.pill_active, Pz = C.cfg.pill_pause, Lp = A + Pz, dd = diff(date, C.cfg.pill_start);
+      if (dd < 0) return null;
+      var dia = dd % Lp + 1;
+      return { day: dia, key: dia <= A ? 'ativa' : 'pausa', L: Lp, P: A, start: addD(date, 1 - dia), late: false, pill: true, fk: function (d) { return d <= A ? 'ativa' : 'pausa'; } };
+    }
     if (!natural()) return null;
     var k = lens(), st = null;
     for (var i = k.s.length - 1; i >= 0; i--) if (k.s[i] <= date) { st = k.s[i]; break; }
     if (!st) return null;
     var day = diff(date, st) + 1;
     if (day > 60) return null;
-    return { day: day, key: day > k.L ? 'tpm' : faseDia(day, k.L, k.P), L: k.L, P: k.P, start: st, late: day > k.L };
+    return { day: day, key: day > k.L ? 'tpm' : faseDia(day, k.L, k.P), L: k.L, P: k.P, start: st, late: day > k.L, fk: function (d) { return faseDia(d, k.L, k.P); } };
   };
   var logOf = function (d) { return C.logs.find(function (l) { return l.day === d; }); };
 
@@ -99,7 +118,7 @@
     var L = ph.L, R = 92, cx = 110, cy = 110, s = '';
     for (var d = 1; d <= L; d++) {
       var a0 = (d - 1) / L * 2 * Math.PI - Math.PI / 2, a1 = d / L * 2 * Math.PI - Math.PI / 2 - .025;
-      var k = faseDia(d, L, ph.P), on = d === Math.min(ph.day, L);
+      var k = ph.fk(d), on = d === Math.min(ph.day, L);
       s += '<path d="M' + (cx + R * Math.cos(a0)) + ' ' + (cy + R * Math.sin(a0)) + 'A' + R + ' ' + R + ' 0 0 1 ' + (cx + R * Math.cos(a1)) + ' ' + (cy + R * Math.sin(a1)) + '" stroke="' + F[k].c + '" stroke-width="' + (on ? 22 : 14) + '" fill="none" opacity="' + (d <= ph.day ? 1 : .28) + '"/>';
     }
     var at = (Math.min(ph.day, L) - .5) / L * 2 * Math.PI - Math.PI / 2;
@@ -111,7 +130,7 @@
   C.homeCard = function () {
     if (!C.on()) return '';
     var ph = C.phaseOf(today()), lg = logOf(today());
-    var t = ph ? '<b>Dia ' + ph.day + '</b> · ' + (ph.late ? 'menstruação atrasando?' : 'fase ' + F[ph.key].n.toLowerCase()) : natural() ? '<b>Seu ciclo</b> · marque o 1º dia da menstruação' : '<b>Seu ciclo</b> · registre como você está';
+    var t = ph ? '<b>Dia ' + ph.day + '</b> · ' + (ph.late ? 'menstruação atrasando?' : ph.pill ? F[ph.key].n.toLowerCase() : 'fase ' + F[ph.key].n.toLowerCase()) : natural() ? '<b>Seu ciclo</b> · marque o 1º dia da menstruação' : '<b>Seu ciclo</b> · registre como você está';
     return '<button class="cy-home" style="--pc:' + (ph ? F[ph.key].c : '#7B1FA2') + '" onclick="RB.athlete.go(\'ciclo\')"><span class="cy-dot">' + (ph ? F[ph.key].e : '☾') + '</span><span class="cy-ht">' + t + '</span><span class="cy-hr">' + (lg ? '✓ hoje' : 'Registrar ›') + '</span></button>';
   };
 
@@ -121,10 +140,15 @@
     var hoje = today(), ph = C.phaseOf(hoje), lg = logOf(hoje), html = RB.tt('CICLO');
     if (ph) {
       var f = F[ph.key], prox = addD(ph.start, ph.L), falta = diff(prox, hoje);
-      html += '<div class="cy-hero" style="--pc:' + f.c + '"><div class="cy-rw">' + ring(ph) + '<div class="cy-c"><small>DIA</small><b>' + ph.day + '</b><span>' + f.e + ' ' + f.n + '</span></div></div>' +
-        '<div class="cy-pred">' + (ph.late ? 'A menstruação era esperada por volta de ' + curto(prox) + '. Quando vier, marque aqui.' : falta <= 0 ? 'A menstruação pode vir hoje.' : 'Próxima menstruação: por volta de <b>' + curto(prox) + '</b> (em ' + falta + ' dia' + (falta > 1 ? 's' : '') + ')') + '</div></div>';
+      var pz = ph.pill ? (ph.key === 'ativa' ? diff(addD(ph.start, ph.P), hoje) : falta) : 0;
+      html += '<div class="cy-hero" style="--pc:' + f.c + '"><div class="cy-rw">' + ring(ph) + '<div class="cy-c"><small>' + 'DIA' + '</small><b>' + ph.day + '</b><span><i>' + f.e + '</i>' + f.n + '</span></div></div>' +
+        '<div class="cy-pred">' + (ph.pill ? (ph.key === 'ativa' ? 'Pausa começa por volta de <b>' + curto(addD(ph.start, ph.P)) + '</b> (em ' + pz + ' dia' + (pz > 1 ? 's' : '') + ')' : 'Nova cartela em <b>' + curto(prox) + '</b> (em ' + pz + ' dia' + (pz > 1 ? 's' : '') + ')') : ph.late ? 'A menstruação era esperada por volta de ' + curto(prox) + '. Quando vier, marque aqui.' : falta <= 0 ? 'A menstruação pode vir hoje.' : 'Próxima menstruação: por volta de <b>' + curto(prox) + '</b> (em ' + falta + ' dia' + (falta > 1 ? 's' : '') + ')') + '</div></div>';
     } else if (natural()) {
       html += '<div class="cy-hero" style="--pc:#7B1FA2"><div class="cy-empty">☾</div><div class="cy-pred">Marque o primeiro dia da sua última menstruação para o app calcular sua fase.</div></div>';
+    } else if (C.cfg.hormonal === 'pilula' && C.cfg.pill_pause > 0) {
+      html += '<div class="cy-hero" style="--pc:#00897B"><div class="cy-empty">💊</div><div class="cy-pred">Informe o dia em que começou a cartela atual para o app mostrar se você está na pílula ativa ou na pausa.</div><button class="btn btn-o sm" style="margin-top:12px" onclick="RB.ciclo.setup()">INFORMAR CARTELA</button></div>';
+    } else if (C.cfg.hormonal === 'pilula') {
+      html += '<div class="cy-hero" style="--pc:#00897B"><div class="cy-empty">💊</div><div class="cy-pred">Com a pílula em uso contínuo, os hormônios ficam estáveis o mês todo: não há fases nem pausa. Registre sintomas e escapes de sangramento: com o tempo, aparece o <b>seu</b> padrão.</div></div>';
     } else {
       html += '<div class="cy-hero" style="--pc:#7B1FA2"><div class="cy-empty">☾</div><div class="cy-pred">Com anticoncepcional hormonal, as fases naturais do ciclo ficam mais estáveis, então o app não calcula fase. Registre sintomas e sangramentos: com o tempo, aparece o <b>seu</b> padrão.</div></div>';
     }
@@ -132,7 +156,7 @@
     html += alerta();
     if (ph && !ph.late) {
       var f2 = F[ph.key];
-      html += '<div class="cy-card" style="--pc:' + f2.c + '"><div class="cy-tag">' + f2.e + ' Fase ' + f2.n.toLowerCase() + '</div>' +
+      html += '<div class="cy-card" style="--pc:' + f2.c + '"><div class="cy-tag">' + f2.e + ' ' + (ph.pill ? f2.n : 'Fase ' + f2.n.toLowerCase()) + '</div>' +
         '<div class="cy-sec"><b>No corpo</b><p>' + f2.corpo + '</p></div><div class="cy-sec"><b>No treino</b><p>' + f2.treino + '</p></div><div class="cy-sec"><b>Dica</b><p>' + f2.dica + '</p></div></div>';
     }
     html += strip() + padroes() + fasesGuia() +
@@ -159,7 +183,9 @@
   }
   // padrões pessoais: sintomas e esforço (RPE dos feedbacks) por fase
   function padroes() {
-    if (!natural() || starts().length < 2) return '<div class="card"><div class="ew mid">Seus padrões</div><div class="p">Depois de 2 ciclos registrados, aparece aqui como <b>você</b> costuma se sentir e render em cada fase.</div></div>';
+    var pronto = pilula() ? diff(today(), C.cfg.pill_start) >= C.cfg.pill_active + C.cfg.pill_pause : natural() && starts().length >= 2;
+    if (!pronto) return '<div class="card"><div class="ew mid">Seus padrões</div><div class="p">' + (pilula() ? 'Depois de 1 cartela completa' : 'Depois de 2 ciclos registrados') + ', aparece aqui como <b>você</b> costuma se sentir e render em cada fase.</div></div>';
+    var ORDEM = fases();
     var by = {};
     ORDEM.forEach(function (k) { by[k] = { n: 0, s: {}, en: [], rpe: [] }; });
     C.logs.forEach(function (l) {
@@ -183,8 +209,8 @@
     return '<div class="card"><div class="ew mid">Seus padrões</div>' + rows + '<div class="hint" style="margin-top:6px">Esforço = média da nota de esforço (RPE) que você dá nos feedbacks dos treinos naquela fase.</div></div>';
   }
   function fasesGuia() {
-    if (!natural()) return '';
-    return '<details class="cy-guia"><summary>Entenda as 5 fases</summary>' + ORDEM.map(function (k) {
+    var ORDEM = fases(); if (!ORDEM.length) return '';
+    return '<details class="cy-guia"><summary>' + (pilula() ? 'Pílula ativa × pausa' : 'Entenda as 5 fases') + '</summary>' + ORDEM.map(function (k) {
       return '<div class="cy-gi" style="--pc:' + F[k].c + '"><b>' + F[k].e + ' ' + F[k].n + '</b><p>' + F[k].treino + '</p></div>';
     }).join('') + '</details>';
   }
@@ -247,7 +273,7 @@
   C.s = {};
   C.setup = function () {
     var c = C.cfg || {};
-    C.s = { hormonal: c.hormonal || 'nao', cycle_len: c.cycle_len || 28, period_len: c.period_len || 5, last: '' };
+    C.s = { hormonal: c.hormonal || 'nao', cycle_len: c.cycle_len || 28, period_len: c.period_len || 5, last: '', pill_start: c.pill_start || '', cartela: c.pill_pause === 0 ? '0' : (c.pill_active || 21) + '-' + (c.pill_pause == null ? 7 : c.pill_pause) };
     setupSheet();
   };
   function setupSheet() {
@@ -259,18 +285,26 @@
       (nat ? '<div class="fld"><div class="fld-l">Seu ciclo costuma durar <span class="hint">do 1º dia de uma menstruação até a próxima</span></div><div class="cy-num"><button onclick="RB.ciclo.ss(\'cycle_len\',' + (s.cycle_len - 1) + ')">−</button><b>' + s.cycle_len + ' dias</b><button onclick="RB.ciclo.ss(\'cycle_len\',' + (s.cycle_len + 1) + ')">+</button></div></div>' +
         '<div class="fld"><div class="fld-l">A menstruação costuma durar</div><div class="cy-num"><button onclick="RB.ciclo.ss(\'period_len\',' + (s.period_len - 1) + ')">−</button><b>' + s.period_len + ' dias</b><button onclick="RB.ciclo.ss(\'period_len\',' + (s.period_len + 1) + ')">+</button></div><div class="hint" style="margin-top:4px">Não sabe? Deixe 28 e 5: o app ajusta sozinho conforme você registra.</div></div>' +
         (novo || !starts().length ? '<div class="fld"><div class="fld-l">1º dia da última menstruação</div><input class="fi" type="date" max="' + today() + '" value="' + s.last + '" onchange="RB.ciclo.s.last=this.value"></div>' : '') : '') +
+      (s.hormonal === 'pilula' ? '<div class="fld"><div class="fld-l">Sua cartela</div>' + opt('cartela', CARTELAS.concat(CARTELAS.some(function (x) { return x[0] === s.cartela; }) ? [] : [[s.cartela, s.cartela.replace('-', ' + ') + ' de pausa']])) + '</div>' +
+        (s.cartela !== '0' ? '<div class="fld"><div class="fld-l">Dia em que começou a cartela atual <span class="hint">1º comprimido</span></div><input class="fi" type="date" id="cy-pill" max="' + today() + '" value="' + s.pill_start + '" onchange="RB.ciclo.s.pill_start=this.value"></div>' : '') : '') +
       '<button class="btn btn-r" id="cy-go" onclick="RB.ciclo.saveCfg()">' + (novo ? 'ATIVAR' : 'SALVAR') + '</button>' +
       (novo ? '' : '<button class="btn-link danger" onclick="RB.ciclo.off()">Desativar a aba Ciclo</button>'));
   }
   C.ss = function (k, v) {
     if (k === 'cycle_len') v = Math.max(18, Math.min(60, +v));
     if (k === 'period_len') v = Math.max(1, Math.min(12, +v));
-    var dt = document.querySelector('#sheet-body input[type=date]'); if (dt) C.s.last = dt.value;
+    var dt = document.querySelector('#sheet-body input[type=date]:not(#cy-pill)'); if (dt) C.s.last = dt.value;
+    var pl = RB.$('cy-pill'); if (pl) C.s.pill_start = pl.value;
     C.s[k] = v; setupSheet();
   };
   C.saveCfg = async function () {
     var s = C.s, uid = RB.state.user.id, b = RB.$('cy-go'); if (b) b.disabled = true;
     var row = { athlete_id: uid, enabled: true, hormonal: s.hormonal, cycle_len: +s.cycle_len, period_len: +s.period_len, updated_at: new Date().toISOString() };
+    if (s.hormonal === 'pilula') {
+      var ct = s.cartela === '0' ? [28, 0] : s.cartela.split('-').map(Number);
+      if (ct[1] > 0 && !s.pill_start) { if (b) b.disabled = false; RB.toast('Informe quando começou a cartela atual', false); return; }
+      row.pill_active = ct[0]; row.pill_pause = ct[1]; row.pill_start = ct[1] > 0 ? s.pill_start : null;
+    }
     var r = await sb.from('period_settings').upsert(row, { onConflict: 'athlete_id' }).select().single();
     if (r.error) { if (b) b.disabled = false; RB.toast('Não deu para salvar', false); return; }
     C.cfg = r.data;
@@ -306,7 +340,7 @@
       var rec = C.logs.filter(function (l) { return diff(hoje, l.day) <= 7 && (l.symptoms.length || l.flow || l.note); }).reverse();
       var s = starts(), sem = natural() && diff(hoje, s.length ? s[s.length - 1] : (C.cfg.created_at || hoje).slice(0, 10)) >= 60;
       var html = '<div class="card cy-coach"' + (ph ? ' style="--pc:' + F[ph.key].c + '"' : '') + '>' + RB.ew('☾ Ciclo', 'mid') +
-        '<div class="cy-ch1">' + (ph ? '<b>' + F[ph.key].e + ' Dia ' + ph.day + ' · ' + (ph.late ? 'atrasada' : F[ph.key].n) + '</b>' : '<b>' + (natural() ? 'Sem fase calculada' : 'Usa ' + (HORM.find(function (h) { return h[0] === C.cfg.hormonal; }) || ['', 'anticoncepcional'])[1].toLowerCase()) + '</b>') +
+        '<div class="cy-ch1">' + (ph ? '<b>' + F[ph.key].e + ' Dia ' + ph.day + (ph.pill ? ' da cartela' : '') + ' · ' + (ph.late ? 'atrasada' : F[ph.key].n) + '</b>' : '<b>' + (natural() ? 'Sem fase calculada' : 'Usa ' + (HORM.find(function (h) { return h[0] === C.cfg.hormonal; }) || ['', 'anticoncepcional'])[1].toLowerCase()) + '</b>') +
         (ph && !ph.late ? '<span>' + F[ph.key].treino + '</span>' : '') + '</div>' +
         (sem ? '<div class="tags" style="margin:6px 0">' + RB.tag('+2 meses sem menstruação registrada', 'r') + '</div>' : '') +
         (rec.length ? rec.slice(0, 5).map(function (l) {

@@ -916,7 +916,7 @@ body.ckx-open{overflow:hidden}
 .cy-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .cy-c small{font-family:'Space Mono',monospace;font-size:calc(10px*var(--fs) + var(--fb));letter-spacing:.2em;color:var(--mid)}
 .cy-c b{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(64px*var(--fs) + var(--fb));line-height:.9;color:var(--pc)}
-.cy-c span{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:calc(18px*var(--fs) + var(--fb));color:var(--dark)}
+.cy-c span{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:calc(17px*var(--fs) + var(--fb));color:var(--dark);max-width:62%;text-align:center;line-height:1.05}
 .cy-empty{font-size:56px;line-height:1;margin:6px 0 10px;color:#7B1FA2}
 .cy-pred{font-size:calc(14px*var(--fs) + var(--fb));color:var(--mid);line-height:1.45;margin-top:12px}.cy-pred b{color:var(--dark)}
 .cy-log{width:100%;border:0;border-radius:999px;background:var(--dark);color:#fff;padding:16px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:calc(18px*var(--fs) + var(--fb));letter-spacing:.04em;cursor:pointer;margin-bottom:12px}
@@ -952,3 +952,4 @@ body.ckx-open{overflow:hidden}
 .cy-ch1 span{display:block;font-size:calc(12px*var(--fs) + var(--fb));color:var(--mid);line-height:1.4;margin:2px 0 8px}
 .cy-cl{font-size:calc(13px*var(--fs) + var(--fb));padding:5px 0;border-top:1px solid var(--cream2)}.cy-cl span{font-family:'Space Mono',monospace;font-size:calc(9px*var(--fs) + var(--fb));color:var(--mid);margin-right:8px;text-transform:uppercase}
 #screen-athlete .nav-btn span.lbl{letter-spacing:.02em}
+.cy-c span i{display:block;font-style:normal;font-size:20px;line-height:1.1;margin-top:2px}

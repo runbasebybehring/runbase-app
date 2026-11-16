@@ -29,3 +29,9 @@ create policy period_logs_read on public.period_logs for select to authenticated
 create policy period_logs_ins on public.period_logs for insert to authenticated with check (athlete_id = (select auth.uid()));
 create policy period_logs_upd on public.period_logs for update to authenticated using (athlete_id = (select auth.uid()));
 create policy period_logs_del on public.period_logs for delete to authenticated using (athlete_id = (select auth.uid()));
+
+-- modo pílula: início da cartela atual, dias de pílula ativa e de pausa (pausa 0 = uso contínuo)
+alter table public.period_settings
+  add column if not exists pill_start date,
+  add column if not exists pill_active int not null default 21 check (pill_active between 1 and 120),
+  add column if not exists pill_pause int not null default 7 check (pill_pause between 0 and 14);
