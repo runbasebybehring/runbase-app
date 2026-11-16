@@ -953,3 +953,10 @@ body.ckx-open{overflow:hidden}
 .cy-cl{font-size:calc(13px*var(--fs) + var(--fb));padding:5px 0;border-top:1px solid var(--cream2)}.cy-cl span{font-family:'Space Mono',monospace;font-size:calc(9px*var(--fs) + var(--fb));color:var(--mid);margin-right:8px;text-transform:uppercase}
 #screen-athlete .nav-btn span.lbl{letter-spacing:.02em}
 .cy-c span i{display:block;font-style:normal;font-size:20px;line-height:1.1;margin-top:2px}
+
+/* ---- 3.4: recados da treinadora ---- */
+.rc{border:1.5px solid var(--red);background:linear-gradient(180deg,#fff,var(--red-bg,#FBEAEC))}
+.rc-top{display:flex;justify-content:space-between;align-items:flex-start}
+.rc-top .x{border:0;background:none;font-size:18px;color:var(--mid);cursor:pointer;padding:0 2px}
+.rc-t{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(24px*var(--fs) + var(--fb));line-height:1.02;margin:4px 0 8px}
+.rc-b{font-size:calc(15px*var(--fs) + var(--fb));line-height:1.5;color:var(--dark)}

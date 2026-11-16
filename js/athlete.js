@@ -31,7 +31,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid), RB.stories.load(uid), RB.ciclo.load(uid)]);
+    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid), RB.stories.load(uid), RB.ciclo.load(uid), RB.recados.load(uid)]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -83,7 +83,7 @@
     var done = wo.filter(function (w) { return A.byWorkout[w.id]; }).length;
     var pct = wo.length ? Math.round(done / wo.length * 100) : 0;
     var html = '<div class="hello"><div class="hello-s">Olá,</div><div class="hello-n">' + RB.esc(a.name.split(' ')[0].toUpperCase()) + '.</div></div>';
-    html += RB.stories.row() + RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard() + RB.ciclo.homeCard();
+    html += RB.recados.homeCard() + RB.stories.row() + RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard() + RB.ciclo.homeCard();
 
     // mensagens novas do coach
     var unreadFbs = A.feedbacks.filter(function (f) { return RB.threads.unread(A.replies[f.id]); });
