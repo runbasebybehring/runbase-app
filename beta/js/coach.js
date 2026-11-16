@@ -129,7 +129,8 @@
       var reps = await RB.threads.load(fbs.map(function (f) { return f.id; }));
       var rp = fbs.filter(function (f) { return f.rpe; }).slice(0, 20).reverse();
       var ckr = await sb.from('checkins').select('*').eq('athlete_id', a.id).order('week_start', { ascending: false }).limit(1);
-      body.innerHTML = RB.checkin.line((ckr.data || [])[0]) + RB.trainLoad.card(fbs) + (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
+      var cyc = await RB.ciclo.coachCard(a.id);
+      body.innerHTML = RB.checkin.line((ckr.data || [])[0]) + cyc + RB.trainLoad.card(fbs) + (rp.length > 1 ? '<div class="card">' + RB.ew('RPE dos últimos treinos', 'mid') + RB.lineChart(rp.map(function (f) { return { d: f.performed_at || f.created_at, v: f.rpe, label: f.kind === 'strength' ? 'Força' : (f.workouts ? f.workouts.type : ''), color: RB.rpeColor(f.rpe) }; }), { aria: 'RPE por treino', band: [3, 6] }) + '</div>' : '') +
         (fbs.length ? fbs.map(function (f) { return RB.fbCard(f, { athlete: a, replies: reps[f.id] }); }).join('') : RB.empty('Nenhum feedback ainda'));
     } else if (C.dtab === 'relatorios') {
       await RB.reports.list(a, body);

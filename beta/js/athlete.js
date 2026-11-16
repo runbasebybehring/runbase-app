@@ -31,7 +31,7 @@
     A.cur = A.weeks.find(function (w) { return w.is_current; }) || A.weeks[A.weeks.length - 1] || null;
     A.openWeek = A.cur ? A.cur.id : null;
     A.replies = await RB.threads.load(A.feedbacks.map(function (f) { return f.id; }));
-    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid), RB.stories.load(uid)]);
+    await Promise.all([RB.ms.loadAcks(), RB.events.load(), RB.perf.load(uid), RB.checkin.load(uid), RB.fin.loadMine(uid), RB.stories.load(uid), RB.ciclo.load(uid)]);
     RB.$('ath-avatar').textContent = A.me.img || A.me.name.slice(0, 2).toUpperCase();
     RB.threads.onClose = A.refreshReplies;
     A.go(A.tab);
@@ -72,7 +72,7 @@
     RB.setBadge('relBadge', A.reports.filter(function (r) { return !r.seen_at; }).length);
     RB.setBadge('evBadge', RB.events.pendingCount());
     var el = RB.$('athlete-content');
-    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.galera.render(el); }, feedback: feedback, relatorio: relatorio })[tab](el);
+    ({ home: home, planilha: planilha, forca: function (el) { RB.strength.render(el); }, zonas: planilha, eventos: function (el) { RB.galera.render(el); }, feedback: feedback, relatorio: relatorio, ciclo: function (el) { RB.ciclo.render(el); } })[tab](el);
     if (!keepScroll) window.scrollTo(0, 0);
   };
 
@@ -83,7 +83,7 @@
     var done = wo.filter(function (w) { return A.byWorkout[w.id]; }).length;
     var pct = wo.length ? Math.round(done / wo.length * 100) : 0;
     var html = '<div class="hello"><div class="hello-s">Olá,</div><div class="hello-n">' + RB.esc(a.name.split(' ')[0].toUpperCase()) + '.</div></div>';
-    html += RB.stories.row() + RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard();
+    html += RB.stories.row() + RB.fin.studentCard() + RB.intake.homeCard() + RB.checkin.homeCard() + RB.ciclo.homeCard();
 
     // mensagens novas do coach
     var unreadFbs = A.feedbacks.filter(function (f) { return RB.threads.unread(A.replies[f.id]); });
@@ -367,7 +367,7 @@
       '<div class="fld"><div class="fld-l">Nova senha <span class="hint">mínimo 6 caracteres</span></div><input class="fi" type="password" id="my-pw" autocomplete="new-password"></div>' +
       '<div class="fld"><div class="fld-l">Repita a nova senha</div><input class="fi" type="password" id="my-pw2" autocomplete="new-password"></div>' +
       '<button class="btn btn-o" id="my-pw-go" onclick="RB.athlete.changePw()">TROCAR SENHA</button>' +
-      '<button class="btn btn-o" style="margin-top:10px" onclick="RB.closeSheet();RB.intake.open()">MINHA FICHA DE ENTRADA</button>' +
+      '<button class="btn btn-o" style="margin-top:10px" onclick="RB.closeSheet();RB.intake.open()">MINHA FICHA DE ENTRADA</button>' + RB.ciclo.accountBtn() +
       '<button class="btn-link danger" style="margin-top:14px" onclick="RB.closeSheet();RB.logout()">Sair do app</button>');
   };
   A.changePw = async function () {

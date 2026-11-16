@@ -904,3 +904,51 @@ body.ckx-open{overflow:hidden}
 @keyframes ckxConf{to{top:105%;transform:rotate(720deg) translateX(30px)}}
 @media (max-height:700px){.ckx-q{font-size:calc(28px*var(--fs) + var(--fb))}.ckx-deck{margin-top:4px}}
 @media (prefers-reduced-motion:reduce){.ckx-card,.ckx-art svg,.ckx-conf i{animation:none!important;transition:none!important}}
+
+/* ---- 3.3: aba Ciclo ---- */
+.cy-home{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:12px;padding:11px 14px;border:1.5px solid var(--pc);background:color-mix(in srgb,var(--pc) 7%,#fff);border-radius:999px;font:inherit;color:var(--dark);cursor:pointer}
+.cy-dot{width:32px;height:32px;border-radius:50%;background:var(--pc);display:grid;place-items:center;font-size:16px;flex:none;color:#fff}
+.cy-ht{flex:1;font-size:calc(14px*var(--fs) + var(--fb))}
+.cy-hr{font-family:'Space Mono',monospace;font-size:calc(9px*var(--fs) + var(--fb));text-transform:uppercase;letter-spacing:.06em;color:var(--pc);font-weight:700;white-space:nowrap}
+.cy-hero{background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 12%,#fff),#fff);border:1px solid var(--border);border-radius:28px;padding:20px 16px 18px;margin-bottom:12px;text-align:center}
+.cy-rw{position:relative;width:220px;max-width:70vw;margin:0 auto}
+.cy-ring{width:100%;height:auto;display:block}
+.cy-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.cy-c small{font-family:'Space Mono',monospace;font-size:calc(10px*var(--fs) + var(--fb));letter-spacing:.2em;color:var(--mid)}
+.cy-c b{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(64px*var(--fs) + var(--fb));line-height:.9;color:var(--pc)}
+.cy-c span{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:calc(18px*var(--fs) + var(--fb));color:var(--dark)}
+.cy-empty{font-size:56px;line-height:1;margin:6px 0 10px;color:#7B1FA2}
+.cy-pred{font-size:calc(14px*var(--fs) + var(--fb));color:var(--mid);line-height:1.45;margin-top:12px}.cy-pred b{color:var(--dark)}
+.cy-log{width:100%;border:0;border-radius:999px;background:var(--dark);color:#fff;padding:16px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:calc(18px*var(--fs) + var(--fb));letter-spacing:.04em;cursor:pointer;margin-bottom:12px}
+.cy-log.done{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green)}
+.cy-card{background:var(--pc);color:#fff;border-radius:24px;padding:18px 18px 8px;margin-bottom:12px;transform:rotate(-.6deg)}
+.cy-tag{display:inline-block;font-family:'Space Mono',monospace;font-weight:700;font-size:calc(10px*var(--fs) + var(--fb));letter-spacing:.12em;text-transform:uppercase;background:rgba(255,255,255,.2);padding:5px 12px;border-radius:999px;margin-bottom:6px}
+.cy-sec{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.2)}.cy-sec:last-child{border:0}
+.cy-sec b{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(18px*var(--fs) + var(--fb))}
+.cy-sec p{font-size:calc(14px*var(--fs) + var(--fb));line-height:1.45;margin-top:2px;opacity:.95}
+.cy-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cy-d{aspect-ratio:1;border:0;border-radius:50%;background:color-mix(in srgb,var(--pc,#999) 13%,#fff);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--pc,#ccc) 35%,transparent);position:relative;font-family:'Space Mono',monospace;font-size:calc(10px*var(--fs) + var(--fb));color:var(--dark);cursor:pointer;display:grid;place-items:center}
+.cy-d.fl{background:#C41731;color:#fff;box-shadow:none}.cy-d.fl.leve{background:#E57383}
+.cy-d.hj{outline:2px solid var(--dark);outline-offset:2px}
+.cy-d i{position:absolute;bottom:1px;font-style:normal;font-size:12px;line-height:1;color:var(--dark)}
+.cy-pr{border-left:4px solid var(--pc);padding:8px 0 8px 12px;margin-bottom:8px}
+.cy-prn{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(17px*var(--fs) + var(--fb))}
+.cy-prt{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}.cy-prt span{font-size:calc(12px*var(--fs) + var(--fb));background:var(--cream2);padding:3px 9px;border-radius:999px}.cy-prt span.ok{background:var(--green-bg);color:var(--green)}
+.cy-prm{display:flex;gap:10px;font-family:'Space Mono',monospace;font-size:calc(9px*var(--fs) + var(--fb));color:var(--mid);text-transform:uppercase}
+.cy-guia{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;margin-bottom:12px}
+.cy-guia summary{cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(18px*var(--fs) + var(--fb))}
+.cy-gi{border-left:4px solid var(--pc);padding:6px 0 6px 12px;margin-top:10px}.cy-gi p{font-size:calc(13px*var(--fs) + var(--fb));color:var(--mid);line-height:1.45}
+.cy-disc{line-height:1.6;margin:4px 4px 0}
+.cy-inv{background:#fff;border:1px solid var(--border);border-radius:28px;padding:24px 20px}.cy-inv .cy-empty{text-align:center}
+.cy-op{display:flex;gap:6px}.cy-op.wrap{flex-wrap:wrap}
+.cy-b{flex:1;border:1.5px solid var(--border);background:#fff;border-radius:14px;padding:11px 6px;font-family:'Barlow',sans-serif;font-weight:500;font-size:calc(13px*var(--fs) + var(--fb));color:var(--dark);cursor:pointer;white-space:nowrap}
+.cy-op.wrap .cy-b{flex:0 1 auto;padding:10px 14px}
+.cy-b.on{background:var(--dark);border-color:var(--dark);color:#fff}.cy-b.fl.on{background:#C41731;border-color:#C41731}
+.cy-b.en{display:grid;place-items:center;padding:12px 2px}.cy-b.en.on .ckx-bat i:not([style]){background:rgba(255,255,255,.25)}
+.cy-ch{display:flex;flex-wrap:wrap;gap:6px}
+.cy-num{display:flex;align-items:center;gap:10px}.cy-num button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:#fff;font-size:22px;cursor:pointer}.cy-num b{flex:1;text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:calc(22px*var(--fs) + var(--fb))}
+.cy-coach{border-left:4px solid var(--pc,#7B1FA2)}
+.cy-ch1 b{display:block;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(19px*var(--fs) + var(--fb))}
+.cy-ch1 span{display:block;font-size:calc(12px*var(--fs) + var(--fb));color:var(--mid);line-height:1.4;margin:2px 0 8px}
+.cy-cl{font-size:calc(13px*var(--fs) + var(--fb));padding:5px 0;border-top:1px solid var(--cream2)}.cy-cl span{font-family:'Space Mono',monospace;font-size:calc(9px*var(--fs) + var(--fb));color:var(--mid);margin-right:8px;text-transform:uppercase}
+#screen-athlete .nav-btn span.lbl{letter-spacing:.02em}

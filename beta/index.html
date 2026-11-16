@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script>var f='1';try{f=localStorage.getItem('rb_fs')||'1';}catch(e){}if(f==="1"||f==="2")document.documentElement.dataset.fs=f;</script>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Barlow:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=3.2.0">
+<link rel="stylesheet" href="css/app.css?v=3.3.0">
 </head>
 <body>
 <div id="toast" class="toast"></div>
@@ -58,6 +58,7 @@
     <button class="nav-btn" data-tab="forca" onclick="RB.athlete.go('forca')"><span class="icon">◆</span><span class="lbl">Força</span></button>
     <button class="nav-btn" data-tab="eventos" onclick="RB.athlete.go('eventos')"><span class="icon">✦</span><span class="lbl">Eventos</span><div class="badge" id="evBadge" style="display:none">0</div></button>
     <button class="nav-btn" data-tab="feedback" onclick="RB.athlete.go('feedback')"><span class="icon">◎</span><span class="lbl">Feedback</span><div class="badge" id="pendBadge" style="display:none">0</div></button>
+    <button class="nav-btn" data-tab="ciclo" style="display:none" onclick="RB.athlete.go('ciclo')"><span class="icon">☾</span><span class="lbl">Ciclo</span></button>
     <button class="nav-btn" data-tab="relatorio" onclick="RB.athlete.go('relatorio')"><span class="icon">◑</span><span class="lbl">Relatório</span><div class="badge" id="relBadge" style="display:none">0</div></button>
   </nav>
 </div>
@@ -69,31 +70,32 @@
 <div id="print-root"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=3.2.0"></script>
-<script src="js/core.js?v=3.2.0"></script>
-<script src="js/charts.js?v=3.2.0"></script>
-<script src="js/threads.js?v=3.2.0"></script>
-<script src="js/reports.js?v=3.2.0"></script>
-<script src="js/media.js?v=3.2.0"></script>
-<script src="js/strength.js?v=3.2.0"></script>
-<script src="js/pace.js?v=3.2.0"></script>
-<script src="js/push.js?v=3.2.0"></script>
-<script src="js/events.js?v=3.2.0"></script>
-<script src="js/editor.js?v=3.2.0"></script>
-<script src="js/share.js?v=3.2.0"></script>
-<script src="js/milestones.js?v=3.2.0"></script>
-<script src="js/radar.js?v=3.2.0"></script>
-<script src="js/perf.js?v=3.2.0"></script>
-<script src="js/community.js?v=3.2.0"></script>
-<script src="js/audio.js?v=3.2.0"></script>
-<script src="js/finance.js?v=3.2.0"></script>
-<script src="js/intake.js?v=3.2.0"></script>
-<script src="js/load.js?v=3.2.0"></script>
-<script src="js/weekly.js?v=3.2.0"></script>
-<script src="js/stories.js?v=3.2.0"></script>
-<script src="js/monthstory.js?v=3.2.0"></script>
-<script src="js/checkin.js?v=3.2.0"></script>
-<script src="js/athlete.js?v=3.2.0"></script>
-<script src="js/coach.js?v=3.2.0"></script>
+<script src="js/config.js?v=3.3.0"></script>
+<script src="js/core.js?v=3.3.0"></script>
+<script src="js/charts.js?v=3.3.0"></script>
+<script src="js/threads.js?v=3.3.0"></script>
+<script src="js/reports.js?v=3.3.0"></script>
+<script src="js/media.js?v=3.3.0"></script>
+<script src="js/strength.js?v=3.3.0"></script>
+<script src="js/pace.js?v=3.3.0"></script>
+<script src="js/push.js?v=3.3.0"></script>
+<script src="js/events.js?v=3.3.0"></script>
+<script src="js/editor.js?v=3.3.0"></script>
+<script src="js/share.js?v=3.3.0"></script>
+<script src="js/milestones.js?v=3.3.0"></script>
+<script src="js/radar.js?v=3.3.0"></script>
+<script src="js/perf.js?v=3.3.0"></script>
+<script src="js/community.js?v=3.3.0"></script>
+<script src="js/audio.js?v=3.3.0"></script>
+<script src="js/finance.js?v=3.3.0"></script>
+<script src="js/intake.js?v=3.3.0"></script>
+<script src="js/load.js?v=3.3.0"></script>
+<script src="js/weekly.js?v=3.3.0"></script>
+<script src="js/stories.js?v=3.3.0"></script>
+<script src="js/monthstory.js?v=3.3.0"></script>
+<script src="js/checkin.js?v=3.3.0"></script>
+<script src="js/ciclo.js?v=3.3.0"></script>
+<script src="js/athlete.js?v=3.3.0"></script>
+<script src="js/coach.js?v=3.3.0"></script>
 </body>
 </html>
