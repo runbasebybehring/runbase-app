@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
         const done = new Set((cks ?? []).map((c) => c.athlete_id));
         const who = all.map((a) => a.id).filter((id) => !done.has(id));
         let n = 0;
-        for (const id of who) n += await send([id], { title: "☀ Check-in da semana", body: "3 toques: sono, estresse e dores. Ajuda a treinadora a ajustar seus treinos.", tab: "home", tag: "checkin" });
+        for (const id of who) n += await send([id], { title: "☀ Check-in da semana", body: "3 cartões, 30 segundos: sono, cabeça e corpo. Ajuda a treinadora a ajustar seus treinos.", tab: "home", tag: "checkin" });
         out.push("checkin:" + n);
       }
 
@@ -215,6 +215,16 @@ Deno.serve(async (req) => {
         out.push("relatorios");
       }
       return json({ ok: true, sent, out });
+    }
+
+    // ---- recados da treinadora (tabela recados): avisa no celular quem recebeu ----
+    // chamado pelo banco (x-cron-secret), logo depois de criar os recados
+    if (body.type === "recado" && req.headers.get("x-cron-secret") === sec.cron_secret) {
+      const ids = (Array.isArray(body.recado_ids) ? body.recado_ids : []).map(String);
+      const { data: rs } = await db.from("recados").select("athlete_id,title,athletes!inner(active)").in("id", ids).is("dismissed_at", null).eq("athletes.active", true);
+      let sent = 0;
+      for (const r of rs ?? []) sent += await send([r.athlete_id], { title: "Recado da treinadora 👋", body: r.title, tab: "home", tag: "recado" });
+      return json({ ok: true, sent });
     }
 
     // ---- ações do app: precisa estar logado ----
