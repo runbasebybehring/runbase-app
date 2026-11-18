@@ -259,6 +259,15 @@ Deno.serve(async (req) => {
       return json({ sent: await send([COACH_ID], msg) });
     }
 
+    if (body.type === "checkin") {
+      const { data: c } = await db.from("checkins").select("athlete_id,sono,estresse,dor,dor_onde,note,athletes(name)").eq("id", body.checkin_id).single();
+      if (!c || c.athlete_id !== me.id) return json({ error: "forbidden" }, 403);
+      const name = first((c.athletes as unknown as { name: string })?.name);
+      const SONO = ["péssimo", "ruim", "ok", "bom", "ótimo"], EST = ["baixo", "leve", "médio", "alto", "muito alto"];
+      const txt = `Sono ${SONO[c.sono - 1]} · estresse ${EST[c.estresse - 1]} · ${c.dor ? "dor" + (c.dor_onde ? ": " + c.dor_onde : "") : "sem dor"}${c.note ? " — “" + c.note + "”" : ""}`;
+      return json({ sent: await send([COACH_ID], { title: c.dor ? `⚠ Check-in: ${name} com dor` : `☀ Check-in: ${name}`, body: txt.length > 170 ? txt.slice(0, 170) + "…" : txt, tab: "athletes", tag: "checkin-" + c.athlete_id }) });
+    }
+
     if (body.type === "report") {
       if (!isCoach) return json({ error: "forbidden" }, 403);
       const { data: r } = await db.from("reports").select("athlete_id,title,status").eq("id", body.report_id).single();

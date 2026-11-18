@@ -168,6 +168,7 @@
     var r = await sb.from('checkins').insert(row).select().single();
     if (r.error) { RB.toast('Não deu para enviar. Tente de novo.', false); if (b) { b.disabled = false; b.textContent = 'ENVIAR PRA TREINADORA'; } return; }
     K.cur = r.data;
+    if (RB.push && RB.push.notify) RB.push.notify({ type: 'checkin', checkin_id: r.data.id });
     var el = RB.$('ckx'); if (!el) return;
     var msg = f.dor ? 'A treinadora vai ver o aviso de dor e ajustar o que for preciso.'
       : (f.sono <= 2 || f.estresse >= 4) ? 'Semana puxada, né? A treinadora vai levar isso em conta nos treinos.'
