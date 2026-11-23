@@ -12,7 +12,7 @@
   M.swapKey = function (plan) { return plan && plan.strength_started_at ? 'swap:' + String(plan.strength_started_at).slice(0, 10) : null; };
   M.swapBtn = function (plan) {
     var k = M.swapKey(plan); if (!k) return '';
-    if (M.acked[k]) return '<div class="swap-ok">✓ Pedido enviado. A treinadora vai montar seu novo treino.</div>';
+    if (M.acked[k]) return '<div class="swap-ok">✓ Pedido enviado. A treinadora vai entrar em contato.</div>';
     return '<button class="btn btn-r sm swap-b" onclick="RB.ms.askSwap(\'' + k + '\', this)">🔁 QUERO TROCAR O TREINO</button>';
   };
   M.askSwap = async function (key, el) {
@@ -22,7 +22,7 @@
     M.acked[key] = true;
     if (RB.push && RB.push.notify) RB.push.notify({ type: 'swap' });
     var lk = el && el.parentNode && el.parentNode.querySelector('.btn-link'); if (lk) lk.textContent = 'Fechar';
-    if (el) el.outerHTML = '<div class="swap-ok">✓ Pedido enviado. A treinadora vai montar seu novo treino.</div>';
+    if (el) el.outerHTML = '<div class="swap-ok">✓ Pedido enviado. A treinadora vai entrar em contato.</div>';
     RB.toast('Pedido enviado pra treinadora ✓');
   };
 
