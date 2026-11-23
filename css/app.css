@@ -960,3 +960,8 @@ body.ckx-open{overflow:hidden}
 .rc-top .x{border:0;background:none;font-size:18px;color:var(--mid);cursor:pointer;padding:0 2px}
 .rc-t{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:italic;font-size:calc(24px*var(--fs) + var(--fb));line-height:1.02;margin:4px 0 8px}
 .rc-b{font-size:calc(15px*var(--fs) + var(--fb));line-height:1.5;color:var(--dark)}
+
+/* ---- 3.5: pedido de troca do treino de força ---- */
+.swap-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+.swap-b{margin-top:12px}.swap-row .swap-b{margin-top:0}
+.swap-ok{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--green-bg);color:var(--green);font-weight:600;font-size:calc(14px*var(--fs) + var(--fb))}

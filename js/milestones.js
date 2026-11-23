@@ -8,6 +8,24 @@
     M.acked = {};
     (r.data || []).forEach(function (a) { M.acked[a.key] = true; });
   };
+  // pedido de troca do treino de força (uma vez por programa): avisa a treinadora no celular
+  M.swapKey = function (plan) { return plan && plan.strength_started_at ? 'swap:' + String(plan.strength_started_at).slice(0, 10) : null; };
+  M.swapBtn = function (plan) {
+    var k = M.swapKey(plan); if (!k) return '';
+    if (M.acked[k]) return '<div class="swap-ok">✓ Pedido enviado. A treinadora vai entrar em contato.</div>';
+    return '<button class="btn btn-r sm swap-b" onclick="RB.ms.askSwap(\'' + k + '\', this)">🔁 QUERO TROCAR O TREINO</button>';
+  };
+  M.askSwap = async function (key, el) {
+    if (el) { el.disabled = true; el.textContent = 'ENVIANDO…'; }
+    var r = await sb.from('acks').upsert({ key: key, user_id: RB.state.user.id });
+    if (r.error) { if (el) { el.disabled = false; el.textContent = '🔁 QUERO TROCAR O TREINO'; } RB.toast('Não deu para enviar. Tente de novo.', false); return; }
+    M.acked[key] = true;
+    if (RB.push && RB.push.notify) RB.push.notify({ type: 'swap' });
+    var lk = el && el.parentNode && el.parentNode.querySelector('.btn-link'); if (lk) lk.textContent = 'Fechar';
+    if (el) el.outerHTML = '<div class="swap-ok">✓ Pedido enviado. A treinadora vai entrar em contato.</div>';
+    RB.toast('Pedido enviado pra treinadora ✓');
+  };
+
   M.ack = async function (key, el) {
     M.acked[key] = true;
     if (el) { var card = el.closest('.ms-card'); if (card) card.remove(); }
@@ -52,8 +70,8 @@
       if (!M.acked[gk]) {
         out += '<div class="card ms-card rl">' + RB.ew('🔁 Treino de força') +
           '<div class="ms-big">' + sw + ' semanas no mesmo treino</div>' +
-          '<div class="p">Hora de evoluir: carga, estrutura ou exercícios novos. Sua treinadora já foi avisada. Registre as cargas e o feedback dos treinos para ajudar no ajuste.</div>' +
-          '<button class="btn btn-o sm" onclick="RB.ms.ack(\'' + gk + '\', this)">ENTENDI</button></div>';
+          '<div class="p">Hora de evoluir: carga, estrutura ou exercícios novos. Quer um treino novo? Avise a treinadora com um toque.</div>' +
+          '<div class="swap-row">' + M.swapBtn(A.plan) + '<button class="btn-link" onclick="RB.ms.ack(\'' + gk + '\', this)">' + (M.acked[M.swapKey(A.plan)] ? 'Fechar' : 'Agora não') + '</button></div></div>';
       }
     }
     return out;
