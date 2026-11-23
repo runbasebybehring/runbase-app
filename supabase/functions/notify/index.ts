@@ -268,6 +268,20 @@ Deno.serve(async (req) => {
       return json({ sent: await send([COACH_ID], { title: c.dor ? `⚠ Check-in: ${name} com dor` : `☀ Check-in: ${name}`, body: txt.length > 170 ? txt.slice(0, 170) + "…" : txt, tab: "athletes", tag: "checkin-" + c.athlete_id }) });
     }
 
+    if (body.type === "swap") {
+      const { data: pl } = await db.from("athlete_plans").select("strength_started_at,athletes(name)").eq("athlete_id", me.id).maybeSingle();
+      if (!pl?.strength_started_at) return json({ error: "no_strength" }, 400);
+      const start = String(pl.strength_started_at).slice(0, 10);
+      const key = `push:swap:${me.id}:${start}`;
+      const { data: dup } = await db.from("acks").select("key").eq("user_id", COACH_ID).eq("key", key).maybeSingle();
+      if (dup) return json({ sent: 0, dup: true });
+      const name = first((pl.athletes as unknown as { name: string })?.name);
+      const weeks = Math.floor((Date.now() - new Date(pl.strength_started_at).getTime()) / (7 * 864e5));
+      const n = await send([COACH_ID], { title: `🔁 ${name} quer trocar o treino`, body: `${weeks} semanas no treino de força atual. Hora de montar o próximo.`, tab: "athletes", tag: "swap-" + me.id });
+      await db.from("acks").upsert({ user_id: COACH_ID, key });
+      return json({ sent: n });
+    }
+
     if (body.type === "report") {
       if (!isCoach) return json({ error: "forbidden" }, 403);
       const { data: r } = await db.from("reports").select("athlete_id,title,status").eq("id", body.report_id).single();
